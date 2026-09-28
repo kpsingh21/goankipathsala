@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 interface GalleryItem {
   id: string;
@@ -42,13 +43,13 @@ export default function SchoolPortalPage() {
     async function fetchPortalData() {
       try {
         const [resSchool, resNotices, resRoutes] = await Promise.all([
-          fetch(`http://localhost:4000/api/tenants/current`, {
+          fetch(`${API_BASE}/api/tenants/current`, {
             headers: { "X-Tenant-Slug": slug },
           }),
-          fetch(`http://localhost:4000/api/notices`, {
+          fetch(`${API_BASE}/api/notices`, {
             headers: { "X-Tenant-Slug": slug },
           }),
-          fetch(`http://localhost:4000/api/transport/routes`, {
+          fetch(`${API_BASE}/api/transport/routes`, {
             headers: { "X-Tenant-Slug": slug },
           }),
         ]);

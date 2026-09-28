@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 export default function ForgotPasswordPage() {
   const params = useParams();
@@ -26,7 +27,7 @@ export default function ForgotPasswordPage() {
     setDebugOtp(null);
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/forgot-password", {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +67,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/reset-password", {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

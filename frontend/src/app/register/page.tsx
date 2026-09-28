@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 interface RegisterFormData {
   schoolName: string;
@@ -51,7 +52,7 @@ export default function RegisterTenantPage() {
     setSuccess(null);
 
     try {
-      const res = await fetch("http://localhost:4000/api/tenants", {
+      const res = await fetch(`${API_BASE}/api/tenants`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

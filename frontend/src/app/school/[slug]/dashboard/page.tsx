@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
+
 
 interface FeeComponent {
   name: string;
@@ -286,7 +288,7 @@ export default function SchoolDashboardPage() {
   // ==========================================
   const fetchLandingData = async () => {
     try {
-      const res = await fetch(`http://localhost:4000/api/tenants/current`, {
+      const res = await fetch(`${API_BASE}/api/tenants/current`, {
         headers: { "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -301,7 +303,7 @@ export default function SchoolDashboardPage() {
   const fetchStaff = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:4000/api/staff", {
+      const res = await fetch(`${API_BASE}/api/staff`, {
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -314,7 +316,7 @@ export default function SchoolDashboardPage() {
   const fetchStudents = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:4000/api/students", {
+      const res = await fetch(`${API_BASE}/api/students`, {
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -334,7 +336,7 @@ export default function SchoolDashboardPage() {
 
   const fetchNotices = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/notices", {
+      const res = await fetch(`${API_BASE}/api/notices`, {
         headers: { "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -346,7 +348,7 @@ export default function SchoolDashboardPage() {
 
   const fetchBusRoutes = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/transport/routes", {
+      const res = await fetch(`${API_BASE}/api/transport/routes`, {
         headers: { "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -360,7 +362,7 @@ export default function SchoolDashboardPage() {
     if (!token) return;
     try {
       const res = await fetch(
-        `http://localhost:4000/api/subjects?classGradeName=${encodeURIComponent(gradeName)}`,
+        `${API_BASE}/api/subjects?classGradeName=${encodeURIComponent(gradeName)}`,
         {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }
@@ -375,7 +377,7 @@ export default function SchoolDashboardPage() {
   const fetchTimetable = async (gradeName: string) => {
     try {
       const res = await fetch(
-        `http://localhost:4000/api/timetable?classGradeName=${encodeURIComponent(gradeName)}`,
+        `${API_BASE}/api/timetable?classGradeName=${encodeURIComponent(gradeName)}`,
         {
           headers: { "X-Tenant-Slug": slug },
         }
@@ -391,7 +393,7 @@ export default function SchoolDashboardPage() {
     if (!token) return;
     try {
       const res = await fetch(
-        `http://localhost:4000/api/attendance/monthly?month=${encodeURIComponent(month)}`,
+        `${API_BASE}/api/attendance/monthly?month=${encodeURIComponent(month)}`,
         {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }
@@ -407,10 +409,10 @@ export default function SchoolDashboardPage() {
     if (!token) return;
     try {
       const [resStructures, resInvoices] = await Promise.all([
-        fetch("http://localhost:4000/api/fees/structures", {
+        fetch(`${API_BASE}/api/fees/structures`, {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }),
-        fetch("http://localhost:4000/api/fees/invoices", {
+        fetch(`${API_BASE}/api/fees/invoices`, {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }),
       ]);
@@ -428,7 +430,7 @@ export default function SchoolDashboardPage() {
   const fetchExams = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:4000/api/exams", {
+      const res = await fetch(`${API_BASE}/api/exams`, {
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -441,7 +443,7 @@ export default function SchoolDashboardPage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/classes", {
+      const res = await fetch(`${API_BASE}/api/classes`, {
         headers: { "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -454,7 +456,7 @@ export default function SchoolDashboardPage() {
   const fetchTeacherScope = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:4000/api/exams/my-scope", {
+      const res = await fetch(`${API_BASE}/api/exams/my-scope`, {
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
       if (res.ok) {
@@ -472,7 +474,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/tenants/landing", {
+      const res = await fetch(`${API_BASE}/api/tenants/landing`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -584,7 +586,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/notices", {
+      const res = await fetch(`${API_BASE}/api/notices`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -618,7 +620,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteNotice = async (id: string) => {
     if (!confirm("Are you sure you want to delete this notice?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/notices/${id}`, {
+      const res = await fetch(`${API_BASE}/api/notices/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -635,7 +637,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/staff", {
+      const res = await fetch(`${API_BASE}/api/staff`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -679,7 +681,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteStaff = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to remove staff member "${name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/staff/${id}`, {
+      const res = await fetch(`${API_BASE}/api/staff/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -694,7 +696,7 @@ export default function SchoolDashboardPage() {
 
   const handleUpdateRole = async (targetUserId: string, newRole: string) => {
     try {
-      const res = await fetch("http://localhost:4000/api/staff/role", {
+      const res = await fetch(`${API_BASE}/api/staff/role`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -718,7 +720,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/students", {
+      const res = await fetch(`${API_BASE}/api/students`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -774,7 +776,7 @@ export default function SchoolDashboardPage() {
     if (!editModalStudent) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/students/${editModalStudent.id}`, {
+      const res = await fetch(`${API_BASE}/api/students/${editModalStudent.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -798,7 +800,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteStudent = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete student "${name}"? This removes their attendance, exam, and billing records.`)) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/students/${id}`, {
+      const res = await fetch(`${API_BASE}/api/students/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -820,7 +822,7 @@ export default function SchoolDashboardPage() {
         enrollmentId,
         status,
       }));
-      const res = await fetch("http://localhost:4000/api/attendance", {
+      const res = await fetch(`${API_BASE}/api/attendance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -844,7 +846,7 @@ export default function SchoolDashboardPage() {
     setSeedMonthlyLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/attendance/seed-month", {
+      const res = await fetch(`${API_BASE}/api/attendance/seed-month`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -873,7 +875,7 @@ export default function SchoolDashboardPage() {
     if (!newSubjectName) return;
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/subjects", {
+      const res = await fetch(`${API_BASE}/api/subjects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -903,7 +905,7 @@ export default function SchoolDashboardPage() {
 
   const handleAssignSubjectTeacher = async (subjectId: string, teacherId: string) => {
     try {
-      const res = await fetch("http://localhost:4000/api/subjects/assign-teacher", {
+      const res = await fetch(`${API_BASE}/api/subjects/assign-teacher`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -927,7 +929,7 @@ export default function SchoolDashboardPage() {
     if (!editSlotModal) return;
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/timetable/entry", {
+      const res = await fetch(`${API_BASE}/api/timetable/entry`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -975,7 +977,7 @@ export default function SchoolDashboardPage() {
           return { name: s, time: newPickupTime };
         });
 
-      const res = await fetch("http://localhost:4000/api/transport/routes", {
+      const res = await fetch(`${API_BASE}/api/transport/routes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1010,7 +1012,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteBusRoute = async (id: string) => {
     if (!confirm("Delete this bus route?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/transport/routes/${id}`, {
+      const res = await fetch(`${API_BASE}/api/transport/routes/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -1027,7 +1029,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/fees/structures", {
+      const res = await fetch(`${API_BASE}/api/fees/structures`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1062,7 +1064,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/fees/generate-class-invoices", {
+      const res = await fetch(`${API_BASE}/api/fees/generate-class-invoices`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1085,7 +1087,7 @@ export default function SchoolDashboardPage() {
 
   const handleRecordPayment = async (invoiceId: string, amount: number) => {
     try {
-      const res = await fetch("http://localhost:4000/api/fees/pay", {
+      const res = await fetch(`${API_BASE}/api/fees/pay`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1109,7 +1111,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/exams", {
+      const res = await fetch(`${API_BASE}/api/exams`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1143,7 +1145,7 @@ export default function SchoolDashboardPage() {
       const practical = parseFloat(markPracticalMarks) || 0;
       const totalScore = theory + practical;
 
-      const res = await fetch("http://localhost:4000/api/exams/marks", {
+      const res = await fetch(`${API_BASE}/api/exams/marks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1176,7 +1178,7 @@ export default function SchoolDashboardPage() {
   const handleFetchReportCard = async (enrollmentId: string) => {
     try {
       const res = await fetch(
-        `http://localhost:4000/api/exams/report-card?enrollmentId=${enrollmentId}`,
+        `${API_BASE}/api/exams/report-card?enrollmentId=${enrollmentId}`,
         {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }
@@ -1192,7 +1194,7 @@ export default function SchoolDashboardPage() {
   const handleFetchAggregateReportCard = async (enrollmentId: string) => {
     try {
       const res = await fetch(
-        `http://localhost:4000/api/exams/aggregate-report-card?enrollmentId=${enrollmentId}`,
+        `${API_BASE}/api/exams/aggregate-report-card?enrollmentId=${enrollmentId}`,
         {
           headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
         }
@@ -1226,7 +1228,7 @@ export default function SchoolDashboardPage() {
         };
       });
 
-      const res = await fetch("http://localhost:4000/api/exams/batch-marks", {
+      const res = await fetch(`${API_BASE}/api/exams/batch-marks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1260,7 +1262,7 @@ export default function SchoolDashboardPage() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("http://localhost:4000/api/classes", {
+      const res = await fetch(`${API_BASE}/api/classes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1287,7 +1289,7 @@ export default function SchoolDashboardPage() {
     if (!editClassModal) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/classes/${editClassModal.id}`, {
+      const res = await fetch(`${API_BASE}/api/classes/${editClassModal.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1311,7 +1313,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteClass = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete class "${name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/classes/${id}`, {
+      const res = await fetch(`${API_BASE}/api/classes/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -1330,7 +1332,7 @@ export default function SchoolDashboardPage() {
     if (!editNoticeModal) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/notices/${editNoticeModal.id}`, {
+      const res = await fetch(`${API_BASE}/api/notices/${editNoticeModal.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1357,7 +1359,7 @@ export default function SchoolDashboardPage() {
     if (!editRouteModal) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/transport/routes/${editRouteModal.id}`, {
+      const res = await fetch(`${API_BASE}/api/transport/routes/${editRouteModal.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1384,7 +1386,7 @@ export default function SchoolDashboardPage() {
     if (!editSubjectModal) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/subjects/${editSubjectModal.id}`, {
+      const res = await fetch(`${API_BASE}/api/subjects/${editSubjectModal.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1408,7 +1410,7 @@ export default function SchoolDashboardPage() {
   const handleDeleteSubject = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete subject "${name}"?`)) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/subjects/${id}`, {
+      const res = await fetch(`${API_BASE}/api/subjects/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
       });
@@ -1426,7 +1428,7 @@ export default function SchoolDashboardPage() {
     e.preventDefault();
     if (!resetModalUser || !overridePassword) return;
     try {
-      const res = await fetch("http://localhost:4000/api/auth/admin-reset-password", {
+      const res = await fetch(`${API_BASE}/api/auth/admin-reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

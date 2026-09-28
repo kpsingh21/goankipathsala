@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 interface TenantSummary {
   id: string;
@@ -16,7 +17,7 @@ interface TenantSummary {
 
 async function getRegisteredSchools(): Promise<TenantSummary[]> {
   try {
-    const res = await fetch("http://localhost:4000/api/tenants", {
+    const res = await fetch(`${API_BASE}/api/tenants`, {
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -59,7 +60,7 @@ export default async function Home() {
             Network Schools
           </a>
           <a
-            href="http://localhost:4000/docs"
+            href={`${API_BASE}/docs`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-300 hover:text-emerald-400 transition flex items-center gap-1 font-mono text-[11px]"
@@ -289,7 +290,7 @@ export default async function Home() {
           <Link href="/platform-admin" className="text-emerald-500 hover:underline">
             Super Admin Onboarding
           </Link>
-          <a href="http://localhost:4000/docs" target="_blank" rel="noopener noreferrer" className="hover:underline">
+          <a href={`${API_BASE}/docs`} target="_blank" rel="noopener noreferrer" className="hover:underline">
             API Documentation
           </a>
         </div>

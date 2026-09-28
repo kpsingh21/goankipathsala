@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 export default function SchoolPortalGatewayPage() {
   const params = useParams();
@@ -33,7 +34,7 @@ export default function SchoolPortalGatewayPage() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/login", {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

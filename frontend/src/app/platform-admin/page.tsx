@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 interface TenantItem {
   id: string;
@@ -69,7 +70,7 @@ export default function PlatformAdminPage() {
   const fetchTenants = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:4000/api/tenants");
+      const res = await fetch(`${API_BASE}/api/tenants`);
       if (res.ok) {
         const data = await res.json();
         setTenants(data.tenants || []);
@@ -103,7 +104,7 @@ export default function PlatformAdminPage() {
     setRegMessage(null);
 
     try {
-      const res = await fetch("http://localhost:4000/api/tenants", {
+      const res = await fetch(`${API_BASE}/api/tenants`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -145,7 +146,7 @@ export default function PlatformAdminPage() {
   const toggleTenantStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     try {
-      const res = await fetch(`http://localhost:4000/api/tenants/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/tenants/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -161,7 +162,7 @@ export default function PlatformAdminPage() {
   // Change Tenant Plan
   const changeTenantPlan = async (id: string, newPlan: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/tenants/${id}/status`, {
+      const res = await fetch(`${API_BASE}/api/tenants/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan: newPlan }),
@@ -182,7 +183,7 @@ export default function PlatformAdminPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:4000/api/tenants/${id}`, {
+      const res = await fetch(`${API_BASE}/api/tenants/${id}`, {
         method: "DELETE",
       });
       const data = await res.json();
