@@ -25,6 +25,20 @@ export async function getTimetable(req: Request, res: Response) {
 
     let entries = await prisma.timetableEntry.findMany({
       where: { tenantId, classGradeId: classGrade.id },
+      include: {
+        teacherUser: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            staffProfile: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: [{ dayOfWeek: 'asc' }, { periodNumber: 'asc' }],
     });
 
@@ -61,6 +75,20 @@ export async function getTimetable(req: Request, res: Response) {
 
       entries = await prisma.timetableEntry.findMany({
         where: { tenantId, classGradeId: classGrade.id },
+        include: {
+          teacherUser: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              staffProfile: {
+                select: {
+                  fullName: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: [{ dayOfWeek: 'asc' }, { periodNumber: 'asc' }],
       });
     }
@@ -85,6 +113,7 @@ export async function upsertTimetableEntry(req: Request, res: Response) {
       endTime,
       subjectName,
       teacherName,
+      teacherUserId,
       roomNumber,
     } = req.body;
 
@@ -96,6 +125,17 @@ export async function upsertTimetableEntry(req: Request, res: Response) {
       return res.status(400).json({
         error: 'Class grade, day of week, period number, and subject name are required.',
       });
+    }
+
+    let resolvedTeacherName = teacherName ? teacherName.trim() : null;
+    if (teacherUserId) {
+      const teacher = await prisma.user.findFirst({
+        where: { id: teacherUserId, tenantId },
+        include: { staffProfile: true },
+      });
+      if (teacher) {
+        resolvedTeacherName = teacher.staffProfile?.fullName || teacher.email?.split('@')[0] || resolvedTeacherName;
+      }
     }
 
     let classGrade = await prisma.classGrade.findFirst({
@@ -128,15 +168,27 @@ export async function upsertTimetableEntry(req: Request, res: Response) {
         startTime: startTime || '08:30 AM',
         endTime: endTime || '09:15 AM',
         subjectName: subjectName.trim(),
-        teacherName: teacherName ? teacherName.trim() : null,
+        teacherName: resolvedTeacherName,
+        teacherUserId: teacherUserId || null,
         roomNumber: roomNumber ? roomNumber.trim() : 'Room 101',
       },
       update: {
         startTime: startTime || '08:30 AM',
         endTime: endTime || '09:15 AM',
         subjectName: subjectName.trim(),
-        teacherName: teacherName ? teacherName.trim() : null,
+        teacherName: resolvedTeacherName,
+        teacherUserId: teacherUserId !== undefined ? (teacherUserId || null) : undefined,
         roomNumber: roomNumber ? roomNumber.trim() : 'Room 101',
+      },
+      include: {
+        teacherUser: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            staffProfile: { select: { fullName: true } },
+          },
+        },
       },
     });
 

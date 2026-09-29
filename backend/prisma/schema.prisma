@@ -99,6 +99,8 @@ model User {
   markedAttendance  AttendanceRecord[] @relation("MarkedByUser")
   taughtSubjects    CurriculumSubject[] @relation("SubjectTeacher")
   drivenBusRoutes   BusRoute[]          @relation("DriverBusRoute")
+  conductedBusRoutes BusRoute[]         @relation("ConductorBusRoute")
+  timetableEntries  TimetableEntry[]    @relation("TimetableTeacher")
 
   resetToken       String?   @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
@@ -539,6 +541,10 @@ model BusRoute {
   driverPhone   String   @map("driver_phone")
   driverUserId  String?  @map("driver_user_id")
   driverUser    User?    @relation("DriverBusRoute", fields: [driverUserId], references: [id], onDelete: SetNull)
+  conductorName String?  @map("conductor_name")
+  conductorPhone String? @map("conductor_phone")
+  conductorUserId String? @map("conductor_user_id")
+  conductorUser User?    @relation("ConductorBusRoute", fields: [conductorUserId], references: [id], onDelete: SetNull)
   stops         Json?    @default("[]") // [{ name: "Goradiya Chaupal", time: "07:15 AM" }]
   morningPickupTime String? @map("morning_pickup_time")
   eveningDropTime   String? @map("evening_drop_time")
@@ -558,23 +564,25 @@ model BusRoute {
 // -------------------------------------------------------------
 
 model TimetableEntry {
-  id           String     @id @default(uuid())
-  tenantId     String     @map("tenant_id")
-  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  classGradeId String     @map("class_grade_id")
-  classGrade   ClassGrade @relation(fields: [classGradeId], references: [id], onDelete: Cascade)
-  sectionId    String?    @map("section_id")
-  section      Section?   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  dayOfWeek    String     // "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
-  periodNumber Int        @map("period_number") // 1 to 8
-  startTime    String     @map("start_time") // e.g. "08:30 AM"
-  endTime      String     @map("end_time")   // e.g. "09:15 AM"
-  subjectName  String     @map("subject_name")
-  teacherName  String?    @map("teacher_name")
-  roomNumber   String?    @map("room_number")
+  id            String     @id @default(uuid())
+  tenantId      String     @map("tenant_id")
+  tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classGradeId  String     @map("class_grade_id")
+  classGrade    ClassGrade @relation(fields: [classGradeId], references: [id], onDelete: Cascade)
+  sectionId     String?    @map("section_id")
+  section       Section?   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  dayOfWeek     String     // "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
+  periodNumber  Int        @map("period_number") // 1 to 8
+  startTime     String     @map("start_time") // e.g. "08:30 AM"
+  endTime       String     @map("end_time")   // e.g. "09:15 AM"
+  subjectName   String     @map("subject_name")
+  teacherName   String?    @map("teacher_name")
+  teacherUserId String?    @map("teacher_user_id")
+  teacherUser   User?      @relation("TimetableTeacher", fields: [teacherUserId], references: [id], onDelete: SetNull)
+  roomNumber    String?    @map("room_number")
 
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
   @@unique([tenantId, classGradeId, dayOfWeek, periodNumber])
   @@map("timetable_entries")

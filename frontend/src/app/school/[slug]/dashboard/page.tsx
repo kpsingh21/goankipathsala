@@ -134,6 +134,9 @@ export default function SchoolDashboardPage() {
   const [newStaffBloodGroup, setNewStaffBloodGroup] = useState("O+");
   const [newStaffAvatarUrl, setNewStaffAvatarUrl] = useState("");
   const [newStaffAddress, setNewStaffAddress] = useState("");
+  const [newStaffSectionId, setNewStaffSectionId] = useState("");
+  const [newStaffSubjectIds, setNewStaffSubjectIds] = useState<string[]>([]);
+  const [newStaffBusRouteId, setNewStaffBusRouteId] = useState("");
 
   // ==========================================
   // 4. Student SIS state & Filters
@@ -181,6 +184,7 @@ export default function SchoolDashboardPage() {
   // 6. Subjects state
   // ==========================================
   const [subjectsList, setSubjectsList] = useState<any[]>([]);
+  const [allSchoolSubjects, setAllSchoolSubjects] = useState<any[]>([]);
   const [subjectClassGrade, setSubjectClassGrade] = useState("Class 6");
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectBoard, setNewSubjectBoard] = useState("CBSE");
@@ -202,6 +206,10 @@ export default function SchoolDashboardPage() {
   const [newVehicleNumber, setNewVehicleNumber] = useState("MP-09-EF-9012");
   const [newDriverName, setNewDriverName] = useState("Gopal Singh Parmar");
   const [newDriverPhone, setNewDriverPhone] = useState("+91 98262 33445");
+  const [newDriverUserId, setNewDriverUserId] = useState("");
+  const [newConductorName, setNewConductorName] = useState("Mohan Lal");
+  const [newConductorPhone, setNewConductorPhone] = useState("+91 98262 88990");
+  const [newConductorUserId, setNewConductorUserId] = useState("");
   const [newPickupTime, setNewPickupTime] = useState("07:25 AM");
   const [newDropTime, setNewDropTime] = useState("02:40 PM");
   const [newCapacity, setNewCapacity] = useState("32");
@@ -393,6 +401,14 @@ export default function SchoolDashboardPage() {
       if (res.ok) {
         const d = await res.json();
         setSubjectsList(d.subjects || []);
+      }
+      // Also fetch all subjects across the school for dropdowns/workload assignment
+      const allRes = await fetch(`${API_BASE}/api/subjects`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+      });
+      if (allRes.ok) {
+        const dAll = await allRes.json();
+        setAllSchoolSubjects(dAll.subjects || []);
       }
     } catch (e) {}
   };
@@ -819,12 +835,40 @@ export default function SchoolDashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setMsg({ type: "success", text: "Faculty member registered successfully!" });
+
+      // Auto assign section, subjects or bus route if selected
+      const createdStaffId = data.staff?.id || data.staff?.userId;
+      if (createdStaffId && (newStaffSectionId || newStaffSubjectIds.length > 0 || newStaffBusRouteId)) {
+        try {
+          await fetch(`${API_BASE}/api/staff/assign-workload`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              "X-Tenant-Slug": slug,
+            },
+            body: JSON.stringify({
+              userId: createdStaffId,
+              role: newStaffRole,
+              classTeacherSectionId: newStaffSectionId || undefined,
+              subjectIds: newStaffSubjectIds,
+              busRouteId: newStaffBusRouteId || undefined,
+            }),
+          });
+        } catch (e) {
+          console.warn("Workload auto-assignment error:", e);
+        }
+      }
+
+      setMsg({ type: "success", text: "Faculty member registered & assigned successfully!" });
       setNewStaffFullName("");
       setNewStaffEmail("");
       setNewStaffPhone("");
       setNewStaffPassword("");
       setNewStaffAadhar("");
+      setNewStaffSectionId("");
+      setNewStaffSubjectIds([]);
+      setNewStaffBusRouteId("");
       setStaffSubTab("list");
       fetchStaff();
     } catch (err: any) {
@@ -1100,6 +1144,7 @@ export default function SchoolDashboardPage() {
           endTime: editSlotModal.endTime,
           subjectName: editSlotModal.subjectName,
           teacherName: editSlotModal.teacherName,
+          teacherUserId: editSlotModal.teacherUserId || undefined,
           roomNumber: editSlotModal.roomNumber,
         }),
       });
@@ -1146,6 +1191,10 @@ export default function SchoolDashboardPage() {
           vehicleNumber: newVehicleNumber,
           driverName: newDriverName,
           driverPhone: newDriverPhone,
+          driverUserId: newDriverUserId || null,
+          conductorName: newConductorName,
+          conductorPhone: newConductorPhone,
+          conductorUserId: newConductorUserId || null,
           morningPickupTime: newPickupTime,
           eveningDropTime: newDropTime,
           capacity: newCapacity,
@@ -1989,10 +2038,10 @@ export default function SchoolDashboardPage() {
                       onChange={(e) => setStudentFilterClass(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     >
-                      <option value="ALL">All Classes</option>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                        <option key={g} value={`Class ${g}`}>
-                          Class {g}
+                      <option value="ALL">All Configured Classes ({classesList.length})</option>
+                      {classesList.map((c) => (
+                        <option key={c.id || c.name} value={c.name}>
+                          {c.name}
                         </option>
                       ))}
                     </select>
@@ -2080,18 +2129,20 @@ export default function SchoolDashboardPage() {
                                 {s.addressText || "Campus Area"}
                               </p>
                             </td>
-                            <td className="p-3.5 text-right space-x-1.5">
+                            <td className="p-3.5 text-right space-x-1">
                               <button
                                 onClick={() => setViewIdCardStudent(s)}
-                                className="px-2.5 py-1 rounded bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 text-[11px] font-semibold"
+                                title="Print Identity Card"
+                                className="px-2 py-1 rounded bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 text-[11px] font-semibold inline-flex items-center gap-1 transition"
                               >
-                                🪪 ID Card
+                                <span>🪪</span> <span className="hidden md:inline">ID Card</span>
                               </button>
                               <button
                                 onClick={() => setProfileModalStudent(s)}
-                                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-semibold"
+                                title="View Comprehensive Profile"
+                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-semibold inline-flex items-center gap-1 transition"
                               >
-                                Dossier
+                                <span>👤</span> <span className="hidden md:inline">Profile</span>
                               </button>
                               <button
                                 onClick={() =>
@@ -2101,16 +2152,18 @@ export default function SchoolDashboardPage() {
                                     sectionName: s.enrollments?.[0]?.section?.name || "A",
                                   })
                                 }
-                                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-blue-400 text-[11px] font-semibold"
+                                title="Edit Student Record"
+                                className="px-2 py-1 rounded bg-slate-800 hover:bg-blue-900/60 text-blue-400 text-[11px] font-semibold inline-flex items-center gap-1 transition"
                               >
-                                Edit
+                                <span>✏️</span> <span className="hidden md:inline">Edit</span>
                               </button>
                               {isAdmin && (
                                 <button
                                   onClick={() => handleDeleteStudent(s.id, `${s.firstName} ${s.lastName}`)}
-                                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold"
+                                  title="Delete Student"
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold transition"
                                 >
-                                  Delete
+                                  🗑️
                                 </button>
                               )}
                             </td>
@@ -2127,7 +2180,7 @@ export default function SchoolDashboardPage() {
             {studentSubTab === "create" && (
               <form onSubmit={handleRegisterStudent} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                  + Comprehensive Student Enrollment Dossier
+                  + New Student Admission & Profile Enrollment
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -2195,11 +2248,15 @@ export default function SchoolDashboardPage() {
                       onChange={(e) => setClassName(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                        <option key={g} value={`Class ${g}`}>
-                          Class {g}
-                        </option>
-                      ))}
+                      {classesList.length > 0 ? (
+                        classesList.map((c) => (
+                          <option key={c.id || c.name} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="Class 6">Class 6</option>
+                      )}
                     </select>
                   </div>
                   <div>
@@ -2518,32 +2575,36 @@ export default function SchoolDashboardPage() {
                                   {m.role}
                                 </span>
                               </td>
-                              <td className="p-3.5 text-right space-x-1.5">
+                              <td className="p-3.5 text-right space-x-1">
                                 <button
                                   onClick={() => handleOpenAssignModal(m)}
-                                  className="px-2.5 py-1 rounded bg-indigo-950/70 hover:bg-indigo-800 text-indigo-300 border border-indigo-700/50 text-[11px] font-semibold"
+                                  title="Assign Role, Headed Class & Subject Workload"
+                                  className="px-2 py-1 rounded bg-indigo-950/70 hover:bg-indigo-800 text-indigo-300 border border-indigo-700/50 text-[11px] font-semibold inline-flex items-center gap-1 transition"
                                 >
-                                  🎯 Role & Classes
+                                  <span>🎯</span> <span className="hidden md:inline">Role & Classes</span>
                                 </button>
                                 <button
                                   onClick={() => setProfileModalStaff(m)}
-                                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
+                                  title="View Staff Profile"
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold inline-flex items-center gap-1 transition"
                                 >
-                                  Dossier
+                                  <span>👤</span> <span className="hidden md:inline">Profile</span>
                                 </button>
                                 {m.id !== currentUser.id && (
                                   <>
                                     <button
                                       onClick={() => setResetModalUser(m)}
-                                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-amber-950/60 hover:text-amber-300 text-[11px] text-slate-300"
+                                      title="Reset Password"
+                                      className="px-2 py-1 rounded bg-slate-800 hover:bg-amber-950/60 hover:text-amber-300 text-[11px] text-slate-300 inline-flex items-center gap-1 transition"
                                     >
-                                      Reset Pass
+                                      <span>🔑</span> <span className="hidden md:inline">Reset</span>
                                     </button>
                                     <button
                                       onClick={() => handleDeleteStaff(m.id, prof.fullName || m.email)}
-                                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px]"
+                                      title="Delete Staff Member"
+                                      className="px-2 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold transition"
                                     >
-                                      Delete
+                                      🗑️
                                     </button>
                                   </>
                                 )}
@@ -2562,7 +2623,7 @@ export default function SchoolDashboardPage() {
             {staffSubTab === "create" && (
               <form onSubmit={handleCreateStaff} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                  + Register New Faculty / Staff Member
+                  + Register Faculty / Staff Member & Assign Workload
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -2682,6 +2743,90 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
+                {/* Direct Onboarding Workload Assignments (Classes & Subjects) */}
+                {["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN"].includes(newStaffRole) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                    <div>
+                      <label className="block text-[11px] text-amber-400 font-bold mb-1">
+                        🏛️ Assign as Class Teacher for Section (Optional)
+                      </label>
+                      <p className="text-[10px] text-slate-400 mb-2">Teacher will head this section and take daily attendance.</p>
+                      <select
+                        value={newStaffSectionId}
+                        onChange={(e) => setNewStaffSectionId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      >
+                        <option value="">— None (Not Heading a Class) —</option>
+                        {classesList.flatMap((cls: any) =>
+                          (cls.sections || []).map((sec: any) => (
+                            <option key={sec.id} value={sec.id}>
+                              {cls.name} - Section {sec.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] text-sky-400 font-bold mb-1">
+                        📚 Assign Curriculum Subjects to Teach (Optional)
+                      </label>
+                      <p className="text-[10px] text-slate-400 mb-2">Select subjects from school's configured curriculum.</p>
+                      <div className="max-h-28 overflow-y-auto space-y-1 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                        {(allSchoolSubjects.length > 0 ? allSchoolSubjects : subjectsList).length === 0 ? (
+                          <p className="text-[10px] text-slate-500 py-1 text-center">No subjects created yet.</p>
+                        ) : (
+                          (allSchoolSubjects.length > 0 ? allSchoolSubjects : subjectsList).map((sub: any) => {
+                            const checked = newStaffSubjectIds.includes(sub.id);
+                            return (
+                              <label
+                                key={sub.id}
+                                className={`flex items-center justify-between p-1.5 rounded cursor-pointer text-xs ${
+                                  checked ? "bg-sky-950/80 text-white font-semibold" : "text-slate-300 hover:bg-slate-800/40"
+                                }`}
+                              >
+                                <span>{sub.name} <span className="text-[10px] text-slate-500">({sub.classGrade?.name || "Grade"})</span></span>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => {
+                                    if (checked) {
+                                      setNewStaffSubjectIds(newStaffSubjectIds.filter((id) => id !== sub.id));
+                                    } else {
+                                      setNewStaffSubjectIds([...newStaffSubjectIds, sub.id]);
+                                    }
+                                  }}
+                                  className="accent-sky-500 h-3.5 w-3.5"
+                                />
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {newStaffRole === "DRIVER" && (
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                    <label className="block text-[11px] text-orange-400 font-bold mb-1">
+                      🚌 Assign Bus Route (Optional)
+                    </label>
+                    <select
+                      value={newStaffBusRouteId}
+                      onChange={(e) => setNewStaffBusRouteId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                    >
+                      <option value="">— None / Transport Pool —</option>
+                      {busRoutesList.map((r: any) => (
+                        <option key={r.id} value={r.id}>
+                          {r.routeNumber}: {r.routeName} ({r.vehicleNumber})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -2774,18 +2919,20 @@ export default function SchoolDashboardPage() {
                               <span className="text-slate-500 italic text-[11px]">No subjects mapped yet</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-right space-x-2">
+                          <td className="p-3.5 text-right space-x-1.5">
                             <button
                               onClick={() => setEditClassModal(c)}
-                              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-[11px] transition"
+                              title="Edit Class Configuration"
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs transition inline-flex items-center gap-1"
                             >
-                              Edit
+                              <span>✏️</span> <span className="hidden sm:inline">Edit</span>
                             </button>
                             <button
                               onClick={() => handleDeleteClass(c.id, c.name)}
-                              className="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-[11px] transition"
+                              title="Delete Class"
+                              className="px-2 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
                             >
-                              Delete
+                              🗑️
                             </button>
                           </td>
                         </tr>
@@ -3189,11 +3336,15 @@ export default function SchoolDashboardPage() {
                           onChange={(e) => setNewFeeClassGrade(e.target.value)}
                           className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                            <option key={g} value={`Class ${g}`}>
-                              Class {g}
-                            </option>
-                          ))}
+                          {classesList.length > 0 ? (
+                            classesList.map((c) => (
+                              <option key={c.id || c.name} value={c.name}>
+                                {c.name}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="Class 6">Class 6</option>
+                          )}
                         </select>
                       </div>
                       <div>
@@ -3716,28 +3867,30 @@ export default function SchoolDashboardPage() {
                                 <select
                                   value={sub.teacherId || ""}
                                   onChange={(e) => handleAssignSubjectTeacher(sub.id, e.target.value)}
-                                  className="px-2.5 py-1 rounded bg-slate-800 text-xs text-white border border-slate-700 outline-none"
+                                  className="px-2 py-1 rounded bg-slate-800 text-xs text-white border border-slate-700 outline-none"
                                 >
                                   <option value="">— Unassign —</option>
                                   {staffList
-                                    .filter((s) => s.role === "TEACHER" || s.role === "SCHOOL_ADMIN")
+                                    .filter((s) => ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(s.role))
                                     .map((t) => (
                                       <option key={t.id} value={t.id}>
-                                        {t.staffProfile?.fullName || t.email}
+                                        {t.staffProfile?.fullName || t.email} ({t.role.replace("_", " ")})
                                       </option>
                                     ))}
                                 </select>
                                 <button
                                   onClick={() => setEditSubjectModal(sub)}
-                                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-[11px] transition"
+                                  title="Edit Subject"
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs transition inline-flex items-center gap-1"
                                 >
-                                  Edit
+                                  <span>✏️</span> <span className="hidden sm:inline">Edit</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteSubject(sub.id, sub.name)}
-                                  className="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-[11px] transition"
+                                  title="Delete Subject"
+                                  className="px-2 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
                                 >
-                                  Delete
+                                  🗑️
                                 </button>
                               </td>
                             )}
@@ -3878,14 +4031,19 @@ export default function SchoolDashboardPage() {
                     onChange={(e) => {
                       setTimetableClassGrade(e.target.value);
                       fetchTimetable(e.target.value);
+                      fetchSubjects(e.target.value);
                     }}
                     className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                      <option key={g} value={`Class ${g}`}>
-                        Class {g}
-                      </option>
-                    ))}
+                    {classesList.length > 0 ? (
+                      classesList.map((c) => (
+                        <option key={c.id || c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="Class 6">Class 6</option>
+                    )}
                   </select>
                 </div>
 
@@ -3914,15 +4072,20 @@ export default function SchoolDashboardPage() {
                                 <td
                                   key={pNum}
                                   onClick={() => {
+                                    const slotTeacher = staffList.find(
+                                      (s) => s.id === entry?.teacherUserId || (entry?.teacherName && (s.staffProfile?.fullName === entry.teacherName || s.email?.startsWith(entry.teacherName)))
+                                    );
                                     setEditSlotModal({
                                       dayOfWeek: day,
                                       periodNumber: pNum,
                                       startTime: entry?.startTime || "08:30 AM",
                                       endTime: entry?.endTime || "09:15 AM",
-                                      subjectName: entry?.subjectName || "Mathematics",
-                                      teacherName: entry?.teacherName || "Suresh Kumar Verma",
+                                      subjectName: entry?.subjectName || (subjectsList[0]?.name || "Mathematics"),
+                                      teacherName: entry?.teacherName || (slotTeacher?.staffProfile?.fullName || ""),
+                                      teacherUserId: entry?.teacherUserId || slotTeacher?.id || "",
                                       roomNumber: entry?.roomNumber || "Room 101",
                                     });
+                                    setTimetableSubTab("edit");
                                   }}
                                   className="p-2 border-l border-slate-800 cursor-pointer hover:bg-slate-800/60 transition"
                                 >
@@ -3989,27 +4152,56 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Subject</label>
-                  <input
-                    type="text"
+                  <label className="block text-[11px] text-slate-400 mb-1">Curriculum Subject *</label>
+                  <select
                     required
                     value={editSlotModal?.subjectName || ""}
                     onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), subjectName: e.target.value })}
-                    placeholder="Mathematics"
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
-                  />
+                  >
+                    <option value="">— Select Configured Subject —</option>
+                    {subjectsList.map((s) => (
+                      <option key={s.id || s.name} value={s.name}>
+                        {s.name} ({s.board || "CBSE"})
+                      </option>
+                    ))}
+                    {/* Common core fallback options */}
+                    {["Mathematics", "Science", "English", "Hindi", "Social Studies", "Computer Science", "Sports / Physical Ed", "Library", "Art & Craft", "Sanskrit"].map((s) => {
+                      if (subjectsList.some((x) => x.name === s)) return null;
+                      return <option key={s} value={s}>{s}</option>;
+                    })}
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Teacher</label>
-                  <input
-                    type="text"
-                    required
-                    value={editSlotModal?.teacherName || ""}
-                    onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), teacherName: e.target.value })}
-                    placeholder="Suresh Kumar Verma"
+                  <label className="block text-[11px] text-slate-400 mb-1">Assigned Teacher (Faculty) *</label>
+                  <select
+                    value={editSlotModal?.teacherUserId || ""}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const staffMember = staffList.find((s) => s.id === selId);
+                      setEditSlotModal({
+                        ...(editSlotModal || {}),
+                        teacherUserId: selId,
+                        teacherName: staffMember ? (staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "") : editSlotModal?.teacherName || "",
+                      });
+                    }}
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
-                  />
+                  >
+                    <option value="">— Select Teacher from Staff —</option>
+                    {staffList
+                      .filter((s) => ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(s.role))
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.staffProfile?.fullName || t.email} ({t.role.replace("_", " ")})
+                        </option>
+                      ))}
+                  </select>
+                  {editSlotModal?.teacherName && (
+                    <p className="text-[10px] text-slate-400 mt-1 font-mono">
+                      Faculty Name: <strong className="text-emerald-400">{editSlotModal.teacherName}</strong>
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -4107,6 +4299,9 @@ export default function SchoolDashboardPage() {
                         <h4 className="font-bold text-sm text-white">{route.routeName}</h4>
                         <p className="text-xs text-slate-400 mt-1">
                           Driver: <strong className="text-slate-200">{route.driverName}</strong> ({route.driverPhone})
+                          {route.conductorName && (
+                            <> • Conductor: <strong className="text-slate-200">{route.conductorName}</strong> {route.conductorPhone ? `(${route.conductorPhone})` : ""}</>
+                          )}
                         </p>
 
                         <div className="flex items-center gap-4 text-xs text-slate-300 mt-2 font-mono">
@@ -4133,18 +4328,20 @@ export default function SchoolDashboardPage() {
                       </div>
 
                       {currentUser.role === "SCHOOL_ADMIN" && (
-                        <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end gap-3">
+                        <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end gap-2">
                           <button
                             onClick={() => setEditRouteModal(route)}
-                            className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
+                            title="Edit Bus Route"
+                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-xs transition inline-flex items-center gap-1"
                           >
-                            Edit Route
+                            <span>✏️</span> <span className="hidden sm:inline">Edit</span>
                           </button>
                           <button
                             onClick={() => handleDeleteBusRoute(route.id)}
-                            className="text-xs text-red-400 hover:text-red-300 font-semibold"
+                            title="Delete Bus Route"
+                            className="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
                           >
-                            Delete Route
+                            🗑️
                           </button>
                         </div>
                       )}
@@ -4158,7 +4355,7 @@ export default function SchoolDashboardPage() {
             {transportSubTab === "create" && currentUser.role === "SCHOOL_ADMIN" && (
               <form onSubmit={handleCreateBusRoute} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                  + Configure New Bus Route
+                  + Configure New Bus Route & Assign Driver / Conductor
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
@@ -4195,29 +4392,112 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Driver Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newDriverName}
-                      onChange={(e) => setNewDriverName(e.target.value)}
-                      placeholder="Gopal Singh"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
-                    />
+                {/* Driver & Conductor Select from Staff */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                  {/* Driver Section */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] text-orange-400 font-bold">
+                      🚌 Select Driver from Staff
+                    </label>
+                    <select
+                      value={newDriverUserId}
+                      onChange={(e) => {
+                        const selId = e.target.value;
+                        setNewDriverUserId(selId);
+                        const staffMember = staffList.find((s) => s.id === selId);
+                        if (staffMember) {
+                          setNewDriverName(staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "");
+                          setNewDriverPhone(staffMember.phone || "");
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                    >
+                      <option value="">— Select Registered Driver / Staff —</option>
+                      {staffList.map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {s.staffProfile?.fullName || s.email} ({s.role} {s.phone ? `• ${s.phone}` : ""})
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">Driver Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={newDriverName}
+                          onChange={(e) => setNewDriverName(e.target.value)}
+                          placeholder="Driver Name"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">Driver Phone *</label>
+                        <input
+                          type="tel"
+                          required
+                          value={newDriverPhone}
+                          onChange={(e) => setNewDriverPhone(e.target.value)}
+                          placeholder="+91..."
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Driver Phone *</label>
-                    <input
-                      type="tel"
-                      required
-                      value={newDriverPhone}
-                      onChange={(e) => setNewDriverPhone(e.target.value)}
-                      placeholder="+91 98262 33445"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
-                    />
+
+                  {/* Conductor Section */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] text-amber-400 font-bold">
+                      🎫 Select Conductor from Staff
+                    </label>
+                    <select
+                      value={newConductorUserId}
+                      onChange={(e) => {
+                        const selId = e.target.value;
+                        setNewConductorUserId(selId);
+                        const staffMember = staffList.find((s) => s.id === selId);
+                        if (staffMember) {
+                          setNewConductorName(staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "");
+                          setNewConductorPhone(staffMember.phone || "");
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                    >
+                      <option value="">— Select Registered Conductor / Staff —</option>
+                      {staffList.map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {s.staffProfile?.fullName || s.email} ({s.role} {s.phone ? `• ${s.phone}` : ""})
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Name</label>
+                        <input
+                          type="text"
+                          value={newConductorName}
+                          onChange={(e) => setNewConductorName(e.target.value)}
+                          placeholder="Conductor Name"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Phone</label>
+                        <input
+                          type="tel"
+                          value={newConductorPhone}
+                          onChange={(e) => setNewConductorPhone(e.target.value)}
+                          placeholder="+91..."
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] text-slate-400 mb-1">Pickup Time</label>
                     <input
@@ -4361,15 +4641,17 @@ export default function SchoolDashboardPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => setEditNoticeModal(n)}
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-950/80 hover:text-emerald-400 text-slate-300 text-xs transition font-semibold"
+                            title="Edit Notice"
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs transition font-semibold inline-flex items-center gap-1"
                           >
-                            Edit
+                            <span>✏️</span> <span className="hidden sm:inline">Edit</span>
                           </button>
                           <button
                             onClick={() => handleDeleteNotice(n.id)}
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-950/80 hover:text-red-400 text-slate-400 text-xs transition"
+                            title="Delete Notice"
+                            className="px-2.5 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 text-red-400 text-xs transition font-semibold"
                           >
-                            Delete
+                            🗑️
                           </button>
                         </div>
                       )}
@@ -4847,11 +5129,15 @@ export default function SchoolDashboardPage() {
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, classGradeName: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                      <option key={g} value={`Class ${g}`}>
-                        Class {g}
-                      </option>
-                    ))}
+                    {classesList.length > 0 ? (
+                      classesList.map((c) => (
+                        <option key={c.id || c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="Class 6">Class 6</option>
+                    )}
                   </select>
                 </div>
                 <div>
@@ -4929,12 +5215,24 @@ export default function SchoolDashboardPage() {
                   <p className="text-xs font-mono text-emerald-400">{profileModalStudent.admissionNumber}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setProfileModalStudent(null)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
-              >
-                ✕ Close
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const st = profileModalStudent;
+                    setProfileModalStudent(null);
+                    setViewIdCardStudent(st);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-800 hover:bg-emerald-900 text-xs font-bold inline-flex items-center gap-1 transition"
+                >
+                  🪪 Print ID Card
+                </button>
+                <button
+                  onClick={() => setProfileModalStudent(null)}
+                  className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+                >
+                  ✕ Close
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
@@ -5015,12 +5313,24 @@ export default function SchoolDashboardPage() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setProfileModalStaff(null)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
-              >
-                ✕ Close
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const st = profileModalStaff;
+                    setProfileModalStaff(null);
+                    handleOpenAssignModal(st);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800 hover:bg-indigo-900 text-xs font-bold inline-flex items-center gap-1 transition"
+                >
+                  🎯 Workload & Role
+                </button>
+                <button
+                  onClick={() => setProfileModalStaff(null)}
+                  className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+                >
+                  ✕ Close
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
@@ -5675,26 +5985,104 @@ export default function SchoolDashboardPage() {
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] text-slate-400 font-medium block mb-1">Driver Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={editRouteModal.driverName || ""}
-                    onChange={(e) => setEditRouteModal({ ...editRouteModal, driverName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
-                  />
+              {/* Driver & Conductor selection */}
+              <div className="space-y-3 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                {/* Driver */}
+                <div className="space-y-2">
+                  <label className="block text-[11px] text-orange-400 font-bold">
+                    🚌 Driver Selection from Staff
+                  </label>
+                  <select
+                    value={editRouteModal.driverUserId || ""}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const staffMember = staffList.find((s: any) => s.id === selId);
+                      setEditRouteModal({
+                        ...editRouteModal,
+                        driverUserId: selId || null,
+                        driverName: staffMember ? (staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "") : editRouteModal.driverName,
+                        driverPhone: staffMember ? (staffMember.phone || "") : editRouteModal.driverPhone,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                  >
+                    <option value="">— Select Registered Driver / Staff (or Enter Below) —</option>
+                    {staffList.map((s: any) => (
+                      <option key={s.id} value={s.id}>
+                        {s.staffProfile?.fullName || s.email} ({s.role} {s.phone ? `• ${s.phone}` : ""})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Driver Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editRouteModal.driverName || ""}
+                        onChange={(e) => setEditRouteModal({ ...editRouteModal, driverName: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Driver Phone *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editRouteModal.driverPhone || ""}
+                        onChange={(e) => setEditRouteModal({ ...editRouteModal, driverPhone: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[11px] text-slate-400 font-medium block mb-1">Driver Phone</label>
-                  <input
-                    type="text"
-                    required
-                    value={editRouteModal.driverPhone || ""}
-                    onChange={(e) => setEditRouteModal({ ...editRouteModal, driverPhone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
-                  />
+
+                {/* Conductor */}
+                <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                  <label className="block text-[11px] text-amber-400 font-bold">
+                    🎫 Conductor Selection from Staff
+                  </label>
+                  <select
+                    value={editRouteModal.conductorUserId || ""}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const staffMember = staffList.find((s: any) => s.id === selId);
+                      setEditRouteModal({
+                        ...editRouteModal,
+                        conductorUserId: selId || null,
+                        conductorName: staffMember ? (staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "") : editRouteModal.conductorName,
+                        conductorPhone: staffMember ? (staffMember.phone || "") : editRouteModal.conductorPhone,
+                      });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                  >
+                    <option value="">— Select Registered Conductor / Staff (or Enter Below) —</option>
+                    {staffList.map((s: any) => (
+                      <option key={s.id} value={s.id}>
+                        {s.staffProfile?.fullName || s.email} ({s.role} {s.phone ? `• ${s.phone}` : ""})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Name</label>
+                      <input
+                        type="text"
+                        value={editRouteModal.conductorName || ""}
+                        onChange={(e) => setEditRouteModal({ ...editRouteModal, conductorName: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Phone</label>
+                      <input
+                        type="tel"
+                        value={editRouteModal.conductorPhone || ""}
+                        onChange={(e) => setEditRouteModal({ ...editRouteModal, conductorPhone: e.target.value })}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -5808,11 +6196,15 @@ export default function SchoolDashboardPage() {
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                 >
                   <option value="">— Unassigned Teacher —</option>
-                  {staffList.map((t: any) => (
-                    <option key={t.id} value={t.id}>
-                      {t.fullName} ({t.designation || t.role})
-                    </option>
-                  ))}
+                  {staffList
+                    .filter((t: any) =>
+                      ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(t.role)
+                    )
+                    .map((t: any) => (
+                      <option key={t.id} value={t.id}>
+                        {t.staffProfile?.fullName || t.fullName || t.email} ({t.role || t.designation})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
@@ -6361,9 +6753,18 @@ export default function SchoolDashboardPage() {
                   onChange={(e) => setClassInvoiceGenClass(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                 >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
-                    <option key={g} value={`Class ${g}`}>Class {g}</option>
-                  ))}
+                  <option value="">— Select Academic Class Grade —</option>
+                  {classesList.length > 0 ? (
+                    classesList.map((c: any) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))
+                  ) : (
+                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
+                      <option key={g} value={`Class ${g}`}>Class {g}</option>
+                    ))
+                  )}
                 </select>
               </div>
 

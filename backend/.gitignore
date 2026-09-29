@@ -29,3 +29,7 @@ yarn-error.log*
 # OS / Editor
 .DS_Store
 Thumbs.db
+
+# User Uploads
+uploads/*
+!uploads/.gitkeep

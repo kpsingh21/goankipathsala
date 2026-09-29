@@ -28,6 +28,20 @@ export async function listBusRoutes(req: Request, res: Response) {
             },
           },
         },
+        conductorUser: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            staffProfile: {
+              select: {
+                fullName: true,
+                avatarUrl: true,
+                emergencyPhone: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { routeNumber: 'asc' },
     });
@@ -41,6 +55,8 @@ export async function listBusRoutes(req: Request, res: Response) {
           vehicleNumber: 'MP-09-AB-1234',
           driverName: 'Rameshwar Gurjar',
           driverPhone: '+91 98260 11223',
+          conductorName: 'Mohan Lal',
+          conductorPhone: '+91 98260 99887',
           morningPickupTime: '07:15 AM',
           eveningDropTime: '02:30 PM',
           capacity: 32,
@@ -58,6 +74,8 @@ export async function listBusRoutes(req: Request, res: Response) {
           vehicleNumber: 'MP-09-CD-5678',
           driverName: 'Mukesh Yadav',
           driverPhone: '+91 98261 44556',
+          conductorName: 'Sohan Patidar',
+          conductorPhone: '+91 98261 77665',
           morningPickupTime: '07:20 AM',
           eveningDropTime: '02:35 PM',
           capacity: 32,
@@ -84,6 +102,20 @@ export async function listBusRoutes(req: Request, res: Response) {
         where: { tenantId },
         include: {
           driverUser: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              staffProfile: {
+                select: {
+                  fullName: true,
+                  avatarUrl: true,
+                  emergencyPhone: true,
+                },
+              },
+            },
+          },
+          conductorUser: {
             select: {
               id: true,
               email: true,
@@ -126,6 +158,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
       driverName,
       driverPhone,
       driverUserId,
+      conductorName,
+      conductorPhone,
+      conductorUserId,
       stops,
       morningPickupTime,
       eveningDropTime,
@@ -162,6 +197,24 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
       }
     }
 
+    let finalConductorName = conductorName ? conductorName.trim() : 'TBD';
+    let finalConductorPhone = conductorPhone ? conductorPhone.trim() : '';
+
+    if (conductorUserId) {
+      const conductorStaff = await prisma.user.findFirst({
+        where: { id: conductorUserId, tenantId },
+        include: { staffProfile: true },
+      });
+      if (conductorStaff) {
+        if (!conductorName || conductorName === 'TBD') {
+          finalConductorName = conductorStaff.staffProfile?.fullName || conductorStaff.email?.split('@')[0] || 'Conductor';
+        }
+        if (!conductorPhone) {
+          finalConductorPhone = conductorStaff.phone || '';
+        }
+      }
+    }
+
     let route;
     if (id) {
       route = await prisma.busRoute.update({
@@ -173,6 +226,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
           driverName: finalDriverName,
           driverPhone: finalDriverPhone,
           driverUserId: driverUserId || null,
+          conductorName: finalConductorName,
+          conductorPhone: finalConductorPhone,
+          conductorUserId: conductorUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',
@@ -196,6 +252,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
           driverName: finalDriverName,
           driverPhone: finalDriverPhone,
           driverUserId: driverUserId || null,
+          conductorName: finalConductorName,
+          conductorPhone: finalConductorPhone,
+          conductorUserId: conductorUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',
@@ -208,6 +267,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
           driverName: finalDriverName,
           driverPhone: finalDriverPhone,
           driverUserId: driverUserId || null,
+          conductorName: finalConductorName,
+          conductorPhone: finalConductorPhone,
+          conductorUserId: conductorUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',
@@ -267,6 +329,10 @@ export async function updateBusRoute(req: Request, res: Response) {
       vehicleNumber,
       driverName,
       driverPhone,
+      driverUserId,
+      conductorName,
+      conductorPhone,
+      conductorUserId,
       stops,
       morningPickupTime,
       eveningDropTime,
@@ -294,6 +360,10 @@ export async function updateBusRoute(req: Request, res: Response) {
         ...(vehicleNumber !== undefined && { vehicleNumber: vehicleNumber ? vehicleNumber.trim() : 'TBD' }),
         ...(driverName && { driverName: driverName.trim() }),
         ...(driverPhone && { driverPhone: driverPhone.trim() }),
+        ...(driverUserId !== undefined && { driverUserId }),
+        ...(conductorName !== undefined && { conductorName: conductorName ? conductorName.trim() : null }),
+        ...(conductorPhone !== undefined && { conductorPhone: conductorPhone ? conductorPhone.trim() : null }),
+        ...(conductorUserId !== undefined && { conductorUserId }),
         ...(stops !== undefined && { stops: stops || [] }),
         ...(morningPickupTime && { morningPickupTime }),
         ...(eveningDropTime && { eveningDropTime }),
