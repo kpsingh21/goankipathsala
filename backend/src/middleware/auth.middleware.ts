@@ -43,7 +43,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
- * Role-Based Access Control Middleware
+ * Role-Based Access Control Middleware with Hierarchical Role Support
  */
 export function authorize(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -51,9 +51,41 @@ export function authorize(...allowedRoles: UserRole[]) {
       return res.status(401).json({ error: 'Unauthenticated.' });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user.role;
+
+    // SuperAdmin and School Admin/Admin/Principal have top-level access to administrative endpoints
+    const effectiveRoles = new Set<UserRole>(allowedRoles);
+
+    // Expand administrative synonyms
+    if (
+      effectiveRoles.has(UserRole.SCHOOL_ADMIN) ||
+      effectiveRoles.has(UserRole.ADMIN) ||
+      effectiveRoles.has(UserRole.PRINCIPAL)
+    ) {
+      effectiveRoles.add(UserRole.SUPERADMIN);
+      effectiveRoles.add(UserRole.SCHOOL_ADMIN);
+      effectiveRoles.add(UserRole.ADMIN);
+      effectiveRoles.add(UserRole.PRINCIPAL);
+    }
+
+    // Expand teacher synonyms
+    if (
+      effectiveRoles.has(UserRole.TEACHER) ||
+      effectiveRoles.has(UserRole.CLASS_TEACHER) ||
+      effectiveRoles.has(UserRole.SUBJECT_TEACHER)
+    ) {
+      effectiveRoles.add(UserRole.TEACHER);
+      effectiveRoles.add(UserRole.CLASS_TEACHER);
+      effectiveRoles.add(UserRole.SUBJECT_TEACHER);
+      // School leadership can also access teacher-level views
+      effectiveRoles.add(UserRole.SCHOOL_ADMIN);
+      effectiveRoles.add(UserRole.ADMIN);
+      effectiveRoles.add(UserRole.PRINCIPAL);
+    }
+
+    if (!effectiveRoles.has(userRole)) {
       return res.status(403).json({
-        error: `Forbidden: Requires one of [${allowedRoles.join(', ')}] role.`,
+        error: `Forbidden: Requires one of [${allowedRoles.join(', ')}] role. Current role is ${userRole}.`,
       });
     }
 

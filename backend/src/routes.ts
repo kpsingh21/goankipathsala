@@ -21,7 +21,8 @@ import {
   confirmPasswordReset,
   adminResetUserPassword,
 } from './controllers/auth.controller.js';
-import { listStaff, createStaff, updateStaffRole, updateStaffProfile, deleteStaff } from './controllers/staff.controller.js';
+import { listStaff, createStaff, updateStaffRole, updateStaffProfile, deleteStaff, assignStaffRolesAndWorkload } from './controllers/staff.controller.js';
+import { handleFileUpload } from './controllers/upload.controller.js';
 import { listStudents, registerStudent, updateStudent, deleteStudent } from './controllers/student.controller.js';
 import {
   getDailyAttendance,
@@ -96,7 +97,13 @@ router.get('/staff', authenticate, authorize(UserRole.SCHOOL_ADMIN), listStaff);
 router.post('/staff', authenticate, authorize(UserRole.SCHOOL_ADMIN), createStaff);
 router.patch('/staff/role', authenticate, authorize(UserRole.SCHOOL_ADMIN), updateStaffRole);
 router.put('/staff/profile', authenticate, authorize(UserRole.SCHOOL_ADMIN), updateStaffProfile);
+router.post('/staff/assignments', authenticate, authorize(UserRole.SCHOOL_ADMIN), assignStaffRolesAndWorkload);
 router.delete('/staff/:id', authenticate, authorize(UserRole.SCHOOL_ADMIN), deleteStaff);
+
+// --------------------------------------------------
+// Desktop File & Media Upload
+// --------------------------------------------------
+router.post('/upload', authenticate, handleFileUpload);
 
 // --------------------------------------------------
 // Student Management (Admin & Teachers)

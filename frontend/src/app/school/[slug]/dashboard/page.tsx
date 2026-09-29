@@ -250,10 +250,31 @@ export default function SchoolDashboardPage() {
   const [profileModalStudent, setProfileModalStudent] = useState<any | null>(null);
   const [profileModalStaff, setProfileModalStaff] = useState<any | null>(null);
 
+  // New Feature Modals state (ID Card, Fee Invoice Receipt, Staff Workload Assignment)
+  const [viewIdCardStudent, setViewIdCardStudent] = useState<any | null>(null);
+  const [viewInvoiceReceipt, setViewInvoiceReceipt] = useState<any | null>(null);
+  const [assignModalStaff, setAssignModalStaff] = useState<any | null>(null);
+  const [assignRole, setAssignRole] = useState("TEACHER");
+  const [assignSectionId, setAssignSectionId] = useState("");
+  const [assignSubjectIds, setAssignSubjectIds] = useState<string[]>([]);
+  const [assignBusRouteId, setAssignBusRouteId] = useState("");
+  const [uploadingDesktopMedia, setUploadingDesktopMedia] = useState(false);
+  const [classInvoiceGenModal, setClassInvoiceGenModal] = useState(false);
+  const [classInvoiceGenClass, setClassInvoiceGenClass] = useState("Class 6");
+  const [classInvoiceGenStructureId, setClassInvoiceGenStructureId] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("gkp_token") : null;
+
+  // Role authorization helpers
+  const isAdmin = currentUser && ["SCHOOL_ADMIN", "ADMIN", "PRINCIPAL", "SUPERADMIN"].includes(currentUser.role);
+  const isTeacher = currentUser && ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isClassTeacher = currentUser && ["CLASS_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isSubjectTeacher = currentUser && ["SUBJECT_TEACHER", "TEACHER", "CLASS_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isAccountant = currentUser && ["ACCOUNTANT", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isDriver = currentUser && ["DRIVER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("gkp_user");
@@ -263,8 +284,10 @@ export default function SchoolDashboardPage() {
     }
     const user = JSON.parse(storedUser);
     setCurrentUser(user);
-    if (user.role === "SCHOOL_ADMIN") {
-      setActiveSection("students");
+    if (user.role === "DRIVER") {
+      setActiveSection("transport");
+    } else if (user.role === "ACCOUNTANT") {
+      setActiveSection("fees");
     } else {
       setActiveSection("students");
     }
@@ -469,6 +492,139 @@ export default function SchoolDashboardPage() {
   // ==========================================
   // HANDLERS
   // ==========================================
+  const uploadDesktopFile = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onSuccess: (url: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset value so same file can be re-selected if desired
+    e.target.value = "";
+
+    try {
+      setUploadingDesktopMedia(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result as string;
+          const res = await fetch(`${API_BASE}/api/upload`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token || ""}`,
+              "X-Tenant-Slug": slug,
+            },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileData: base64Data,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.url) {
+            const finalUrl = data.url.startsWith("http") ? data.url : `${API_BASE}${data.url}`;
+            onSuccess(finalUrl);
+            setMsg({ type: "success", text: `Uploaded "${file.name}" successfully!` });
+          } else {
+            setMsg({ type: "error", text: data.error || "File upload failed." });
+          }
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to upload file." });
+        } finally {
+          setUploadingDesktopMedia(false);
+        }
+      };
+      reader.onerror = () => {
+        setUploadingDesktopMedia(false);
+        setMsg({ type: "error", text: "Failed to read file from desktop." });
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setUploadingDesktopMedia(false);
+      setMsg({ type: "error", text: err.message || "Error reading file." });
+    }
+  };
+
+  const handleOpenAssignModal = (staff: any) => {
+    setAssignModalStaff(staff);
+    setAssignRole(staff.role || "TEACHER");
+    setAssignSectionId(staff.headedSections?.[0]?.id || "");
+    setAssignSubjectIds(staff.taughtSubjects?.map((s: any) => s.id) || []);
+    setAssignBusRouteId(staff.drivenBusRoutes?.[0]?.id || "");
+  };
+
+  const handleSaveStaffAssignments = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignModalStaff) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/staff/assignments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          userId: assignModalStaff.id,
+          role: assignRole,
+          classTeacherSectionId: assignSectionId || null,
+          subjectIds: assignSubjectIds,
+          busRouteId: assignBusRouteId || null,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: "Staff role & assignments updated successfully!" });
+        setAssignModalStaff(null);
+        fetchStaff();
+        fetchClasses();
+        fetchSubjects(subjectClassGrade);
+        fetchBusRoutes();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to save assignments." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to update staff assignments." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateClassInvoices = async () => {
+    if (!classInvoiceGenClass || !classInvoiceGenStructureId) {
+      setMsg({ type: "error", text: "Please select both a class and a fee structure." });
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/fees/generate-class-invoices`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          classGradeName: classInvoiceGenClass,
+          feeStructureId: classInvoiceGenStructureId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: data.message || "Class invoices generated successfully!" });
+        setClassInvoiceGenModal(false);
+        fetchFeeData();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to generate class invoices." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to generate class invoices." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveLanding = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -1511,28 +1667,30 @@ export default function SchoolDashboardPage() {
 
         {/* Navigation Menu */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs">
-          <button
-            onClick={() => setActiveSection("students")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "students"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>🎓</span>
-              <span>Student SIS</span>
-            </div>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                activeSection === "students" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+          {currentUser.role !== "DRIVER" && (
+            <button
+              onClick={() => setActiveSection("students")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "students"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
               }`}
             >
-              {studentList.length}
-            </span>
-          </button>
+              <div className="flex items-center gap-2.5">
+                <span>🎓</span>
+                <span>Student SIS</span>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                  activeSection === "students" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                }`}
+              >
+                {studentList.length}
+              </span>
+            </button>
+          )}
 
-          {currentUser.role === "SCHOOL_ADMIN" && (
+          {isAdmin && (
             <button
               onClick={() => setActiveSection("staff")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
@@ -1555,7 +1713,7 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          {currentUser.role === "SCHOOL_ADMIN" && (
+          {isAdmin && (
             <button
               onClick={() => setActiveSection("classes")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
@@ -1578,82 +1736,92 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          <button
-            onClick={() => setActiveSection("attendance")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "attendance"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>📋</span>
-              <span>Attendance Engine</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setActiveSection("fees")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "fees"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>💳</span>
-              <span>Fees & Invoices</span>
-            </div>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                activeSection === "fees" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+            <button
+              onClick={() => setActiveSection("attendance")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "attendance"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
               }`}
             >
-              {feeStructures.length}
-            </span>
-          </button>
+              <div className="flex items-center gap-2.5">
+                <span>📋</span>
+                <span>Attendance Engine</span>
+              </div>
+            </button>
+          )}
 
-          <button
-            onClick={() => setActiveSection("exams")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "exams"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>📊</span>
-              <span>Exams & Report Cards</span>
-            </div>
-          </button>
+          {currentUser.role !== "DRIVER" && (
+            <button
+              onClick={() => setActiveSection("fees")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "fees"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span>💳</span>
+                <span>Fees & Invoices</span>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                  activeSection === "fees" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                }`}
+              >
+                {feeStructures.length}
+              </span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setActiveSection("subjects")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "subjects"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>📚</span>
-              <span>Subjects & Teachers</span>
-            </div>
-          </button>
+          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+            <button
+              onClick={() => setActiveSection("exams")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "exams"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span>📊</span>
+                <span>Exams & Report Cards</span>
+              </div>
+            </button>
+          )}
 
-          <button
-            onClick={() => setActiveSection("timetable")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
-              activeSection === "timetable"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>🗓️</span>
-              <span>Weekly Timetable</span>
-            </div>
-          </button>
+          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+            <button
+              onClick={() => setActiveSection("subjects")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "subjects"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span>📚</span>
+                <span>Subjects & Teachers</span>
+              </div>
+            </button>
+          )}
+
+          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+            <button
+              onClick={() => setActiveSection("timetable")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
+                activeSection === "timetable"
+                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
+                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span>🗓️</span>
+                <span>Weekly Timetable</span>
+              </div>
+            </button>
+          )}
 
           <button
             onClick={() => setActiveSection("transport")}
@@ -1697,7 +1865,7 @@ export default function SchoolDashboardPage() {
             </span>
           </button>
 
-          {currentUser.role === "SCHOOL_ADMIN" && (
+          {isAdmin && (
             <button
               onClick={() => setActiveSection("website")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
@@ -1914,6 +2082,12 @@ export default function SchoolDashboardPage() {
                             </td>
                             <td className="p-3.5 text-right space-x-1.5">
                               <button
+                                onClick={() => setViewIdCardStudent(s)}
+                                className="px-2.5 py-1 rounded bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 text-[11px] font-semibold"
+                              >
+                                🪪 ID Card
+                              </button>
+                              <button
                                 onClick={() => setProfileModalStudent(s)}
                                 className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-semibold"
                               >
@@ -1931,7 +2105,7 @@ export default function SchoolDashboardPage() {
                               >
                                 Edit
                               </button>
-                              {currentUser.role === "SCHOOL_ADMIN" && (
+                              {isAdmin && (
                                 <button
                                   onClick={() => handleDeleteStudent(s.id, `${s.firstName} ${s.lastName}`)}
                                   className="px-2.5 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold"
@@ -1991,12 +2165,23 @@ export default function SchoolDashboardPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Photo / Avatar URL</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] text-slate-400">Photo / Avatar URL</label>
+                      <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                        <span>📁 Upload Desktop</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => uploadDesktopFile(e, (url) => setStudentAvatarUrl(url))}
+                        />
+                      </label>
+                    </div>
                     <input
-                      type="url"
+                      type="text"
                       value={studentAvatarUrl}
                       onChange={(e) => setStudentAvatarUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://... or uploaded file"
                       className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     />
                   </div>
@@ -2165,7 +2350,7 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {/* SECTION 2: STAFF & FACULTY */}
         {/* ======================================================================= */}
-        {activeSection === "staff" && currentUser.role === "SCHOOL_ADMIN" && (
+        {activeSection === "staff" && isAdmin && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
               <div>
@@ -2173,7 +2358,7 @@ export default function SchoolDashboardPage() {
                   <span>👥</span> School Staff & Faculty Directory
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Onboard teachers, accountants, and administrators with comprehensive employee credentials.
+                  Onboard and assign Principals, Class Teachers, Subject Teachers, Accountants, and Bus Drivers with workload controls.
                 </p>
               </div>
 
@@ -2226,9 +2411,13 @@ export default function SchoolDashboardPage() {
                       className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     >
                       <option value="ALL">All Roles ({staffList.length})</option>
-                      <option value="SCHOOL_ADMIN">School Admin</option>
-                      <option value="TEACHER">Teacher</option>
+                      <option value="PRINCIPAL">Principal / Headmaster</option>
+                      <option value="ADMIN">Admin / School Admin</option>
+                      <option value="CLASS_TEACHER">Class Teacher</option>
+                      <option value="SUBJECT_TEACHER">Subject Teacher</option>
+                      <option value="TEACHER">General Teacher</option>
                       <option value="ACCOUNTANT">Accountant</option>
+                      <option value="DRIVER">Bus Driver</option>
                     </select>
                   </div>
                   <div>
@@ -2243,6 +2432,7 @@ export default function SchoolDashboardPage() {
                       <option value="Humanities">Humanities & Social</option>
                       <option value="Languages">Languages & Literature</option>
                       <option value="Administration">Administration & Accounts</option>
+                      <option value="Transport">Transport & Logistics</option>
                     </select>
                   </div>
                 </div>
@@ -2253,7 +2443,7 @@ export default function SchoolDashboardPage() {
                       <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
                         <tr>
                           <th className="p-3.5">Staff Member</th>
-                          <th className="p-3.5">Designation & Dept</th>
+                          <th className="p-3.5">Designation & Workload</th>
                           <th className="p-3.5">Contact Details</th>
                           <th className="p-3.5">Aadhar / ID</th>
                           <th className="p-3.5">Role</th>
@@ -2282,7 +2472,23 @@ export default function SchoolDashboardPage() {
                               </td>
                               <td className="p-3.5">
                                 <p className="text-slate-200 font-medium">{prof.designation || m.role}</p>
-                                <p className="text-[10px] text-slate-400">{prof.department || "General"}</p>
+                                <div className="text-[10px] space-y-0.5 mt-0.5">
+                                  {m.headedSections && m.headedSections.length > 0 && (
+                                    <span className="inline-block px-1.5 py-0.5 rounded bg-amber-950/70 text-amber-300 border border-amber-800/60 text-[9px] font-semibold mr-1">
+                                      🏛️ Class Teacher: {m.headedSections.map((s: any) => `${s.classGrade?.name || ''} - ${s.name}`).join(', ')}
+                                    </span>
+                                  )}
+                                  {m.taughtSubjects && m.taughtSubjects.length > 0 && (
+                                    <span className="inline-block px-1.5 py-0.5 rounded bg-sky-950/70 text-sky-300 border border-sky-800/60 text-[9px] font-semibold mr-1">
+                                      📚 Subjects: {m.taughtSubjects.map((s: any) => `${s.name} (${s.classGrade?.name || ''})`).join(', ')}
+                                    </span>
+                                  )}
+                                  {m.drivenBusRoutes && m.drivenBusRoutes.length > 0 && (
+                                    <span className="inline-block px-1.5 py-0.5 rounded bg-orange-950/70 text-orange-300 border border-orange-800/60 text-[9px] font-semibold">
+                                      🚌 Route: {m.drivenBusRoutes.map((r: any) => `${r.routeNumber} (${r.routeName})`).join(', ')}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="p-3.5 font-mono text-[11px] text-slate-300">
                                 <div>{m.email}</div>
@@ -2294,10 +2500,18 @@ export default function SchoolDashboardPage() {
                               <td className="p-3.5">
                                 <span
                                   className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                    m.role === "SCHOOL_ADMIN"
-                                      ? "bg-purple-950 text-purple-400 border border-purple-800"
+                                    m.role === "PRINCIPAL"
+                                      ? "bg-purple-950 text-purple-300 border border-purple-700"
+                                      : m.role === "SCHOOL_ADMIN" || m.role === "ADMIN"
+                                      ? "bg-fuchsia-950 text-fuchsia-300 border border-fuchsia-800"
+                                      : m.role === "CLASS_TEACHER"
+                                      ? "bg-amber-950 text-amber-300 border border-amber-800"
+                                      : m.role === "SUBJECT_TEACHER"
+                                      ? "bg-sky-950 text-sky-300 border border-sky-800"
                                       : m.role === "TEACHER"
                                       ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                      : m.role === "DRIVER"
+                                      ? "bg-orange-950 text-orange-400 border border-orange-800"
                                       : "bg-blue-950 text-blue-400 border border-blue-800"
                                   }`}
                                 >
@@ -2305,6 +2519,12 @@ export default function SchoolDashboardPage() {
                                 </span>
                               </td>
                               <td className="p-3.5 text-right space-x-1.5">
+                                <button
+                                  onClick={() => handleOpenAssignModal(m)}
+                                  className="px-2.5 py-1 rounded bg-indigo-950/70 hover:bg-indigo-800 text-indigo-300 border border-indigo-700/50 text-[11px] font-semibold"
+                                >
+                                  🎯 Role & Classes
+                                </button>
                                 <button
                                   onClick={() => setProfileModalStaff(m)}
                                   className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
@@ -2392,7 +2612,7 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                   <div>
                     <label className="block text-[11px] text-slate-400 mb-1">Role Authority *</label>
                     <select
@@ -2400,9 +2620,13 @@ export default function SchoolDashboardPage() {
                       onChange={(e) => setNewStaffRole(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     >
-                      <option value="TEACHER">Teacher</option>
-                      <option value="SCHOOL_ADMIN">Co-School Admin</option>
+                      <option value="PRINCIPAL">Principal / Headmaster</option>
+                      <option value="ADMIN">School Admin</option>
+                      <option value="CLASS_TEACHER">Class Teacher</option>
+                      <option value="SUBJECT_TEACHER">Subject Teacher</option>
+                      <option value="TEACHER">General Teacher</option>
                       <option value="ACCOUNTANT">Accountant / Cashier</option>
+                      <option value="DRIVER">Bus Driver / Transport</option>
                     </select>
                   </div>
                   <div>
@@ -2435,6 +2659,27 @@ export default function SchoolDashboardPage() {
                       className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
                     />
                   </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] text-slate-400">Photo / Avatar</label>
+                      <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                        <span>📁 Upload</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => uploadDesktopFile(e, (url) => setNewStaffAvatarUrl(url))}
+                        />
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={newStaffAvatarUrl}
+                      onChange={(e) => setNewStaffAvatarUrl(e.target.value)}
+                      placeholder="https://... or uploaded"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    />
+                  </div>
                 </div>
 
                 <button
@@ -2452,7 +2697,7 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {/* SECTION 2.5: ACADEMIC CLASSES (Pre-KG to 12) */}
         {/* ======================================================================= */}
-        {activeSection === "classes" && currentUser.role === "SCHOOL_ADMIN" && (
+        {activeSection === "classes" && isAdmin && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
               <div>
@@ -2837,60 +3082,82 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 1: Invoices */}
             {feeSubTab === "invoices" && (
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
-                      <tr>
-                        <th className="p-3.5">Invoice #</th>
-                        <th className="p-3.5">Student</th>
-                        <th className="p-3.5">Total Amount</th>
-                        <th className="p-3.5">Paid</th>
-                        <th className="p-3.5">Balance</th>
-                        <th className="p-3.5">Status</th>
-                        <th className="p-3.5 text-right">Collect Payment</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {invoices.map((inv) => {
-                        const stud = inv.enrollment?.student;
-                        return (
-                          <tr key={inv.id} className="hover:bg-slate-800/30 transition">
-                            <td className="p-3.5 font-mono text-slate-400">{inv.invoiceNumber}</td>
-                            <td className="p-3.5 font-semibold text-white">
-                              {stud ? `${stud.firstName} ${stud.lastName}` : "Student"}
-                            </td>
-                            <td className="p-3.5 font-mono font-bold text-white">₹{inv.totalAmount}</td>
-                            <td className="p-3.5 font-mono text-emerald-400">₹{inv.paidAmount}</td>
-                            <td className="p-3.5 font-mono text-amber-400 font-bold">
-                              ₹{inv.totalAmount - inv.paidAmount}
-                            </td>
-                            <td className="p-3.5">
-                              <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  inv.status === "PAID"
-                                    ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                                    : "bg-amber-950 text-amber-400 border border-amber-800"
-                                }`}
-                              >
-                                {inv.status}
-                              </span>
-                            </td>
-                            <td className="p-3.5 text-right">
-                              {inv.status !== "PAID" && (
-                                <button
-                                  onClick={() => handleRecordPayment(inv.id, inv.totalAmount - inv.paidAmount)}
-                                  className="px-2.5 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] transition"
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 border border-slate-800">
+                  <div className="text-xs text-slate-300">
+                    Showing all generated student fee vouchers and transaction ledgers.
+                  </div>
+                  {(isAdmin || isAccountant) && (
+                    <button
+                      onClick={() => setClassInvoiceGenModal(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow flex items-center gap-1.5"
+                    >
+                      <span>⚡</span> Generate Invoices for Class
+                    </button>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                        <tr>
+                          <th className="p-3.5">Invoice #</th>
+                          <th className="p-3.5">Student</th>
+                          <th className="p-3.5">Total Amount</th>
+                          <th className="p-3.5">Paid</th>
+                          <th className="p-3.5">Balance</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-right">Actions & Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {invoices.map((inv) => {
+                          const stud = inv.enrollment?.student;
+                          return (
+                            <tr key={inv.id} className="hover:bg-slate-800/30 transition">
+                              <td className="p-3.5 font-mono text-slate-400">{inv.invoiceNumber}</td>
+                              <td className="p-3.5 font-semibold text-white">
+                                {stud ? `${stud.firstName} ${stud.lastName}` : "Student"}
+                              </td>
+                              <td className="p-3.5 font-mono font-bold text-white">₹{inv.totalAmount}</td>
+                              <td className="p-3.5 font-mono text-emerald-400">₹{inv.paidAmount}</td>
+                              <td className="p-3.5 font-mono text-amber-400 font-bold">
+                                ₹{inv.totalAmount - inv.paidAmount}
+                              </td>
+                              <td className="p-3.5">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    inv.status === "PAID"
+                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                      : "bg-amber-950 text-amber-400 border border-amber-800"
+                                  }`}
                                 >
-                                  Collect ₹{inv.totalAmount - inv.paidAmount}
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-right space-x-1.5">
+                                <button
+                                  onClick={() => setViewInvoiceReceipt(inv)}
+                                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-[11px] transition"
+                                >
+                                  🖨️ Receipt
                                 </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                                {inv.status !== "PAID" && (
+                                  <button
+                                    onClick={() => handleRecordPayment(inv.id, inv.totalAmount - inv.paidAmount)}
+                                    className="px-2.5 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] transition"
+                                  >
+                                    Collect ₹{inv.totalAmount - inv.paidAmount}
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -4376,12 +4643,23 @@ export default function SchoolDashboardPage() {
                   </h3>
                   <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="md:col-span-2">
-                      <label className="block text-[11px] text-slate-400 mb-1">Photo URL</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] text-slate-400">Photo URL</label>
+                        <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                          <span>📁 Upload Desktop</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => uploadDesktopFile(e, (url) => setNewPhotoUrl(url))}
+                          />
+                        </label>
+                      </div>
                       <input
-                        type="url"
+                        type="text"
                         value={newPhotoUrl}
                         onChange={(e) => setNewPhotoUrl(e.target.value)}
-                        placeholder="https://..."
+                        placeholder="https://... or uploaded file"
                         className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
                       />
                     </div>
@@ -4423,7 +4701,7 @@ export default function SchoolDashboardPage() {
 
                 <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                    Video Showcase Embeds
+                    Video Showcase Embeds & Desktop Videos
                   </h3>
                   <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                     <div>
@@ -4437,12 +4715,23 @@ export default function SchoolDashboardPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">Embed URL</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] text-slate-400">Video File / URL</label>
+                        <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                          <span>📁 Upload Video</span>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            className="hidden"
+                            onChange={(e) => uploadDesktopFile(e, (url) => setNewVideoUrl(url))}
+                          />
+                        </label>
+                      </div>
                       <input
-                        type="url"
+                        type="text"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
-                        placeholder="https://www.youtube.com/embed/..."
+                        placeholder="https://www.youtube.com/... or uploaded file"
                         className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
                       />
                     </div>
@@ -5543,6 +5832,575 @@ export default function SchoolDashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Student Identity Card (Printable) */}
+      {/* ========================================================================= */}
+      {viewIdCardStudent && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setViewIdCardStudent(null)}
+        >
+          <div
+            className="max-w-md w-full bg-white text-slate-900 border border-slate-300 rounded-3xl p-6 space-y-4 shadow-2xl my-8 print:p-0 print:border-none print:shadow-none print:m-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Action Bar */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 print:hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Student Identity Card
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5"
+                >
+                  <span>🖨️</span> Print / Save PDF
+                </button>
+                <button
+                  onClick={() => setViewIdCardStudent(null)}
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition"
+                >
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+
+            {/* The Printable Student ID Card Badge */}
+            <div className="border-2 border-emerald-600 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-b from-emerald-50 to-white text-slate-900">
+              {/* Card Header */}
+              <div className="bg-emerald-600 text-white p-3 text-center relative">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="h-7 w-7 rounded-lg bg-white text-emerald-700 font-black flex items-center justify-center text-sm shadow">
+                    ग
+                  </div>
+                  <h3 className="font-extrabold text-sm uppercase tracking-wide">
+                    {currentUser?.schoolName || slug}
+                  </h3>
+                </div>
+                <p className="text-[9px] text-emerald-100 tracking-wider uppercase font-semibold">
+                  Affiliated to CBSE / State Board • Session 2026-27
+                </p>
+                <div className="text-[10px] font-bold bg-emerald-700 text-white py-0.5 mt-1 rounded uppercase tracking-widest">
+                  Student Identity Card / छात्र पहचान पत्र
+                </div>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-20 w-20 rounded-xl bg-slate-100 border-2 border-emerald-500 overflow-hidden flex items-center justify-center shrink-0 shadow">
+                    {viewIdCardStudent.avatarUrl ? (
+                      <img src={viewIdCardStudent.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-emerald-600">
+                        {viewIdCardStudent.firstName?.[0]}{viewIdCardStudent.lastName?.[0]}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-0.5">
+                    <h4 className="font-extrabold text-base text-slate-900 leading-tight">
+                      {viewIdCardStudent.firstName} {viewIdCardStudent.lastName}
+                    </h4>
+                    <p className="text-[11px] font-bold text-emerald-700">
+                      Class: {viewIdCardStudent.enrollments?.[0]?.section?.classGrade?.name || "Class 6"} - Sec {viewIdCardStudent.enrollments?.[0]?.section?.name || "A"}
+                    </p>
+                    <p className="text-[10px] text-slate-600 font-mono">
+                      Roll No: <span className="font-bold text-slate-900">{viewIdCardStudent.enrollments?.[0]?.rollNumber || "01"}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-600 font-mono">
+                      Adm No: <span className="font-bold text-slate-900">{viewIdCardStudent.admissionNumber}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px] border-t border-slate-200 pt-2 text-slate-700">
+                  <div>
+                    <span className="text-slate-500 block">Father's Name:</span>
+                    <span className="font-bold text-slate-900">{viewIdCardStudent.fatherName || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Date of Birth:</span>
+                    <span className="font-bold text-slate-900">
+                      {viewIdCardStudent.dob ? new Date(viewIdCardStudent.dob).toLocaleDateString() : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Blood Group:</span>
+                    <span className="font-bold text-slate-900">{viewIdCardStudent.bloodGroup || "O+"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Emergency Mobile:</span>
+                    <span className="font-bold text-slate-900 font-mono">{viewIdCardStudent.parentPhone || viewIdCardStudent.emergencyContact || "—"}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-500 block">Village / Address:</span>
+                    <span className="font-semibold text-slate-900 truncate block">
+                      {viewIdCardStudent.villageCity || viewIdCardStudent.addressText || "Campus Residential"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Footer Barcode & Signature */}
+                <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="font-mono text-[9px] tracking-widest text-slate-600">
+                      ||| | |||| | ||| |||| || |
+                    </div>
+                    <div className="font-mono text-[8px] text-slate-500 font-bold">
+                      {viewIdCardStudent.admissionNumber}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[11px] font-serif italic text-emerald-800 font-bold border-b border-slate-400 pb-0.5">
+                      Principal
+                    </div>
+                    <div className="text-[8px] uppercase tracking-wider text-slate-500">
+                      Authorized Sign
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Fee Invoice & Official Payment Receipt (Printable) */}
+      {/* ========================================================================= */}
+      {viewInvoiceReceipt && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setViewInvoiceReceipt(null)}
+        >
+          <div
+            className="max-w-2xl w-full bg-white text-slate-900 border border-slate-300 rounded-3xl p-8 space-y-6 shadow-2xl my-8 print:p-0 print:border-none print:shadow-none print:m-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Action Bar */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 print:hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-emerald-500"></span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Official School Fee Receipt
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow flex items-center gap-1.5"
+                >
+                  <span>🖨️</span> Print / Save as PDF
+                </button>
+                <button
+                  onClick={() => setViewInvoiceReceipt(null)}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition"
+                >
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Receipt Voucher */}
+            <div className="border border-slate-300 rounded-2xl p-6 space-y-5 bg-white text-slate-900 shadow-sm print:border-none print:p-0">
+              {/* Receipt Header */}
+              <div className="text-center border-b-2 border-slate-900 pb-4">
+                <div className="flex items-center justify-center gap-3 mb-1">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white font-extrabold flex items-center justify-center text-xl shadow">
+                    ग
+                  </div>
+                  <div className="text-left">
+                    <h2 className="text-xl font-black uppercase text-slate-900">
+                      {currentUser?.schoolName || slug}
+                    </h2>
+                    <p className="text-[10px] text-slate-600 font-semibold tracking-wider uppercase">
+                      Gramin Shiksha Mission • CBSE / State Board Affiliation
+                    </p>
+                  </div>
+                </div>
+                <div className="inline-block mt-2 px-3 py-0.5 rounded-full bg-slate-900 text-white text-[11px] font-bold uppercase tracking-widest">
+                  Official Fee Receipt / शुल्क पावती
+                </div>
+              </div>
+
+              {/* Meta Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Receipt / Invoice #</span>
+                  <span className="font-mono font-bold text-slate-900">{viewInvoiceReceipt.invoiceNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Date</span>
+                  <span className="font-mono text-slate-900">{new Date(viewInvoiceReceipt.createdAt || Date.now()).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Academic Session</span>
+                  <span className="font-bold text-slate-900">2026-2027</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Payment Status</span>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${viewInvoiceReceipt.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                    {viewInvoiceReceipt.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Student Details */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs border-b border-slate-200 pb-3">
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Student Name:</span>
+                  <span className="font-bold text-slate-900 text-sm">
+                    {viewInvoiceReceipt.enrollment?.student ? `${viewInvoiceReceipt.enrollment.student.firstName} ${viewInvoiceReceipt.enrollment.student.lastName}` : "Student"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Admission Number:</span>
+                  <span className="font-mono font-bold text-emerald-700">
+                    {viewInvoiceReceipt.enrollment?.student?.admissionNumber || "—"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Class & Section:</span>
+                  <span className="font-bold text-slate-900">
+                    {viewInvoiceReceipt.enrollment?.section?.classGrade?.name || "Class"} - {viewInvoiceReceipt.enrollment?.section?.name || "A"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Father / Guardian:</span>
+                  <span className="font-medium text-slate-800">{viewInvoiceReceipt.enrollment?.student?.fatherName || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Contact Mobile:</span>
+                  <span className="font-mono text-slate-800">{viewInvoiceReceipt.enrollment?.student?.parentPhone || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Fee Head:</span>
+                  <span className="font-medium text-slate-800">{viewInvoiceReceipt.feeStructure?.name || "Term Composite Fee"}</span>
+                </div>
+              </div>
+
+              {/* Financial Ledger Table */}
+              <table className="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                <thead className="bg-slate-100 text-slate-700 border-b border-slate-200">
+                  <tr>
+                    <th className="p-2.5 font-bold">Particulars / Head</th>
+                    <th className="p-2.5 text-right font-bold">Billed Amount</th>
+                    <th className="p-2.5 text-right font-bold">Paid Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  <tr>
+                    <td className="p-2.5 font-medium text-slate-800">
+                      {viewInvoiceReceipt.feeStructure?.name || "School Composite Fee"}
+                    </td>
+                    <td className="p-2.5 text-right font-mono font-bold text-slate-900">₹{viewInvoiceReceipt.totalAmount}</td>
+                    <td className="p-2.5 text-right font-mono font-bold text-emerald-700">₹{viewInvoiceReceipt.paidAmount}</td>
+                  </tr>
+                </tbody>
+                <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold">
+                  <tr>
+                    <td className="p-2.5 text-slate-800">Total Balance Outstanding:</td>
+                    <td colSpan={2} className="p-2.5 text-right font-mono text-amber-700 text-sm">
+                      ₹{viewInvoiceReceipt.totalAmount - viewInvoiceReceipt.paidAmount}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              {/* Signature Block */}
+              <div className="flex items-end justify-between pt-6 border-t border-slate-200">
+                <div className="text-[10px] text-slate-500">
+                  <p>• Computer-generated digital receipt. Valid without physical seal.</p>
+                  <p>• Please retain this receipt for annual audit & tax records.</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs font-serif italic text-slate-800 font-bold border-b border-slate-400 pb-0.5 px-4">
+                    Authorized Cashier / Bursar
+                  </div>
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500 mt-1">
+                    Accounts Office Signature
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Teacher Profile, Role & Workload Assignment */}
+      {/* ========================================================================= */}
+      {assignModalStaff && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setAssignModalStaff(null)}
+        >
+          <div
+            className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <span>🎯</span> Assign Role & Faculty Workload
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Configure administrative authority, class teacher section, subject specialization, or transport driver routes.
+                </p>
+              </div>
+              <button
+                onClick={() => setAssignModalStaff(null)}
+                className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Profile Overview Card */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-emerald-400 text-lg shrink-0 overflow-hidden">
+                {assignModalStaff.staffProfile?.avatarUrl ? (
+                  <img src={assignModalStaff.staffProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  (assignModalStaff.staffProfile?.fullName || assignModalStaff.email || "S").charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-sm text-white">
+                  {assignModalStaff.staffProfile?.fullName || assignModalStaff.email?.split("@")[0]}
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  {assignModalStaff.staffProfile?.qualification || "Faculty"} • {assignModalStaff.staffProfile?.designation || assignModalStaff.role}
+                </p>
+                <p className="text-[10px] text-emerald-400 font-mono">
+                  {assignModalStaff.email} {assignModalStaff.phone ? `• ${assignModalStaff.phone}` : ""}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveStaffAssignments} className="space-y-4 text-xs">
+              {/* 1. Role Selection */}
+              <div>
+                <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                  Primary Role & Authority *
+                </label>
+                <select
+                  value={assignRole}
+                  onChange={(e) => setAssignRole(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500 font-semibold"
+                >
+                  <option value="PRINCIPAL">👑 Principal / Headmaster (Full Administrative Command)</option>
+                  <option value="ADMIN">🛡️ School Admin / Co-Admin</option>
+                  <option value="CLASS_TEACHER">🏛️ Class Teacher (Heads Class & Section)</option>
+                  <option value="SUBJECT_TEACHER">📚 Subject Teacher (Curriculum & Subject Marks)</option>
+                  <option value="TEACHER">👨‍🏫 General Teacher</option>
+                  <option value="ACCOUNTANT">💳 Accountant / Bursar (Fees & Billing)</option>
+                  <option value="DRIVER">🚌 Bus Driver / Transport</option>
+                </select>
+              </div>
+
+              {/* 2. Class Teacher Assignment */}
+              {(assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>🏛️</span> Assign as Class Teacher for Section:
+                    </label>
+                    <span className="text-[10px] text-slate-500">Marks daily attendance & class reports</span>
+                  </div>
+                  <select
+                    value={assignSectionId}
+                    onChange={(e) => setAssignSectionId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500"
+                  >
+                    <option value="">— None / Not Heading a Class —</option>
+                    {classesList.flatMap((cls: any) =>
+                      (cls.sections || []).map((sec: any) => (
+                        <option key={sec.id} value={sec.id}>
+                          {cls.name} - Section {sec.name} {sec.classTeacherId === assignModalStaff.id ? "(Currently Assigned)" : ""}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
+
+              {/* 3. Subject Teacher Assignment */}
+              {(assignRole === "SUBJECT_TEACHER" || assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
+                      <span>📚</span> Assign Curriculum Subjects to Teach:
+                    </label>
+                    <span className="text-[10px] text-slate-500">Selected: {assignSubjectIds.length} subjects</span>
+                  </div>
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    {subjectsList.length === 0 ? (
+                      <p className="text-[11px] text-slate-500 text-center py-2">
+                        No subjects created yet. Add subjects in "Subjects & Teachers" tab.
+                      </p>
+                    ) : (
+                      subjectsList.map((sub: any) => {
+                        const checked = assignSubjectIds.includes(sub.id);
+                        return (
+                          <label
+                            key={sub.id}
+                            className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition ${
+                              checked ? "bg-sky-950/70 border border-sky-800/80 text-white" : "hover:bg-slate-800/50 text-slate-300"
+                            }`}
+                          >
+                            <span className="font-semibold text-xs">
+                              {sub.name} <span className="text-[10px] text-slate-400 font-normal">({sub.classGrade?.name || subjectClassGrade})</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                if (checked) {
+                                  setAssignSubjectIds(assignSubjectIds.filter((id) => id !== sub.id));
+                                } else {
+                                  setAssignSubjectIds([...assignSubjectIds, sub.id]);
+                                }
+                              }}
+                              className="accent-sky-500 h-4 w-4"
+                            />
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Bus Driver Route Assignment */}
+              {(assignRole === "DRIVER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-orange-300 flex items-center gap-1.5">
+                      <span>🚌</span> Assign Bus Transport Route (Driver):
+                    </label>
+                    <span className="text-[10px] text-slate-500">Route & vehicle assignment</span>
+                  </div>
+                  <select
+                    value={assignBusRouteId}
+                    onChange={(e) => setAssignBusRouteId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-orange-500"
+                  >
+                    <option value="">— None / No Route Assigned —</option>
+                    {busRoutesList.map((r: any) => (
+                      <option key={r.id} value={r.id}>
+                        {r.routeNumber}: {r.routeName} ({r.vehicleNumber}) {r.driverUserId === assignModalStaff.id ? "(Currently Assigned)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setAssignModalStaff(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                >
+                  {loading ? "Saving Workload..." : "Save Role & Assignments"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Generate Class Invoices */}
+      {/* ========================================================================= */}
+      {classInvoiceGenModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setClassInvoiceGenModal(false)}
+        >
+          <div
+            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <span>⚡</span> Generate Class Invoices
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Batch issue fee vouchers for all enrolled students in a class grade.
+                </p>
+              </div>
+              <button
+                onClick={() => setClassInvoiceGenModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Target Academic Class Grade</label>
+                <select
+                  value={classInvoiceGenClass}
+                  onChange={(e) => setClassInvoiceGenClass(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
+                    <option key={g} value={`Class ${g}`}>Class {g}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Applicable Fee Structure *</label>
+                <select
+                  value={classInvoiceGenStructureId}
+                  onChange={(e) => setClassInvoiceGenStructureId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                >
+                  <option value="">— Select Fee Structure —</option>
+                  {feeStructures.map((f: any) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name} (₹{f.amount} - {f.frequency})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setClassInvoiceGenModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleGenerateClassInvoices}
+                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                >
+                  {loading ? "Generating..." : "⚡ Issue Invoices"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

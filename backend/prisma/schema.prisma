@@ -65,8 +65,13 @@ model Tenant {
 enum UserRole {
   SUPERADMIN
   SCHOOL_ADMIN
+  ADMIN
+  PRINCIPAL
+  CLASS_TEACHER
+  SUBJECT_TEACHER
   TEACHER
   ACCOUNTANT
+  DRIVER
   STUDENT
   GUARDIAN
 }
@@ -93,6 +98,7 @@ model User {
   headedSections    Section[]          @relation("ClassTeacher")
   markedAttendance  AttendanceRecord[] @relation("MarkedByUser")
   taughtSubjects    CurriculumSubject[] @relation("SubjectTeacher")
+  drivenBusRoutes   BusRoute[]          @relation("DriverBusRoute")
 
   resetToken       String?   @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
@@ -531,6 +537,8 @@ model BusRoute {
   vehicleNumber String   @map("vehicle_number") // e.g. "MP-09-AB-1234"
   driverName    String   @map("driver_name")
   driverPhone   String   @map("driver_phone")
+  driverUserId  String?  @map("driver_user_id")
+  driverUser    User?    @relation("DriverBusRoute", fields: [driverUserId], references: [id], onDelete: SetNull)
   stops         Json?    @default("[]") // [{ name: "Goradiya Chaupal", time: "07:15 AM" }]
   morningPickupTime String? @map("morning_pickup_time")
   eveningDropTime   String? @map("evening_drop_time")

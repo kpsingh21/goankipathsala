@@ -17,7 +17,16 @@ export async function listStaff(req: Request, res: Response) {
       where: {
         tenantId,
         role: {
-          in: [UserRole.SCHOOL_ADMIN, UserRole.TEACHER, UserRole.ACCOUNTANT],
+          in: [
+            UserRole.SCHOOL_ADMIN,
+            UserRole.ADMIN,
+            UserRole.PRINCIPAL,
+            UserRole.TEACHER,
+            UserRole.CLASS_TEACHER,
+            UserRole.SUBJECT_TEACHER,
+            UserRole.ACCOUNTANT,
+            UserRole.DRIVER,
+          ],
         },
       },
       select: {
@@ -29,6 +38,38 @@ export async function listStaff(req: Request, res: Response) {
         lastLoginAt: true,
         createdAt: true,
         staffProfile: true,
+        headedSections: {
+          select: {
+            id: true,
+            name: true,
+            classGrade: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        taughtSubjects: {
+          select: {
+            id: true,
+            name: true,
+            classGrade: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        drivenBusRoutes: {
+          select: {
+            id: true,
+            routeNumber: true,
+            routeName: true,
+            vehicleNumber: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -71,8 +112,17 @@ export async function createStaff(req: Request, res: Response) {
       return res.status(400).json({ error: 'Email, password, and role are required.' });
     }
 
-    // Role check: Admin can only create TEACHER, ACCOUNTANT, or SCHOOL_ADMIN
-    const validRoles = [UserRole.TEACHER, UserRole.ACCOUNTANT, UserRole.SCHOOL_ADMIN];
+    // Role check: Support all school staff roles
+    const validRoles = [
+      UserRole.SCHOOL_ADMIN,
+      UserRole.ADMIN,
+      UserRole.PRINCIPAL,
+      UserRole.TEACHER,
+      UserRole.CLASS_TEACHER,
+      UserRole.SUBJECT_TEACHER,
+      UserRole.ACCOUNTANT,
+      UserRole.DRIVER,
+    ];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ error: `Invalid staff role. Allowed: ${validRoles.join(', ')}` });
     }
@@ -156,7 +206,16 @@ export async function updateStaffRole(req: Request, res: Response) {
       return res.status(400).json({ error: 'User ID and new role are required.' });
     }
 
-    const validRoles = [UserRole.TEACHER, UserRole.ACCOUNTANT, UserRole.SCHOOL_ADMIN];
+    const validRoles = [
+      UserRole.SCHOOL_ADMIN,
+      UserRole.ADMIN,
+      UserRole.PRINCIPAL,
+      UserRole.TEACHER,
+      UserRole.CLASS_TEACHER,
+      UserRole.SUBJECT_TEACHER,
+      UserRole.ACCOUNTANT,
+      UserRole.DRIVER,
+    ];
     if (!validRoles.includes(newRole)) {
       return res.status(400).json({ error: `Invalid role. Allowed: ${validRoles.join(', ')}` });
     }
@@ -316,3 +375,137 @@ export async function deleteStaff(req: Request, res: Response) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
+
+/**
+ * Assign Staff Workload & Roles (Class Teacher Section, Subject Teacher Subjects, Driver Bus Route)
+ */
+export async function assignStaffRolesAndWorkload(req: Request, res: Response) {
+  try {
+    const tenantId = req.user?.tenantId;
+    const { userId, role, classTeacherSectionId, subjectIds, busRouteId } = req.body;
+
+    if (!tenantId || !userId) {
+      return res.status(400).json({ error: 'School tenant context and User ID are required.' });
+    }
+
+    const staffUser = await prisma.user.findFirst({
+      where: { id: userId, tenantId },
+      include: { staffProfile: true },
+    });
+
+    if (!staffUser) {
+      return res.status(404).json({ error: 'Staff member not found in this school.' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Update role if provided
+      if (role) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { role },
+        });
+      }
+
+      // 2. Class Teacher assignment: If sectionId provided, set classTeacherId
+      if (classTeacherSectionId !== undefined) {
+        // Clear previous class teacher sections for this teacher
+        await tx.section.updateMany({
+          where: { tenantId, classTeacherId: userId },
+          data: { classTeacherId: null },
+        });
+
+        if (classTeacherSectionId) {
+          await tx.section.update({
+            where: { id: classTeacherSectionId },
+            data: { classTeacherId: userId },
+          });
+          // Also set role to CLASS_TEACHER if currently general teacher
+          if (staffUser.role === UserRole.TEACHER || !role) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { role: UserRole.CLASS_TEACHER },
+            });
+          }
+        }
+      }
+
+      // 3. Subject Teacher assignment: If subjectIds array provided
+      if (Array.isArray(subjectIds)) {
+        // Unlink old subjects not in array
+        await tx.curriculumSubject.updateMany({
+          where: { tenantId, teacherId: userId, id: { notIn: subjectIds } },
+          data: { teacherId: null },
+        });
+
+        // Link new subjects
+        if (subjectIds.length > 0) {
+          await tx.curriculumSubject.updateMany({
+            where: { tenantId, id: { in: subjectIds } },
+            data: { teacherId: userId },
+          });
+          // If role is general teacher, update to SUBJECT_TEACHER
+          if (staffUser.role === UserRole.TEACHER && !role && !classTeacherSectionId) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { role: UserRole.SUBJECT_TEACHER },
+            });
+          }
+        }
+      }
+
+      // 4. Driver Bus Route assignment: If busRouteId provided
+      if (busRouteId !== undefined) {
+        // Unlink previous routes for this driver
+        await tx.busRoute.updateMany({
+          where: { tenantId, driverUserId: userId },
+          data: { driverUserId: null },
+        });
+
+        if (busRouteId) {
+          await tx.busRoute.update({
+            where: { id: busRouteId },
+            data: {
+              driverUserId: userId,
+              driverName: staffUser.staffProfile?.fullName || staffUser.email?.split('@')[0] || 'Driver',
+              driverPhone: staffUser.phone || '',
+            },
+          });
+          // Ensure role is DRIVER
+          await tx.user.update({
+            where: { id: userId },
+            data: { role: UserRole.DRIVER },
+          });
+        }
+      }
+    });
+
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        staffProfile: true,
+        headedSections: {
+          select: { id: true, name: true, classGrade: { select: { id: true, name: true } } },
+        },
+        taughtSubjects: {
+          select: { id: true, name: true, classGrade: { select: { id: true, name: true } } },
+        },
+        drivenBusRoutes: {
+          select: { id: true, routeNumber: true, routeName: true, vehicleNumber: true },
+        },
+      },
+    });
+
+    return res.json({
+      message: 'Staff workload and assignments updated successfully.',
+      staff: updatedUser,
+    });
+  } catch (error: any) {
+    console.error('Assign staff error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+}
+

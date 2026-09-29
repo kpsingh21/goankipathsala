@@ -13,6 +13,22 @@ export async function listBusRoutes(req: Request, res: Response) {
 
     let routes = await prisma.busRoute.findMany({
       where: { tenantId },
+      include: {
+        driverUser: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            staffProfile: {
+              select: {
+                fullName: true,
+                avatarUrl: true,
+                emergencyPhone: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { routeNumber: 'asc' },
     });
 
@@ -66,6 +82,22 @@ export async function listBusRoutes(req: Request, res: Response) {
 
       routes = await prisma.busRoute.findMany({
         where: { tenantId },
+        include: {
+          driverUser: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+              staffProfile: {
+                select: {
+                  fullName: true,
+                  avatarUrl: true,
+                  emergencyPhone: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { routeNumber: 'asc' },
       });
     }
@@ -93,6 +125,7 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
       vehicleNumber,
       driverName,
       driverPhone,
+      driverUserId,
       stops,
       morningPickupTime,
       eveningDropTime,
@@ -100,10 +133,33 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
       monthlyFee,
     } = req.body;
 
-    if (!routeNumber || !routeName || !driverName || !driverPhone) {
+    if (!routeNumber || !routeName) {
       return res.status(400).json({
-        error: 'Route number, route name, driver name, and driver phone are required.',
+        error: 'Route number and route name are required.',
       });
+    }
+
+    let finalDriverName = driverName ? driverName.trim() : 'TBD';
+    let finalDriverPhone = driverPhone ? driverPhone.trim() : 'TBD';
+
+    if (driverUserId) {
+      const driverStaff = await prisma.user.findFirst({
+        where: { id: driverUserId, tenantId },
+        include: { staffProfile: true },
+      });
+      if (driverStaff) {
+        if (!driverName || driverName === 'TBD') {
+          finalDriverName = driverStaff.staffProfile?.fullName || driverStaff.email?.split('@')[0] || 'Driver';
+        }
+        if (!driverPhone || driverPhone === 'TBD') {
+          finalDriverPhone = driverStaff.phone || '';
+        }
+        // Ensure driver role
+        await prisma.user.update({
+          where: { id: driverUserId },
+          data: { role: 'DRIVER' },
+        });
+      }
     }
 
     let route;
@@ -114,8 +170,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
           routeNumber: routeNumber.trim(),
           routeName: routeName.trim(),
           vehicleNumber: vehicleNumber ? vehicleNumber.trim() : 'TBD',
-          driverName: driverName.trim(),
-          driverPhone: driverPhone.trim(),
+          driverName: finalDriverName,
+          driverPhone: finalDriverPhone,
+          driverUserId: driverUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',
@@ -136,8 +193,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
           routeNumber: routeNumber.trim(),
           routeName: routeName.trim(),
           vehicleNumber: vehicleNumber ? vehicleNumber.trim() : 'TBD',
-          driverName: driverName.trim(),
-          driverPhone: driverPhone.trim(),
+          driverName: finalDriverName,
+          driverPhone: finalDriverPhone,
+          driverUserId: driverUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',
@@ -147,8 +205,9 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
         update: {
           routeName: routeName.trim(),
           vehicleNumber: vehicleNumber ? vehicleNumber.trim() : 'TBD',
-          driverName: driverName.trim(),
-          driverPhone: driverPhone.trim(),
+          driverName: finalDriverName,
+          driverPhone: finalDriverPhone,
+          driverUserId: driverUserId || null,
           stops: stops || [],
           morningPickupTime: morningPickupTime || '07:30 AM',
           eveningDropTime: eveningDropTime || '02:30 PM',

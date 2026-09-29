@@ -4,11 +4,18 @@ import cors from 'cors';
 import { tenantMiddleware } from './middleware/tenant.middleware.js';
 import apiRoutes from './routes.js';
 
+import path from 'path';
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static uploaded media files from desktop
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+
 app.use(tenantMiddleware);
 
 // Mount API routes
