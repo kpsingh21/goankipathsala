@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_BASE } from "@/lib/config";
+import * as XLSX from "xlsx";
 
 
 interface FeeComponent {
@@ -56,6 +57,23 @@ export default function SchoolDashboardPage() {
   const [editNoticeModal, setEditNoticeModal] = useState<any | null>(null);
   const [editRouteModal, setEditRouteModal] = useState<any | null>(null);
   const [editSubjectModal, setEditSubjectModal] = useState<any | null>(null);
+
+  // Visual Palette Exploration state
+  const [previewTheme, setPreviewTheme] = useState<"showcase" | "option1" | "option2" | "option3">("showcase");
+
+  // Excel Bulk Import state for Students
+  const [studentImportModalOpen, setStudentImportModalOpen] = useState(false);
+  const [studentImportRows, setStudentImportRows] = useState<any[]>([]);
+  const [studentImportLoading, setStudentImportLoading] = useState(false);
+  const [studentImportResult, setStudentImportResult] = useState<any | null>(null);
+  const [studentImportFileName, setStudentImportFileName] = useState("");
+
+  // Excel Bulk Import state for Staff
+  const [staffImportModalOpen, setStaffImportModalOpen] = useState(false);
+  const [staffImportRows, setStaffImportRows] = useState<any[]>([]);
+  const [staffImportLoading, setStaffImportLoading] = useState(false);
+  const [staffImportResult, setStaffImportResult] = useState<any | null>(null);
+  const [staffImportFileName, setStaffImportFileName] = useState("");
 
   // Teacher scope & Batch Marks & Cumulative report card
   const [teacherScope, setTeacherScope] = useState<any>({
@@ -1655,6 +1673,326 @@ export default function SchoolDashboardPage() {
     }
   };
 
+  // =========================================================================
+  // Excel Bulk Import Handlers (Students & Staff)
+  // =========================================================================
+  const handleDownloadStudentTemplate = () => {
+    const sampleData = [
+      {
+        "Admission Number*": "ADM-2026-001",
+        "First Name*": "Aarav",
+        "Last Name": "Sharma",
+        "Class Grade*": "Class 6",
+        "Section*": "A",
+        "Roll Number": "1",
+        "Gender": "MALE",
+        "Date of Birth (YYYY-MM-DD)": "2014-05-12",
+        "Father Name": "Ramesh Sharma",
+        "Mother Name": "Sunita Sharma",
+        "Parent Mobile Phone*": "9876543210",
+        "Aadhar Number": "123456789012",
+        "Blood Group": "B+",
+        "Category": "GENERAL",
+        "Village / City": "Hatod",
+        "Pincode": "453111",
+        "Address": "Village Hatod, Dist Indore",
+      },
+      {
+        "Admission Number*": "ADM-2026-002",
+        "First Name*": "Priya",
+        "Last Name": "Patel",
+        "Class Grade*": "Class 6",
+        "Section*": "A",
+        "Roll Number": "2",
+        "Gender": "FEMALE",
+        "Date of Birth (YYYY-MM-DD)": "2014-08-20",
+        "Father Name": "Dinesh Patel",
+        "Mother Name": "Kavita Patel",
+        "Parent Mobile Phone*": "9876543211",
+        "Aadhar Number": "987654321098",
+        "Blood Group": "O+",
+        "Category": "OBC",
+        "Village / City": "Semliya",
+        "Pincode": "453111",
+        "Address": "Gram Semliya, Tehsil Depalpur",
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students_Template");
+    XLSX.writeFile(wb, "Student_Bulk_Import_Template.xlsx");
+  };
+
+  const handleStudentExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStudentImportFileName(file.name);
+    setStudentImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+        if (!data || data.length === 0) {
+          setMsg({ type: "error", text: "Uploaded spreadsheet is empty." });
+          return;
+        }
+
+        const parsed = data.map((r, idx) => {
+          const getVal = (...keys: string[]) => {
+            for (const k of keys) {
+              const target = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+              const foundKey = Object.keys(r).find(
+                (orig) => orig.toLowerCase().replace(/[^a-z0-9]/g, "") === target
+              );
+              if (foundKey && r[foundKey] !== undefined && r[foundKey] !== "") {
+                return String(r[foundKey]).trim();
+              }
+            }
+            return "";
+          };
+
+          const admissionNumber = getVal("admissionnumber", "admissionno", "admno", "admission");
+          const firstName = getVal("firstname", "first", "studentname", "name");
+          const lastName = getVal("lastname", "last", "surname");
+          const classGradeName = getVal("classgradename", "classgrade", "class", "grade") || "Class 1";
+          const sectionName = getVal("sectionname", "section", "sec") || "A";
+          const rollNumber = getVal("rollnumber", "rollno", "roll");
+          const gender = getVal("gender", "sex") || "MALE";
+          const dob = getVal("dateofbirth", "dob", "birthdate") || "2015-01-01";
+          const fatherName = getVal("fathername", "father");
+          const motherName = getVal("mothername", "mother");
+          const parentPhone = getVal("parentmobilephone", "parentphone", "phone", "mobile", "contact");
+          const aadharNumber = getVal("aadharnumber", "aadhar", "adhaar");
+          const bloodGroup = getVal("bloodgroup", "blood");
+          const category = getVal("category") || "GENERAL";
+          const villageCity = getVal("villagecity", "village", "city", "town");
+          const pincode = getVal("pincode", "pin");
+          const addressText = getVal("address", "addresstext");
+
+          const isValid = Boolean(admissionNumber && firstName);
+          let reason = "";
+          if (!admissionNumber) reason = "Missing Admission Number";
+          else if (!firstName) reason = "Missing First Name";
+
+          return {
+            rowNum: idx + 1,
+            admissionNumber,
+            firstName,
+            lastName,
+            classGradeName,
+            sectionName,
+            rollNumber,
+            gender,
+            dob,
+            fatherName,
+            motherName,
+            parentPhone,
+            aadharNumber,
+            bloodGroup,
+            category,
+            villageCity,
+            pincode,
+            addressText,
+            isValid,
+            reason,
+          };
+        });
+
+        setStudentImportRows(parsed);
+      } catch (err: any) {
+        setMsg({ type: "error", text: "Failed to parse spreadsheet: " + err.message });
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleExecuteStudentImport = async () => {
+    const validRows = studentImportRows.filter((r) => r.isValid);
+    if (validRows.length === 0) {
+      alert("No valid rows found to import. Please review errors.");
+      return;
+    }
+
+    setStudentImportLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/students/bulk-import`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({ students: validRows }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setStudentImportResult(data);
+      setMsg({ type: "success", text: data.message });
+      fetchStudents();
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Bulk import failed." });
+    } finally {
+      setStudentImportLoading(false);
+    }
+  };
+
+  const handleDownloadStaffTemplate = () => {
+    const sampleStaff = [
+      {
+        "Full Name*": "Vikram Singh Chouhan",
+        "Email": "vikram.singh@school.internal",
+        "Phone Number*": "9826012345",
+        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "TEACHER",
+        "Designation": "Senior PGT Mathematics",
+        "Qualification": "M.Sc, B.Ed",
+        "Department": "Science & Mathematics",
+        "Aadhar Number": "456789012345",
+        "Blood Group": "A+",
+        "Address": "Indore, MP",
+      },
+      {
+        "Full Name*": "Sunita Verma",
+        "Email": "sunita.verma@school.internal",
+        "Phone Number*": "9826054321",
+        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "CLASS_TEACHER",
+        "Designation": "TGT English Faculty",
+        "Qualification": "M.A English, B.Ed",
+        "Department": "Languages",
+        "Aadhar Number": "567890123456",
+        "Blood Group": "B+",
+        "Address": "Depalpur, MP",
+      },
+      {
+        "Full Name*": "Ramesh Bheel",
+        "Email": "ramesh.driver@school.internal",
+        "Phone Number*": "9826098765",
+        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "DRIVER",
+        "Designation": "Heavy Bus Driver",
+        "Qualification": "Commercial DL",
+        "Department": "Transport Operations",
+        "Aadhar Number": "678901234567",
+        "Blood Group": "O+",
+        "Address": "Hatod, MP",
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleStaff);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Staff_Template");
+    XLSX.writeFile(wb, "Staff_Faculty_Import_Template.xlsx");
+  };
+
+  const handleStaffExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStaffImportFileName(file.name);
+    setStaffImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+        if (!data || data.length === 0) {
+          setMsg({ type: "error", text: "Uploaded spreadsheet is empty." });
+          return;
+        }
+
+        const parsed = data.map((r, idx) => {
+          const getVal = (...keys: string[]) => {
+            for (const k of keys) {
+              const target = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+              const foundKey = Object.keys(r).find(
+                (orig) => orig.toLowerCase().replace(/[^a-z0-9]/g, "") === target
+              );
+              if (foundKey && r[foundKey] !== undefined && r[foundKey] !== "") {
+                return String(r[foundKey]).trim();
+              }
+            }
+            return "";
+          };
+
+          const fullName = getVal("fullname", "name", "staffname", "teachername");
+          const email = getVal("email", "emailaddress", "username");
+          const phone = getVal("phonenumber", "phone", "mobile", "contact");
+          const role = getVal("role", "staffrole", "designationrole") || "TEACHER";
+          const designation = getVal("designation", "post", "title");
+          const qualification = getVal("qualification", "degree");
+          const department = getVal("department", "dept") || "Academics";
+          const aadharNumber = getVal("aadharnumber", "aadhar");
+          const bloodGroup = getVal("bloodgroup", "blood");
+          const address = getVal("address", "city");
+
+          const isValid = Boolean(fullName);
+          let reason = "";
+          if (!fullName) reason = "Missing Full Name";
+
+          return {
+            rowNum: idx + 1,
+            fullName,
+            email,
+            phone,
+            role,
+            designation,
+            qualification,
+            department,
+            aadharNumber,
+            bloodGroup,
+            address,
+            isValid,
+            reason,
+          };
+        });
+
+        setStaffImportRows(parsed);
+      } catch (err: any) {
+        setMsg({ type: "error", text: "Failed to parse spreadsheet: " + err.message });
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleExecuteStaffImport = async () => {
+    const validRows = staffImportRows.filter((r) => r.isValid);
+    if (validRows.length === 0) {
+      alert("No valid rows found to import. Please review errors.");
+      return;
+    }
+
+    setStaffImportLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/staff/bulk-import`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({ staff: validRows }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setStaffImportResult(data);
+      setMsg({ type: "success", text: data.message });
+      fetchStaff();
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Bulk staff import failed." });
+    } finally {
+      setStaffImportLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("gkp_token");
     localStorage.removeItem("gkp_user");
@@ -1975,42 +2313,159 @@ export default function SchoolDashboardPage() {
         )}
 
         {/* ======================================================================= */}
+        {/* PALETTE EXPLORATION & THEME COMPARISON CONTROLLER */}
+        {/* ======================================================================= */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-lg shadow-inner">
+              🎨
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs text-white">Visual Palette Exploration Lab</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  Live Preview Active
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Each module currently showcases a distinct color palette so you can compare and choose your preferred site aesthetic.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-2">
+            <button
+              onClick={() => setPreviewTheme("showcase")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                previewTheme === "showcase"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400"
+                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <span>🌟</span>
+              <span>Side-by-Side Comparison</span>
+            </button>
+            <button
+              onClick={() => setPreviewTheme("option1")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                previewTheme === "option1"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400"
+                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-100 border border-blue-400"></span>
+              <span>1. Clean Light (CBSE)</span>
+            </button>
+            <button
+              onClick={() => setPreviewTheme("option2")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                previewTheme === "option2"
+                  ? "bg-emerald-700 text-white shadow-lg shadow-emerald-700/30 ring-2 ring-amber-400"
+                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-[#fbf9f4] border border-amber-600"></span>
+              <span>2. Warm Campus (Goan Heritage)</span>
+            </button>
+            <button
+              onClick={() => setPreviewTheme("option3")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                previewTheme === "option3"
+                  ? "bg-slate-800 text-cyan-300 shadow-lg shadow-cyan-900/30 ring-2 ring-cyan-400"
+                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-[#0B132B] border border-cyan-400"></span>
+              <span>3. Midnight Navy</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ======================================================================= */}
         {/* SECTION 1: STUDENT SIS */}
         {/* ======================================================================= */}
         {activeSection === "students" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div
+            className={`space-y-6 transition-all ${
+              previewTheme === "showcase" || previewTheme === "option1"
+                ? "bg-slate-50 text-slate-900 p-6 rounded-3xl border border-slate-200 shadow-sm"
+                : ""
+            }`}
+          >
+            {/* Visual Palette Preview Banner for Students */}
+            {(previewTheme === "showcase" || previewTheme === "option1") && (
+              <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+                  <span className="font-bold">Palette Option 1 Active: Clean Institutional Light</span>
+                  <span className="text-blue-700 hidden sm:inline">• High-contrast white surfaces, academic navy accents & crisp data typography</span>
+                </div>
+                <span className="text-[10px] font-mono uppercase bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
+                  CBSE / EdTech Light
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2
+                  className={`text-xl font-extrabold flex items-center gap-2 ${
+                    previewTheme === "showcase" || previewTheme === "option1"
+                      ? "text-slate-900"
+                      : "text-white"
+                  }`}
+                >
                   <span>🎓</span> Student Information System (SIS)
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p
+                  className={`text-xs mt-1 ${
+                    previewTheme === "showcase" || previewTheme === "option1"
+                      ? "text-slate-600"
+                      : "text-slate-400"
+                  }`}
+                >
                   Manage student profiles, enrollments, parents, village records, and academic status.
                 </p>
               </div>
 
-              {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              {/* Action buttons & tabs */}
+              <div className="flex items-center flex-wrap gap-2">
                 <button
-                  onClick={() => setStudentSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    studentSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    setStudentImportModalOpen(true);
+                    setStudentImportRows([]);
+                    setStudentImportResult(null);
+                    setStudentImportFileName("");
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950"
                 >
-                  📋 View Students Directory ({studentList.length})
+                  <span>📥</span>
+                  <span>Import via Excel</span>
                 </button>
-                <button
-                  onClick={() => setStudentSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    studentSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  ➕ Enroll New Student
-                </button>
+
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+                  <button
+                    onClick={() => setStudentSubTab("list")}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      studentSubTab === "list"
+                        ? "bg-emerald-500 text-slate-950 font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    📋 View Students ({studentList.length})
+                  </button>
+                  <button
+                    onClick={() => setStudentSubTab("create")}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      studentSubTab === "create"
+                        ? "bg-emerald-500 text-slate-950 font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    ➕ Enroll Student
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2018,9 +2473,21 @@ export default function SchoolDashboardPage() {
             {studentSubTab === "list" && (
               <div className="space-y-4">
                 {/* Filters */}
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div
+                  className={`p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-4 gap-3 ${
+                    previewTheme === "showcase" || previewTheme === "option1"
+                      ? "bg-white border border-slate-200 shadow-sm text-slate-800"
+                      : "bg-slate-900 border border-slate-800"
+                  }`}
+                >
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "text-slate-600"
+                          : "text-slate-400"
+                      }`}
+                    >
                       🔍 Search Name, Admission, Mobile
                     </label>
                     <input
@@ -2028,15 +2495,31 @@ export default function SchoolDashboardPage() {
                       value={studentSearch}
                       onChange={(e) => setStudentSearch(e.target.value)}
                       placeholder="e.g. Aarav, ADM-2026..."
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Class Grade</label>
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "text-slate-600"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      Class Grade
+                    </label>
                     <select
                       value={studentFilterClass}
                       onChange={(e) => setStudentFilterClass(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     >
                       <option value="ALL">All Configured Classes ({classesList.length})</option>
                       {classesList.map((c) => (
@@ -2047,11 +2530,23 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Section</label>
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "text-slate-600"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      Section
+                    </label>
                     <select
                       value={studentFilterSection}
                       onChange={(e) => setStudentFilterSection(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     >
                       <option value="ALL">All Sections</option>
                       {["A", "B", "C", "D"].map((s) => (
@@ -2062,11 +2557,23 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Category</label>
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "text-slate-600"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      Category
+                    </label>
                     <select
                       value={studentFilterCategory}
                       onChange={(e) => setStudentFilterCategory(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option1"
+                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     >
                       <option value="ALL">All Categories</option>
                       <option value="GENERAL">General</option>
@@ -2079,10 +2586,22 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 {/* Table */}
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div
+                  className={`rounded-2xl overflow-hidden ${
+                    previewTheme === "showcase" || previewTheme === "option1"
+                      ? "border border-slate-200 bg-white shadow-sm"
+                      : "border border-slate-800 bg-slate-900/60"
+                  }`}
+                >
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead
+                        className={`border-b ${
+                          previewTheme === "showcase" || previewTheme === "option1"
+                            ? "bg-slate-100 text-slate-700 font-bold border-slate-200"
+                            : "bg-slate-950 text-slate-400 border-slate-800"
+                        }`}
+                      >
                         <tr>
                           <th className="p-3.5">Student</th>
                           <th className="p-3.5">Admission No</th>
@@ -2092,7 +2611,13 @@ export default function SchoolDashboardPage() {
                           <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody
+                        className={`divide-y ${
+                          previewTheme === "showcase" || previewTheme === "option1"
+                            ? "divide-slate-100 text-slate-800"
+                            : "divide-slate-800/60"
+                        }`}
+                      >
                         {filteredStudents.map((s) => (
                           <tr key={s.id} className="hover:bg-slate-800/30 transition">
                             <td className="p-3.5 flex items-center gap-3">
@@ -2408,48 +2933,108 @@ export default function SchoolDashboardPage() {
         {/* SECTION 2: STAFF & FACULTY */}
         {/* ======================================================================= */}
         {activeSection === "staff" && isAdmin && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div
+            className={`space-y-6 transition-all ${
+              previewTheme === "showcase" || previewTheme === "option2"
+                ? "bg-[#fbf9f4] text-[#1c1917] p-6 rounded-3xl border border-[#e7e0d3] shadow-sm"
+                : ""
+            }`}
+          >
+            {/* Visual Palette Preview Banner for Staff */}
+            {(previewTheme === "showcase" || previewTheme === "option2") && (
+              <div className="p-3 rounded-2xl bg-[#f5ede2] border border-[#e2d5c3] text-[#78350f] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#b45309] animate-pulse"></span>
+                  <span className="font-bold">Palette Option 2 Active: Warm Campus & Heritage Earth</span>
+                  <span className="text-[#92400e] hidden sm:inline">• Warm sand/ivory surfaces, forest green headings & terracotta amber accents</span>
+                </div>
+                <span className="text-[10px] font-mono uppercase bg-[#e9dcce] text-[#78350f] px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
+                  Goan Ki Pathshala Heritage
+                </span>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2
+                  className={`text-xl font-extrabold flex items-center gap-2 ${
+                    previewTheme === "showcase" || previewTheme === "option2"
+                      ? "text-[#154a32]"
+                      : "text-white"
+                  }`}
+                >
                   <span>👥</span> School Staff & Faculty Directory
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p
+                  className={`text-xs mt-1 ${
+                    previewTheme === "showcase" || previewTheme === "option2"
+                      ? "text-stone-600"
+                      : "text-slate-400"
+                  }`}
+                >
                   Onboard and assign Principals, Class Teachers, Subject Teachers, Accountants, and Bus Drivers with workload controls.
                 </p>
               </div>
 
-              {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              {/* Action buttons & tabs */}
+              <div className="flex items-center flex-wrap gap-2">
                 <button
-                  onClick={() => setStaffSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    staffSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    setStaffImportModalOpen(true);
+                    setStaffImportRows([]);
+                    setStaffImportResult(null);
+                    setStaffImportFileName("");
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-md shadow-amber-950"
                 >
-                  👥 Staff Directory ({staffList.length})
+                  <span>📥</span>
+                  <span>Import Faculty via Excel</span>
                 </button>
-                <button
-                  onClick={() => setStaffSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    staffSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  ➕ Register New Staff
-                </button>
+
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+                  <button
+                    onClick={() => setStaffSubTab("list")}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      staffSubTab === "list"
+                        ? "bg-emerald-500 text-slate-950 font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    👥 Staff Directory ({staffList.length})
+                  </button>
+                  <button
+                    onClick={() => setStaffSubTab("create")}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      staffSubTab === "create"
+                        ? "bg-emerald-500 text-slate-950 font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    ➕ Register New Staff
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Sub-tab 1: Staff list with filters */}
             {staffSubTab === "list" && (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div
+                  className={`p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 ${
+                    previewTheme === "showcase" || previewTheme === "option2"
+                      ? "bg-white border border-[#e6ded1] shadow-sm text-stone-800"
+                      : "bg-slate-900 border border-slate-800"
+                  }`}
+                >
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "text-stone-600"
+                          : "text-slate-400"
+                      }`}
+                    >
                       🔍 Search Name, Email, Mobile
                     </label>
                     <input
@@ -2457,15 +3042,31 @@ export default function SchoolDashboardPage() {
                       value={staffSearch}
                       onChange={(e) => setStaffSearch(e.target.value)}
                       placeholder="e.g. Suresh or @school.edu..."
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Filter by Role</label>
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "text-stone-600"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      Filter by Role
+                    </label>
                     <select
                       value={staffFilterRole}
                       onChange={(e) => setStaffFilterRole(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     >
                       <option value="ALL">All Roles ({staffList.length})</option>
                       <option value="PRINCIPAL">Principal / Headmaster</option>
@@ -2478,11 +3079,23 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Filter by Department</label>
+                    <label
+                      className={`block text-[10px] uppercase font-bold mb-1 ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "text-stone-600"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      Filter by Department
+                    </label>
                     <select
                       value={staffFilterDept}
                       onChange={(e) => setStaffFilterDept(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
+                        previewTheme === "showcase" || previewTheme === "option2"
+                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
+                          : "bg-slate-950 border border-slate-800 text-white"
+                      }`}
                     >
                       <option value="ALL">All Departments</option>
                       <option value="Science">Science & Maths</option>
@@ -2494,10 +3107,22 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div
+                  className={`rounded-2xl overflow-hidden ${
+                    previewTheme === "showcase" || previewTheme === "option2"
+                      ? "border border-[#e6ded1] bg-white shadow-sm"
+                      : "border border-slate-800 bg-slate-900/60"
+                  }`}
+                >
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead
+                        className={`border-b ${
+                          previewTheme === "showcase" || previewTheme === "option2"
+                            ? "bg-[#f3efe6] text-[#154a32] font-bold border-[#e6ded1]"
+                            : "bg-slate-950 text-slate-400 border-slate-800"
+                        }`}
+                      >
                         <tr>
                           <th className="p-3.5">Staff Member</th>
                           <th className="p-3.5">Designation & Workload</th>
@@ -2507,7 +3132,13 @@ export default function SchoolDashboardPage() {
                           <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody
+                        className={`divide-y ${
+                          previewTheme === "showcase" || previewTheme === "option2"
+                            ? "divide-[#f3efe6] text-stone-800"
+                            : "divide-slate-800/60"
+                        }`}
+                      >
                         {filteredStaff.map((m) => {
                           const prof = m.staffProfile || {};
                           return (
@@ -4241,7 +4872,27 @@ export default function SchoolDashboardPage() {
         {/* SECTION 8: TRANSPORT */}
         {/* ======================================================================= */}
         {activeSection === "transport" && (
-          <div className="space-y-6">
+          <div
+            className={`space-y-6 transition-all ${
+              previewTheme === "showcase" || previewTheme === "option3"
+                ? "bg-[#0B132B] text-slate-100 p-6 rounded-3xl border border-[#3A506B]/50 shadow-2xl"
+                : ""
+            }`}
+          >
+            {/* Visual Palette Preview Banner for Transport */}
+            {(previewTheme === "showcase" || previewTheme === "option3") && (
+              <div className="p-3 rounded-2xl bg-[#1C2541]/90 border border-[#3A506B] text-[#6FFFE9] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-lg shadow-[#0B132B]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#48E5C2] animate-pulse shadow-[0_0_8px_#48E5C2]"></span>
+                  <span className="font-bold">Palette Option 3 Active: Sophisticated Midnight Navy</span>
+                  <span className="text-slate-300 hidden sm:inline">• Deep space navy, elevated indigo glass & mint cyan accents</span>
+                </div>
+                <span className="text-[10px] font-mono uppercase bg-[#3A506B]/50 text-[#6FFFE9] px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
+                  Midnight Tech Dark
+                </span>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
               <div>
                 <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
@@ -4285,7 +4936,11 @@ export default function SchoolDashboardPage() {
                   return (
                     <div
                       key={route.id}
-                      className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between"
+                      className={`p-5 rounded-2xl flex flex-col justify-between transition ${
+                        previewTheme === "showcase" || previewTheme === "option3"
+                          ? "bg-[#1C2541] border border-[#3A506B]/70 shadow-xl"
+                          : "bg-slate-900 border border-slate-800"
+                      }`}
                     >
                       <div>
                         <div className="flex items-center justify-between mb-2">
@@ -6799,6 +7454,415 @@ export default function SchoolDashboardPage() {
                   className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
                 >
                   {loading ? "Generating..." : "⚡ Issue Invoices"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* MODAL: Bulk Import Students via Excel */}
+      {/* ========================================================================= */}
+      {studentImportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setStudentImportModalOpen(false)}
+        >
+          <div
+            className="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                  <span>📥</span> Bulk Import Students from Excel / CSV
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Upload your school's student roster spreadsheet. Download our sample template for standard columns.
+                </p>
+              </div>
+              <button
+                onClick={() => setStudentImportModalOpen(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Template Download & File Upload Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+                <div>
+                  <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider block mb-1">
+                    Step 1: Download Standard Format
+                  </span>
+                  <p className="text-xs text-slate-300">
+                    Get the pre-formatted Excel template with sample student records, admission numbers, and grade columns.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadStudentTemplate}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-950 transition"
+                >
+                  <span>⬇️</span> Download Student_Template.xlsx
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+                <div>
+                  <span className="text-[10px] text-blue-400 uppercase font-bold tracking-wider block mb-1">
+                    Step 2: Choose Excel / CSV File
+                  </span>
+                  <p className="text-xs text-slate-300">
+                    Supports <span className="font-mono text-emerald-300">.xlsx</span>, <span className="font-mono text-emerald-300">.xls</span>, and <span className="font-mono text-emerald-300">.csv</span>.
+                  </p>
+                </div>
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-950 transition">
+                  <span>📂</span> {studentImportFileName ? `Selected: ${studentImportFileName}` : "Browse & Upload Spreadsheet"}
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    onChange={handleStudentExcelUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Results Alert if any */}
+            {studentImportResult && (
+              <div
+                className={`p-4 rounded-2xl border text-xs ${
+                  studentImportResult.skippedCount > 0
+                    ? "bg-amber-950/40 border-amber-800/80 text-amber-200"
+                    : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-sm">
+                    {studentImportResult.message}
+                  </span>
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black">
+                    +{studentImportResult.importedCount} Imported
+                  </span>
+                </div>
+                {studentImportResult.errors?.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                    <span className="font-bold text-[11px] block text-amber-400">Skipped Rows:</span>
+                    {studentImportResult.errors.map((err: any, i: number) => (
+                      <div key={i} className="text-[11px] text-amber-300">
+                        • Row {err.row} ({err.admissionNumber || err.name || "Unknown"}): {err.reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Parsed Rows Preview */}
+            {studentImportRows.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>🔍</span> Spreadsheet Live Data Preview ({studentImportRows.length} rows detected)
+                  </span>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold font-mono">
+                      ✓ {studentImportRows.filter((r) => r.isValid).length} Valid
+                    </span>
+                    {studentImportRows.some((r) => !r.isValid) && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono">
+                        ✕ {studentImportRows.filter((r) => !r.isValid).length} Invalid
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-slate-800 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                      <tr>
+                        <th className="p-2.5 w-12 font-mono">#</th>
+                        <th className="p-2.5">Status</th>
+                        <th className="p-2.5">Admission No</th>
+                        <th className="p-2.5">Student Name</th>
+                        <th className="p-2.5">Class & Section</th>
+                        <th className="p-2.5">Roll No</th>
+                        <th className="p-2.5">Parent Mobile</th>
+                        <th className="p-2.5">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                      {studentImportRows.map((r) => (
+                        <tr
+                          key={r.rowNum}
+                          className={r.isValid ? "hover:bg-slate-950/40" : "bg-red-950/20 hover:bg-red-950/30"}
+                        >
+                          <td className="p-2.5 text-slate-500">{r.rowNum}</td>
+                          <td className="p-2.5">
+                            {r.isValid ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                                READY
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">
+                                ERROR
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-white font-bold">{r.admissionNumber || "—"}</td>
+                          <td className="p-2.5 text-slate-200">
+                            {r.firstName} {r.lastName}
+                          </td>
+                          <td className="p-2.5 text-slate-300">
+                            {r.classGradeName} - {r.sectionName}
+                          </td>
+                          <td className="p-2.5 text-slate-400">{r.rollNumber || "—"}</td>
+                          <td className="p-2.5 text-slate-400">{r.parentPhone || "—"}</td>
+                          <td className="p-2.5 text-[11px] text-amber-400">{r.reason || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+              <span className="text-[11px] text-slate-400">
+                Default portal login password for students is <code className="text-emerald-400">student123</code>.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStudentImportModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={studentImportLoading || studentImportRows.filter((r) => r.isValid).length === 0}
+                  onClick={handleExecuteStudentImport}
+                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition flex items-center gap-2"
+                >
+                  {studentImportLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <span>
+                      ⚡ Confirm & Import ({studentImportRows.filter((r) => r.isValid).length} Students)
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Bulk Import Staff & Faculty via Excel */}
+      {/* ========================================================================= */}
+      {staffImportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setStaffImportModalOpen(false)}
+        >
+          <div
+            className="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                  <span>📥</span> Bulk Import Faculty & Staff from Excel / CSV
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Onboard teachers, principals, drivers, and accounts staff in batch with automatic credentials generation.
+                </p>
+              </div>
+              <button
+                onClick={() => setStaffImportModalOpen(false)}
+                className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Template Download & File Upload Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+                <div>
+                  <span className="text-[10px] text-amber-400 uppercase font-bold tracking-wider block mb-1">
+                    Step 1: Download Staff Format
+                  </span>
+                  <p className="text-xs text-slate-300">
+                    Get pre-formatted template with faculty roles, qualifications, and mobile columns.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadStaffTemplate}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-950 transition"
+                >
+                  <span>⬇️</span> Download Staff_Template.xlsx
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+                <div>
+                  <span className="text-[10px] text-indigo-400 uppercase font-bold tracking-wider block mb-1">
+                    Step 2: Choose Excel / CSV File
+                  </span>
+                  <p className="text-xs text-slate-300">
+                    Supports <span className="font-mono text-amber-300">.xlsx</span>, <span className="font-mono text-amber-300">.xls</span>, and <span className="font-mono text-amber-300">.csv</span>.
+                  </p>
+                </div>
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-indigo-950 transition">
+                  <span>📂</span> {staffImportFileName ? `Selected: ${staffImportFileName}` : "Browse & Upload Spreadsheet"}
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    onChange={handleStaffExcelUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Results Alert if any */}
+            {staffImportResult && (
+              <div
+                className={`p-4 rounded-2xl border text-xs ${
+                  staffImportResult.skippedCount > 0
+                    ? "bg-amber-950/40 border-amber-800/80 text-amber-200"
+                    : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-sm">
+                    {staffImportResult.message}
+                  </span>
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black">
+                    +{staffImportResult.importedCount} Imported
+                  </span>
+                </div>
+                {staffImportResult.errors?.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                    <span className="font-bold text-[11px] block text-amber-400">Skipped Rows:</span>
+                    {staffImportResult.errors.map((err: any, i: number) => (
+                      <div key={i} className="text-[11px] text-amber-300">
+                        • Row {err.row} ({err.email || err.name || "Unknown"}): {err.reason}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Parsed Rows Preview */}
+            {staffImportRows.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>🔍</span> Staff Spreadsheet Live Preview ({staffImportRows.length} rows detected)
+                  </span>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold font-mono">
+                      ✓ {staffImportRows.filter((r) => r.isValid).length} Valid
+                    </span>
+                    {staffImportRows.some((r) => !r.isValid) && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono">
+                        ✕ {staffImportRows.filter((r) => !r.isValid).length} Invalid
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border border-slate-800 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                      <tr>
+                        <th className="p-2.5 w-12 font-mono">#</th>
+                        <th className="p-2.5">Status</th>
+                        <th className="p-2.5">Full Name</th>
+                        <th className="p-2.5">Role</th>
+                        <th className="p-2.5">Designation</th>
+                        <th className="p-2.5">Email / Login</th>
+                        <th className="p-2.5">Phone</th>
+                        <th className="p-2.5">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                      {staffImportRows.map((r) => (
+                        <tr
+                          key={r.rowNum}
+                          className={r.isValid ? "hover:bg-slate-950/40" : "bg-red-950/20 hover:bg-red-950/30"}
+                        >
+                          <td className="p-2.5 text-slate-500">{r.rowNum}</td>
+                          <td className="p-2.5">
+                            {r.isValid ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                                READY
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">
+                                ERROR
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-white font-bold">{r.fullName}</td>
+                          <td className="p-2.5">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                              {r.role}
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-slate-300">{r.designation || "—"}</td>
+                          <td className="p-2.5 text-slate-400">{r.email || "(auto-generate)"}</td>
+                          <td className="p-2.5 text-slate-400">{r.phone || "—"}</td>
+                          <td className="p-2.5 text-[11px] text-amber-400">{r.reason || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+              <span className="text-[11px] text-slate-400">
+                Default portal login password for faculty is <code className="text-amber-400">Staff@123</code>.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStaffImportModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={staffImportLoading || staffImportRows.filter((r) => r.isValid).length === 0}
+                  onClick={handleExecuteStaffImport}
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-amber-950 transition flex items-center gap-2"
+                >
+                  {staffImportLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <span>
+                      ⚡ Confirm & Import ({staffImportRows.filter((r) => r.isValid).length} Staff Members)
+                    </span>
+                  )}
                 </button>
               </div>
             </div>

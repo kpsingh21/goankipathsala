@@ -24,6 +24,7 @@ import {
 import { listStaff, createStaff, updateStaffRole, updateStaffProfile, deleteStaff, assignStaffRolesAndWorkload } from './controllers/staff.controller.js';
 import { handleFileUpload } from './controllers/upload.controller.js';
 import { listStudents, registerStudent, updateStudent, deleteStudent } from './controllers/student.controller.js';
+import { bulkImportStudents, bulkImportStaff } from './controllers/import.controller.js';
 import {
   getDailyAttendance,
   markAttendance,
@@ -95,6 +96,7 @@ router.post(
 // --------------------------------------------------
 router.get('/staff', authenticate, authorize(UserRole.SCHOOL_ADMIN), listStaff);
 router.post('/staff', authenticate, authorize(UserRole.SCHOOL_ADMIN), createStaff);
+router.post('/staff/bulk-import', authenticate, authorize(UserRole.SCHOOL_ADMIN), bulkImportStaff);
 router.patch('/staff/role', authenticate, authorize(UserRole.SCHOOL_ADMIN), updateStaffRole);
 router.put('/staff/profile', authenticate, authorize(UserRole.SCHOOL_ADMIN), updateStaffProfile);
 router.post('/staff/assignments', authenticate, authorize(UserRole.SCHOOL_ADMIN), assignStaffRolesAndWorkload);
@@ -119,6 +121,12 @@ router.post(
   authenticate,
   authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
   registerStudent
+);
+router.post(
+  '/students/bulk-import',
+  authenticate,
+  authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
+  bulkImportStudents
 );
 router.put(
   '/students/:id',
