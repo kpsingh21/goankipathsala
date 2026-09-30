@@ -2032,21 +2032,21 @@ export default function SchoolDashboardPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex font-sans">
       {/* ========================================================================= */}
-      {/* SIDEBAR NAVIGATION */}
+      {/* SIDEBAR NAVIGATION (Clean Light CBSE) */}
       {/* ========================================================================= */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 min-h-screen sticky top-0 h-screen z-30">
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 min-h-screen sticky top-0 h-screen z-30 shadow-sm">
         {/* Brand Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center font-extrabold text-slate-950 text-xl shadow-lg shadow-emerald-950/50">
+        <div className="p-5 border-b border-slate-200 flex items-center gap-3 bg-slate-50/50">
+          <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-white text-xl shadow-md shadow-blue-500/20">
             ग
           </div>
           <div className="overflow-hidden">
-            <h1 className="font-extrabold text-sm text-white truncate">
+            <h1 className="font-extrabold text-sm text-slate-900 truncate">
               {currentUser.schoolName || slug}
             </h1>
-            <p className="text-[10px] text-emerald-400 font-mono tracking-wider uppercase font-semibold">
+            <p className="text-[10px] text-blue-700 font-mono tracking-wider uppercase font-bold">
               {currentUser.role}
             </p>
           </div>
@@ -2059,8 +2059,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("students")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "students"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2069,7 +2069,7 @@ export default function SchoolDashboardPage() {
               </div>
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  activeSection === "students" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                  activeSection === "students" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
                 }`}
               >
                 {studentList.length}
@@ -2082,8 +2082,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("staff")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "staff"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2092,7 +2092,7 @@ export default function SchoolDashboardPage() {
               </div>
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  activeSection === "staff" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                  activeSection === "staff" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
                 }`}
               >
                 {staffList.length}
@@ -2105,8 +2105,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("classes")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "classes"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2115,7 +2115,7 @@ export default function SchoolDashboardPage() {
               </div>
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  activeSection === "classes" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                  activeSection === "classes" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
                 }`}
               >
                 {classesList.length}
@@ -2128,8 +2128,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("attendance")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "attendance"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2144,8 +2144,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("fees")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "fees"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2154,7 +2154,7 @@ export default function SchoolDashboardPage() {
               </div>
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  activeSection === "fees" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                  activeSection === "fees" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
                 }`}
               >
                 {feeStructures.length}
@@ -2167,8 +2167,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("exams")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "exams"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2183,8 +2183,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("subjects")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "subjects"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2199,8 +2199,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("timetable")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "timetable"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2214,8 +2214,8 @@ export default function SchoolDashboardPage() {
             onClick={() => setActiveSection("transport")}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
               activeSection === "transport"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -2224,7 +2224,7 @@ export default function SchoolDashboardPage() {
             </div>
             <span
               className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                activeSection === "transport" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                activeSection === "transport" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
               }`}
             >
               {busRoutesList.length}
@@ -2235,8 +2235,8 @@ export default function SchoolDashboardPage() {
             onClick={() => setActiveSection("notices")}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
               activeSection === "notices"
-                ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -2245,7 +2245,7 @@ export default function SchoolDashboardPage() {
             </div>
             <span
               className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                activeSection === "notices" ? "bg-slate-950 text-emerald-300" : "bg-slate-800 text-slate-400"
+                activeSection === "notices" ? "bg-blue-800 text-blue-100 font-bold" : "bg-slate-100 text-slate-700 border border-slate-200"
               }`}
             >
               {noticesList.length}
@@ -2257,8 +2257,8 @@ export default function SchoolDashboardPage() {
               onClick={() => setActiveSection("website")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition ${
                 activeSection === "website"
-                  ? "bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950"
-                  : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                  ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-500/20"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950 font-semibold"
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -2270,21 +2270,21 @@ export default function SchoolDashboardPage() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50">
           <Link
             href={`/school/${slug}`}
             target="_blank"
-            className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-400 border border-slate-700 transition flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-100 text-xs font-bold text-blue-700 border border-slate-200 transition flex items-center justify-center gap-2 shadow-xs"
           >
             <span>🌐</span> School Campus ↗
           </Link>
           <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-slate-400 truncate max-w-[120px] font-mono">
+            <span className="text-[11px] text-slate-600 truncate max-w-[120px] font-mono font-medium">
               {currentUser.email}
             </span>
             <button
               onClick={handleLogout}
-              className="text-xs text-red-400 hover:text-red-300 font-semibold"
+              className="text-xs text-rose-600 hover:text-rose-700 font-bold"
             >
               Logout
             </button>
@@ -2313,117 +2313,16 @@ export default function SchoolDashboardPage() {
         )}
 
         {/* ======================================================================= */}
-        {/* PALETTE EXPLORATION & THEME COMPARISON CONTROLLER */}
-        {/* ======================================================================= */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-lg shadow-inner">
-              🎨
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-xs text-white">Visual Palette Exploration Lab</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  Live Preview Active
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Each module currently showcases a distinct color palette so you can compare and choose your preferred site aesthetic.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center flex-wrap gap-2">
-            <button
-              onClick={() => setPreviewTheme("showcase")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                previewTheme === "showcase"
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <span>🌟</span>
-              <span>Side-by-Side Comparison</span>
-            </button>
-            <button
-              onClick={() => setPreviewTheme("option1")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                previewTheme === "option1"
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-100 border border-blue-400"></span>
-              <span>1. Clean Light (CBSE)</span>
-            </button>
-            <button
-              onClick={() => setPreviewTheme("option2")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                previewTheme === "option2"
-                  ? "bg-emerald-700 text-white shadow-lg shadow-emerald-700/30 ring-2 ring-amber-400"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#fbf9f4] border border-amber-600"></span>
-              <span>2. Warm Campus (Goan Heritage)</span>
-            </button>
-            <button
-              onClick={() => setPreviewTheme("option3")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                previewTheme === "option3"
-                  ? "bg-slate-800 text-cyan-300 shadow-lg shadow-cyan-900/30 ring-2 ring-cyan-400"
-                  : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0B132B] border border-cyan-400"></span>
-              <span>3. Midnight Navy</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ======================================================================= */}
-        {/* SECTION 1: STUDENT SIS */}
+        {/* SECTION 1: STUDENT SIS (Clean Light CBSE) */}
         {/* ======================================================================= */}
         {activeSection === "students" && (
-          <div
-            className={`space-y-6 transition-all ${
-              previewTheme === "showcase" || previewTheme === "option1"
-                ? "bg-slate-50 text-slate-900 p-6 rounded-3xl border border-slate-200 shadow-sm"
-                : ""
-            }`}
-          >
-            {/* Visual Palette Preview Banner for Students */}
-            {(previewTheme === "showcase" || previewTheme === "option1") && (
-              <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                  <span className="font-bold">Palette Option 1 Active: Clean Institutional Light</span>
-                  <span className="text-blue-700 hidden sm:inline">• High-contrast white surfaces, academic navy accents & crisp data typography</span>
-                </div>
-                <span className="text-[10px] font-mono uppercase bg-blue-200/80 text-blue-900 px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
-                  CBSE / EdTech Light
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2
-                  className={`text-xl font-extrabold flex items-center gap-2 ${
-                    previewTheme === "showcase" || previewTheme === "option1"
-                      ? "text-slate-900"
-                      : "text-white"
-                  }`}
-                >
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                   <span>🎓</span> Student Information System (SIS)
                 </h2>
-                <p
-                  className={`text-xs mt-1 ${
-                    previewTheme === "showcase" || previewTheme === "option1"
-                      ? "text-slate-600"
-                      : "text-slate-400"
-                  }`}
-                >
+                <p className="text-xs text-slate-600 mt-1">
                   Manage student profiles, enrollments, parents, village records, and academic status.
                 </p>
               </div>
@@ -2438,29 +2337,29 @@ export default function SchoolDashboardPage() {
                     setStudentImportResult(null);
                     setStudentImportFileName("");
                   }}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm"
                 >
                   <span>📥</span>
                   <span>Import via Excel</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/80 border border-slate-300">
                   <button
                     onClick={() => setStudentSubTab("list")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                       studentSubTab === "list"
-                        ? "bg-emerald-500 text-slate-950 font-bold"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-700 hover:text-slate-950 font-semibold"
                     }`}
                   >
                     📋 View Students ({studentList.length})
                   </button>
                   <button
                     onClick={() => setStudentSubTab("create")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                       studentSubTab === "create"
-                        ? "bg-emerald-500 text-slate-950 font-bold"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-700 hover:text-slate-950 font-semibold"
                     }`}
                   >
                     ➕ Enroll Student
@@ -2473,21 +2372,9 @@ export default function SchoolDashboardPage() {
             {studentSubTab === "list" && (
               <div className="space-y-4">
                 {/* Filters */}
-                <div
-                  className={`p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-4 gap-3 ${
-                    previewTheme === "showcase" || previewTheme === "option1"
-                      ? "bg-white border border-slate-200 shadow-sm text-slate-800"
-                      : "bg-slate-900 border border-slate-800"
-                  }`}
-                >
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-3 text-slate-800">
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "text-slate-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[11px] text-slate-700 uppercase font-black tracking-wider mb-1">
                       🔍 Search Name, Admission, Mobile
                     </label>
                     <input
@@ -2495,31 +2382,17 @@ export default function SchoolDashboardPage() {
                       value={studentSearch}
                       onChange={(e) => setStudentSearch(e.target.value)}
                       placeholder="e.g. Aarav, ADM-2026..."
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"
                     />
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "text-slate-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[11px] text-slate-700 uppercase font-black tracking-wider mb-1">
                       Class Grade
                     </label>
                     <select
                       value={studentFilterClass}
                       onChange={(e) => setStudentFilterClass(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"
                     >
                       <option value="ALL">All Configured Classes ({classesList.length})</option>
                       {classesList.map((c) => (
@@ -2530,23 +2403,13 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "text-slate-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[11px] text-slate-700 uppercase font-black tracking-wider mb-1">
                       Section
                     </label>
                     <select
                       value={studentFilterSection}
                       onChange={(e) => setStudentFilterSection(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"
                     >
                       <option value="ALL">All Sections</option>
                       {["A", "B", "C", "D"].map((s) => (
@@ -2557,23 +2420,13 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "text-slate-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[11px] text-slate-700 uppercase font-black tracking-wider mb-1">
                       Category
                     </label>
                     <select
                       value={studentFilterCategory}
                       onChange={(e) => setStudentFilterCategory(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option1"
-                          ? "bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition"
                     >
                       <option value="ALL">All Categories</option>
                       <option value="GENERAL">General</option>
@@ -2586,22 +2439,10 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 {/* Table */}
-                <div
-                  className={`rounded-2xl overflow-hidden ${
-                    previewTheme === "showcase" || previewTheme === "option1"
-                      ? "border border-slate-200 bg-white shadow-sm"
-                      : "border border-slate-800 bg-slate-900/60"
-                  }`}
-                >
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead
-                        className={`border-b ${
-                          previewTheme === "showcase" || previewTheme === "option1"
-                            ? "bg-slate-100 text-slate-700 font-bold border-slate-200"
-                            : "bg-slate-950 text-slate-400 border-slate-800"
-                        }`}
-                      >
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                         <tr>
                           <th className="p-3.5">Student</th>
                           <th className="p-3.5">Admission No</th>
@@ -2611,17 +2452,11 @@ export default function SchoolDashboardPage() {
                           <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody
-                        className={`divide-y ${
-                          previewTheme === "showcase" || previewTheme === "option1"
-                            ? "divide-slate-100 text-slate-800"
-                            : "divide-slate-800/60"
-                        }`}
-                      >
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
                         {filteredStudents.map((s) => (
-                          <tr key={s.id} className="hover:bg-slate-800/30 transition">
+                          <tr key={s.id} className="hover:bg-blue-50/50 transition">
                             <td className="p-3.5 flex items-center gap-3">
-                              <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 text-xs shrink-0">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 overflow-hidden flex items-center justify-center font-black text-blue-700 text-xs shrink-0">
                                 {s.avatarUrl ? (
                                   <img src={s.avatarUrl} alt="" className="w-full h-full object-cover" />
                                 ) : (
@@ -2629,68 +2464,76 @@ export default function SchoolDashboardPage() {
                                 )}
                               </div>
                               <div>
-                                <p className="font-bold text-white text-xs">
+                                <p className="font-extrabold text-slate-950 text-sm tracking-tight">
                                   {s.firstName} {s.lastName}
                                 </p>
-                                <p className="text-[10px] text-slate-400 font-mono">
-                                  {s.gender} • {s.category || "GENERAL"}
+                                <p className="text-[11px] text-slate-600 font-bold mt-0.5">
+                                  {s.gender} • <span className="text-blue-700 font-black">{s.category || "GENERAL"}</span>
                                 </p>
                               </div>
                             </td>
-                            <td className="p-3.5 font-mono text-emerald-400">{s.admissionNumber}</td>
                             <td className="p-3.5">
-                              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-medium">
+                              <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300 inline-block shadow-2xs">
+                                {s.admissionNumber}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-100 text-indigo-900 border border-indigo-200 font-mono inline-block shadow-2xs">
                                 {s.enrollments?.[0]?.section?.classGrade?.name || "Class 6"} -{" "}
                                 {s.enrollments?.[0]?.section?.name || "A"}
                               </span>
                             </td>
                             <td className="p-3.5">
-                              <p className="text-slate-200">{s.fatherName || "—"}</p>
-                              <p className="text-[10px] text-slate-400 font-mono">{s.parentPhone || "—"}</p>
-                            </td>
-                            <td className="p-3.5">
-                              <p className="text-slate-200">{s.villageCity || "—"}</p>
-                              <p className="text-[10px] text-slate-400 truncate max-w-[150px]">
-                                {s.addressText || "Campus Area"}
+                              <p className="font-extrabold text-slate-950 text-xs">{s.fatherName || s.motherName || "—"}</p>
+                              <p className="text-xs font-mono font-black text-blue-700 flex items-center gap-1 mt-0.5">
+                                📞 {s.parentPhone || "—"}
                               </p>
                             </td>
-                            <td className="p-3.5 text-right space-x-1">
-                              <button
-                                onClick={() => setViewIdCardStudent(s)}
-                                title="Print Identity Card"
-                                className="px-2 py-1 rounded bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-700/50 text-[11px] font-semibold inline-flex items-center gap-1 transition"
-                              >
-                                <span>🪪</span> <span className="hidden md:inline">ID Card</span>
-                              </button>
-                              <button
-                                onClick={() => setProfileModalStudent(s)}
-                                title="View Comprehensive Profile"
-                                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 text-[11px] font-semibold inline-flex items-center gap-1 transition"
-                              >
-                                <span>👤</span> <span className="hidden md:inline">Profile</span>
-                              </button>
-                              <button
-                                onClick={() =>
-                                  setEditModalStudent({
-                                    ...s,
-                                    classGradeName: s.enrollments?.[0]?.section?.classGrade?.name || "Class 6",
-                                    sectionName: s.enrollments?.[0]?.section?.name || "A",
-                                  })
-                                }
-                                title="Edit Student Record"
-                                className="px-2 py-1 rounded bg-slate-800 hover:bg-blue-900/60 text-blue-400 text-[11px] font-semibold inline-flex items-center gap-1 transition"
-                              >
-                                <span>✏️</span> <span className="hidden md:inline">Edit</span>
-                              </button>
-                              {isAdmin && (
+                            <td className="p-3.5">
+                              <p className="font-bold text-slate-900 text-xs">{s.villageCity || "Campus Area"}</p>
+                              <p className="text-[11px] text-slate-600 font-medium truncate max-w-[160px]">
+                                {s.addressText || "—"}
+                              </p>
+                            </td>
+                            <td className="p-3.5 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
                                 <button
-                                  onClick={() => handleDeleteStudent(s.id, `${s.firstName} ${s.lastName}`)}
-                                  title="Delete Student"
-                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold transition"
+                                  onClick={() => setViewIdCardStudent(s)}
+                                  title="Print Student ID Card"
+                                  className="w-8 h-8 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
                                 >
-                                  🗑️
+                                  🪪
                                 </button>
-                              )}
+                                <button
+                                  onClick={() => setProfileModalStudent(s)}
+                                  title="View Student Profile"
+                                  className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                >
+                                  👤
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setEditModalStudent({
+                                      ...s,
+                                      classGradeName: s.enrollments?.[0]?.section?.classGrade?.name || "Class 6",
+                                      sectionName: s.enrollments?.[0]?.section?.name || "A",
+                                    })
+                                  }
+                                  title="Edit Student Record"
+                                  className="w-8 h-8 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                >
+                                  ✏️
+                                </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => handleDeleteStudent(s.id, `${s.firstName} ${s.lastName}`)}
+                                    title="Delete Student"
+                                    className="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                  >
+                                    🗑️
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -2933,45 +2776,13 @@ export default function SchoolDashboardPage() {
         {/* SECTION 2: STAFF & FACULTY */}
         {/* ======================================================================= */}
         {activeSection === "staff" && isAdmin && (
-          <div
-            className={`space-y-6 transition-all ${
-              previewTheme === "showcase" || previewTheme === "option2"
-                ? "bg-[#fbf9f4] text-[#1c1917] p-6 rounded-3xl border border-[#e7e0d3] shadow-sm"
-                : ""
-            }`}
-          >
-            {/* Visual Palette Preview Banner for Staff */}
-            {(previewTheme === "showcase" || previewTheme === "option2") && (
-              <div className="p-3 rounded-2xl bg-[#f5ede2] border border-[#e2d5c3] text-[#78350f] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#b45309] animate-pulse"></span>
-                  <span className="font-bold">Palette Option 2 Active: Warm Campus & Heritage Earth</span>
-                  <span className="text-[#92400e] hidden sm:inline">• Warm sand/ivory surfaces, forest green headings & terracotta amber accents</span>
-                </div>
-                <span className="text-[10px] font-mono uppercase bg-[#e9dcce] text-[#78350f] px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
-                  Goan Ki Pathshala Heritage
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2
-                  className={`text-xl font-extrabold flex items-center gap-2 ${
-                    previewTheme === "showcase" || previewTheme === "option2"
-                      ? "text-[#154a32]"
-                      : "text-white"
-                  }`}
-                >
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>👥</span> School Staff & Faculty Directory
                 </h2>
-                <p
-                  className={`text-xs mt-1 ${
-                    previewTheme === "showcase" || previewTheme === "option2"
-                      ? "text-stone-600"
-                      : "text-slate-400"
-                  }`}
-                >
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Onboard and assign Principals, Class Teachers, Subject Teachers, Accountants, and Bus Drivers with workload controls.
                 </p>
               </div>
@@ -2986,29 +2797,29 @@ export default function SchoolDashboardPage() {
                     setStaffImportResult(null);
                     setStaffImportFileName("");
                   }}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-md shadow-amber-950"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm"
                 >
                   <span>📥</span>
                   <span>Import Faculty via Excel</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                   <button
                     onClick={() => setStaffSubTab("list")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                       staffSubTab === "list"
-                        ? "bg-emerald-500 text-slate-950 font-bold"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-700 hover:text-slate-950 font-semibold"
                     }`}
                   >
                     👥 Staff Directory ({staffList.length})
                   </button>
                   <button
                     onClick={() => setStaffSubTab("create")}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                       staffSubTab === "create"
-                        ? "bg-emerald-500 text-slate-950 font-bold"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "text-slate-700 hover:text-slate-950 font-semibold"
                     }`}
                   >
                     ➕ Register New Staff
@@ -3020,21 +2831,9 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Staff list with filters */}
             {staffSubTab === "list" && (
               <div className="space-y-4">
-                <div
-                  className={`p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 ${
-                    previewTheme === "showcase" || previewTheme === "option2"
-                      ? "bg-white border border-[#e6ded1] shadow-sm text-stone-800"
-                      : "bg-slate-900 border border-slate-800"
-                  }`}
-                >
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "text-stone-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-700 mb-1">
                       🔍 Search Name, Email, Mobile
                     </label>
                     <input
@@ -3042,31 +2841,17 @@ export default function SchoolDashboardPage() {
                       value={staffSearch}
                       onChange={(e) => setStaffSearch(e.target.value)}
                       placeholder="e.g. Suresh or @school.edu..."
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs outline-none bg-slate-50 border border-slate-300 text-slate-950 font-semibold focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "text-stone-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-700 mb-1">
                       Filter by Role
                     </label>
                     <select
                       value={staffFilterRole}
                       onChange={(e) => setStaffFilterRole(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs outline-none bg-slate-50 border border-slate-300 text-slate-950 font-semibold focus:bg-white focus:border-blue-600"
                     >
                       <option value="ALL">All Roles ({staffList.length})</option>
                       <option value="PRINCIPAL">Principal / Headmaster</option>
@@ -3079,23 +2864,13 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "text-stone-600"
-                          : "text-slate-400"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-700 mb-1">
                       Filter by Department
                     </label>
                     <select
                       value={staffFilterDept}
                       onChange={(e) => setStaffFilterDept(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${
-                        previewTheme === "showcase" || previewTheme === "option2"
-                          ? "bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                          : "bg-slate-950 border border-slate-800 text-white"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs outline-none bg-slate-50 border border-slate-300 text-slate-950 font-semibold focus:bg-white focus:border-blue-600"
                     >
                       <option value="ALL">All Departments</option>
                       <option value="Science">Science & Maths</option>
@@ -3107,22 +2882,10 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
-                <div
-                  className={`rounded-2xl overflow-hidden ${
-                    previewTheme === "showcase" || previewTheme === "option2"
-                      ? "border border-[#e6ded1] bg-white shadow-sm"
-                      : "border border-slate-800 bg-slate-900/60"
-                  }`}
-                >
+                <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead
-                        className={`border-b ${
-                          previewTheme === "showcase" || previewTheme === "option2"
-                            ? "bg-[#f3efe6] text-[#154a32] font-bold border-[#e6ded1]"
-                            : "bg-slate-950 text-slate-400 border-slate-800"
-                        }`}
-                      >
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                         <tr>
                           <th className="p-3.5">Staff Member</th>
                           <th className="p-3.5">Designation & Workload</th>
@@ -3132,19 +2895,13 @@ export default function SchoolDashboardPage() {
                           <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody
-                        className={`divide-y ${
-                          previewTheme === "showcase" || previewTheme === "option2"
-                            ? "divide-[#f3efe6] text-stone-800"
-                            : "divide-slate-800/60"
-                        }`}
-                      >
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
                         {filteredStaff.map((m) => {
                           const prof = m.staffProfile || {};
                           return (
-                            <tr key={m.id} className="hover:bg-slate-800/30 transition">
+                            <tr key={m.id} className="hover:bg-blue-50/50 transition">
                               <td className="p-3.5 flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 text-xs">
+                                <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 overflow-hidden flex items-center justify-center font-black text-blue-700 text-xs shrink-0">
                                   {prof.avatarUrl ? (
                                     <img src={prof.avatarUrl} alt="" className="w-full h-full object-cover" />
                                   ) : (
@@ -3152,93 +2909,97 @@ export default function SchoolDashboardPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <p className="font-bold text-white text-xs">
+                                  <p className="font-extrabold text-slate-950 text-sm tracking-tight">
                                     {prof.fullName || m.email?.split("@")[0] || "Staff Member"}
                                   </p>
-                                  <p className="text-[10px] text-slate-400">{prof.qualification || "Faculty"}</p>
+                                  <p className="text-[11px] text-slate-600 font-semibold">{prof.qualification || "Faculty"}</p>
                                 </div>
                               </td>
                               <td className="p-3.5">
-                                <p className="text-slate-200 font-medium">{prof.designation || m.role}</p>
-                                <div className="text-[10px] space-y-0.5 mt-0.5">
+                                <p className="text-slate-950 font-bold">{prof.designation || m.role}</p>
+                                <div className="text-[10px] space-y-1 mt-1">
                                   {m.headedSections && m.headedSections.length > 0 && (
-                                    <span className="inline-block px-1.5 py-0.5 rounded bg-amber-950/70 text-amber-300 border border-amber-800/60 text-[9px] font-semibold mr-1">
+                                    <span className="inline-block px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 text-[10px] font-bold mr-1">
                                       🏛️ Class Teacher: {m.headedSections.map((s: any) => `${s.classGrade?.name || ''} - ${s.name}`).join(', ')}
                                     </span>
                                   )}
                                   {m.taughtSubjects && m.taughtSubjects.length > 0 && (
-                                    <span className="inline-block px-1.5 py-0.5 rounded bg-sky-950/70 text-sky-300 border border-sky-800/60 text-[9px] font-semibold mr-1">
+                                    <span className="inline-block px-2 py-0.5 rounded-md bg-sky-50 text-sky-900 border border-sky-300 text-[10px] font-bold mr-1">
                                       📚 Subjects: {m.taughtSubjects.map((s: any) => `${s.name} (${s.classGrade?.name || ''})`).join(', ')}
                                     </span>
                                   )}
                                   {m.drivenBusRoutes && m.drivenBusRoutes.length > 0 && (
-                                    <span className="inline-block px-1.5 py-0.5 rounded bg-orange-950/70 text-orange-300 border border-orange-800/60 text-[9px] font-semibold">
+                                    <span className="inline-block px-2 py-0.5 rounded-md bg-orange-50 text-orange-900 border border-orange-300 text-[10px] font-bold">
                                       🚌 Route: {m.drivenBusRoutes.map((r: any) => `${r.routeNumber} (${r.routeName})`).join(', ')}
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td className="p-3.5 font-mono text-[11px] text-slate-300">
-                                <div>{m.email}</div>
-                                <div className="text-slate-500">{m.phone || "—"}</div>
+                              <td className="p-3.5">
+                                <div className="font-bold text-slate-950 font-mono text-xs">{m.email}</div>
+                                <div className="text-xs font-mono font-black text-blue-700 flex items-center gap-1 mt-0.5">
+                                  📞 {m.phone || "—"}
+                                </div>
                               </td>
-                              <td className="p-3.5 font-mono text-slate-400">
+                              <td className="p-3.5 font-mono text-slate-700 font-semibold text-xs">
                                 {prof.aadharNumber ? `•••• ${prof.aadharNumber.slice(-4)}` : "—"}
                               </td>
                               <td className="p-3.5">
                                 <span
-                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wide border ${
                                     m.role === "PRINCIPAL"
-                                      ? "bg-purple-950 text-purple-300 border border-purple-700"
+                                      ? "bg-purple-100 text-purple-900 border-purple-300"
                                       : m.role === "SCHOOL_ADMIN" || m.role === "ADMIN"
-                                      ? "bg-fuchsia-950 text-fuchsia-300 border border-fuchsia-800"
+                                      ? "bg-rose-100 text-rose-900 border-rose-300"
                                       : m.role === "CLASS_TEACHER"
-                                      ? "bg-amber-950 text-amber-300 border border-amber-800"
+                                      ? "bg-amber-100 text-amber-900 border-amber-300"
                                       : m.role === "SUBJECT_TEACHER"
-                                      ? "bg-sky-950 text-sky-300 border border-sky-800"
+                                      ? "bg-sky-100 text-sky-900 border-sky-300"
                                       : m.role === "TEACHER"
-                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                      ? "bg-emerald-100 text-emerald-900 border-emerald-300"
                                       : m.role === "DRIVER"
-                                      ? "bg-orange-950 text-orange-400 border border-orange-800"
-                                      : "bg-blue-950 text-blue-400 border border-blue-800"
+                                      ? "bg-orange-100 text-orange-900 border-orange-300"
+                                      : "bg-blue-100 text-blue-900 border-blue-300"
                                   }`}
                                 >
                                   {m.role}
                                 </span>
                               </td>
-                              <td className="p-3.5 text-right space-x-1">
-                                <button
-                                  onClick={() => handleOpenAssignModal(m)}
-                                  title="Assign Role, Headed Class & Subject Workload"
-                                  className="px-2 py-1 rounded bg-indigo-950/70 hover:bg-indigo-800 text-indigo-300 border border-indigo-700/50 text-[11px] font-semibold inline-flex items-center gap-1 transition"
-                                >
-                                  <span>🎯</span> <span className="hidden md:inline">Role & Classes</span>
-                                </button>
-                                <button
-                                  onClick={() => setProfileModalStaff(m)}
-                                  title="View Staff Profile"
-                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold inline-flex items-center gap-1 transition"
-                                >
-                                  <span>👤</span> <span className="hidden md:inline">Profile</span>
-                                </button>
-                                {m.id !== currentUser.id && (
-                                  <>
-                                    <button
-                                      onClick={() => setResetModalUser(m)}
-                                      title="Reset Password"
-                                      className="px-2 py-1 rounded bg-slate-800 hover:bg-amber-950/60 hover:text-amber-300 text-[11px] text-slate-300 inline-flex items-center gap-1 transition"
-                                    >
-                                      <span>🔑</span> <span className="hidden md:inline">Reset</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteStaff(m.id, prof.fullName || m.email)}
-                                      title="Delete Staff Member"
-                                      className="px-2 py-1 rounded bg-slate-800 hover:bg-red-950/70 hover:text-red-400 text-slate-400 text-[11px] font-semibold transition"
-                                    >
-                                      🗑️
-                                    </button>
-                                  </>
-                                )}
+                              <td className="p-3.5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => handleOpenAssignModal(m)}
+                                    title="Assign Role, Headed Class & Subject Workload"
+                                    className="w-8 h-8 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-800 border border-indigo-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                  >
+                                    🎯
+                                  </button>
+                                  <button
+                                    onClick={() => setProfileModalStaff(m)}
+                                    title="View Staff Profile"
+                                    className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                  >
+                                    👤
+                                  </button>
+                                  {m.id !== currentUser.id && (
+                                    <>
+                                      <button
+                                        onClick={() => setResetModalUser(m)}
+                                        title="Reset Password"
+                                        className="w-8 h-8 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                      >
+                                        🔑
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteStaff(m.id, prof.fullName || m.email)}
+                                        title="Delete Staff Member"
+                                        className="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                      >
+                                        🗑️
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -3252,65 +3013,65 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Register Staff Form */}
             {staffSubTab === "create" && (
-              <form onSubmit={handleCreateStaff} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleCreateStaff} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                   + Register Faculty / Staff Member & Assign Workload
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Full Name *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
                       value={newStaffFullName}
                       onChange={(e) => setNewStaffFullName(e.target.value)}
                       placeholder="Suresh Kumar Verma"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Email Address *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Email Address *</label>
                     <input
                       type="email"
                       required
                       value={newStaffEmail}
                       onChange={(e) => setNewStaffEmail(e.target.value)}
                       placeholder="suresh@school.edu"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Mobile Phone *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Mobile Phone *</label>
                     <input
                       type="tel"
                       required
                       value={newStaffPhone}
                       onChange={(e) => setNewStaffPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Initial Password *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Initial Password *</label>
                     <input
                       type="password"
                       required
                       value={newStaffPassword}
                       onChange={(e) => setNewStaffPassword(e.target.value)}
                       placeholder="Min 6 chars"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Role Authority *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Role Authority *</label>
                     <select
                       value={newStaffRole}
                       onChange={(e) => setNewStaffRole(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       <option value="PRINCIPAL">Principal / Headmaster</option>
                       <option value="ADMIN">School Admin</option>
@@ -3322,39 +3083,39 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Designation</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Designation</label>
                     <input
                       type="text"
                       value={newStaffDesignation}
                       onChange={(e) => setNewStaffDesignation(e.target.value)}
                       placeholder="Senior Mathematics Teacher"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Qualification</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Qualification</label>
                     <input
                       type="text"
                       value={newStaffQualification}
                       onChange={(e) => setNewStaffQualification(e.target.value)}
                       placeholder="B.Ed, M.Sc Mathematics"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Department</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Department</label>
                     <input
                       type="text"
                       value={newStaffDepartment}
                       onChange={(e) => setNewStaffDepartment(e.target.value)}
                       placeholder="Science & Maths"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] text-slate-400">Photo / Avatar</label>
-                      <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                      <label className="text-[11px] font-bold text-slate-700">Photo / Avatar</label>
+                      <label className="text-[10px] text-blue-700 hover:text-blue-800 cursor-pointer font-bold flex items-center gap-1">
                         <span>📁 Upload</span>
                         <input
                           type="file"
@@ -3369,23 +3130,23 @@ export default function SchoolDashboardPage() {
                       value={newStaffAvatarUrl}
                       onChange={(e) => setNewStaffAvatarUrl(e.target.value)}
                       placeholder="https://... or uploaded"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
 
                 {/* Direct Onboarding Workload Assignments (Classes & Subjects) */}
                 {["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN"].includes(newStaffRole) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <div>
-                      <label className="block text-[11px] text-amber-400 font-bold mb-1">
+                      <label className="block text-[11px] text-amber-800 font-bold mb-1">
                         🏛️ Assign as Class Teacher for Section (Optional)
                       </label>
-                      <p className="text-[10px] text-slate-400 mb-2">Teacher will head this section and take daily attendance.</p>
+                      <p className="text-[10px] text-slate-600 font-medium mb-2">Teacher will head this section and take daily attendance.</p>
                       <select
                         value={newStaffSectionId}
                         onChange={(e) => setNewStaffSectionId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                       >
                         <option value="">— None (Not Heading a Class) —</option>
                         {classesList.flatMap((cls: any) =>
@@ -3399,13 +3160,13 @@ export default function SchoolDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] text-sky-400 font-bold mb-1">
+                      <label className="block text-[11px] text-sky-800 font-bold mb-1">
                         📚 Assign Curriculum Subjects to Teach (Optional)
                       </label>
-                      <p className="text-[10px] text-slate-400 mb-2">Select subjects from school's configured curriculum.</p>
-                      <div className="max-h-28 overflow-y-auto space-y-1 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                      <p className="text-[10px] text-slate-600 font-medium mb-2">Select subjects from school's configured curriculum.</p>
+                      <div className="max-h-28 overflow-y-auto space-y-1 p-2 rounded-lg bg-white border border-slate-300">
                         {(allSchoolSubjects.length > 0 ? allSchoolSubjects : subjectsList).length === 0 ? (
-                          <p className="text-[10px] text-slate-500 py-1 text-center">No subjects created yet.</p>
+                          <p className="text-[10px] text-slate-500 py-1 text-center font-medium">No subjects created yet.</p>
                         ) : (
                           (allSchoolSubjects.length > 0 ? allSchoolSubjects : subjectsList).map((sub: any) => {
                             const checked = newStaffSubjectIds.includes(sub.id);
@@ -3413,10 +3174,10 @@ export default function SchoolDashboardPage() {
                               <label
                                 key={sub.id}
                                 className={`flex items-center justify-between p-1.5 rounded cursor-pointer text-xs ${
-                                  checked ? "bg-sky-950/80 text-white font-semibold" : "text-slate-300 hover:bg-slate-800/40"
+                                  checked ? "bg-blue-50 text-blue-900 font-bold border border-blue-200" : "text-slate-700 hover:bg-slate-100"
                                 }`}
                               >
-                                <span>{sub.name} <span className="text-[10px] text-slate-500">({sub.classGrade?.name || "Grade"})</span></span>
+                                <span>{sub.name} <span className="text-[10px] text-slate-500 font-normal">({sub.classGrade?.name || "Grade"})</span></span>
                                 <input
                                   type="checkbox"
                                   checked={checked}
@@ -3427,7 +3188,7 @@ export default function SchoolDashboardPage() {
                                       setNewStaffSubjectIds([...newStaffSubjectIds, sub.id]);
                                     }
                                   }}
-                                  className="accent-sky-500 h-3.5 w-3.5"
+                                  className="accent-blue-600 h-3.5 w-3.5"
                                 />
                               </label>
                             );
@@ -3439,14 +3200,14 @@ export default function SchoolDashboardPage() {
                 )}
 
                 {newStaffRole === "DRIVER" && (
-                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
-                    <label className="block text-[11px] text-orange-400 font-bold mb-1">
+                  <div className="p-4 rounded-xl bg-orange-50/60 border border-orange-200">
+                    <label className="block text-[11px] text-orange-900 font-bold mb-1">
                       🚌 Assign Bus Route (Optional)
                     </label>
                     <select
                       value={newStaffBusRouteId}
                       onChange={(e) => setNewStaffBusRouteId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                     >
                       <option value="">— None / Transport Pool —</option>
                       {busRoutesList.map((r: any) => (
@@ -3461,7 +3222,7 @@ export default function SchoolDashboardPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                 >
                   {loading ? "Registering..." : "+ Register Faculty Member"}
                 </button>
@@ -3475,34 +3236,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "classes" && isAdmin && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>🏛️</span> Academic Classes & Kindergarten Hierarchy
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Manage class grades from Pre-KG, Nursery, LKG, UKG to Class 12, assign sections, and configure curriculum.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setClassSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     classSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   🏛️ Classes & Sections ({classesList.length})
                 </button>
                 <button
                   onClick={() => setClassSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     classSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ➕ Add New Class Grade
@@ -3513,9 +3274,9 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Classes list */}
             {classSubTab === "list" && (
               <div className="space-y-4">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                       <tr>
                         <th className="p-3.5">Class / Grade Name</th>
                         <th className="p-3.5">Order</th>
@@ -3525,46 +3286,48 @@ export default function SchoolDashboardPage() {
                         <th className="p-3.5 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                       {classesList.map((c) => (
-                        <tr key={c.id} className="hover:bg-slate-800/30 transition">
-                          <td className="p-3.5 font-bold text-white text-sm">{c.name}</td>
-                          <td className="p-3.5 font-mono text-slate-400">{c.numericalOrder}</td>
+                        <tr key={c.id} className="hover:bg-blue-50/50 transition">
+                          <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">{c.name}</td>
+                          <td className="p-3.5 font-mono font-bold text-slate-700">{c.numericalOrder}</td>
                           <td className="p-3.5">
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-1.5">
                               {(c.sections || []).map((sec: any) => (
                                 <span
                                   key={sec.id}
-                                  className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-emerald-400 border border-slate-700"
+                                  className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200 text-[10px] font-bold font-mono"
                                 >
                                   {sec.name} ({sec.studentCount} studs)
                                 </span>
                               ))}
                             </div>
                           </td>
-                          <td className="p-3.5 font-bold font-mono text-white">{c.studentCount}</td>
-                          <td className="p-3.5 text-slate-300">
+                          <td className="p-3.5 font-black font-mono text-blue-700 text-sm">{c.studentCount}</td>
+                          <td className="p-3.5 text-slate-900 font-medium">
                             {c.subjectsCount > 0 ? (
                               <span className="text-xs">{c.subjects.join(", ")}</span>
                             ) : (
                               <span className="text-slate-500 italic text-[11px]">No subjects mapped yet</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-right space-x-1.5">
-                            <button
-                              onClick={() => setEditClassModal(c)}
-                              title="Edit Class Configuration"
-                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs transition inline-flex items-center gap-1"
-                            >
-                              <span>✏️</span> <span className="hidden sm:inline">Edit</span>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClass(c.id, c.name)}
-                              title="Delete Class"
-                              className="px-2 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
-                            >
-                              🗑️
-                            </button>
+                          <td className="p-3.5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => setEditClassModal(c)}
+                                title="Edit Class Configuration"
+                                className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClass(c.id, c.name)}
+                                title="Delete Class"
+                                className="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -3576,38 +3339,38 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Create Class Form */}
             {classSubTab === "create" && (
-              <form onSubmit={handleCreateClass} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 max-w-xl">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleCreateClass} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 max-w-xl">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                   + Add New Class / Academic Level
                 </h3>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Class Grade Name *</label>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Class Grade Name *</label>
                   <input
                     type="text"
                     required
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
                     placeholder="e.g. Pre-KG, Nursery, Playgroup, Class 11 Science"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                   />
-                  <p className="text-[10px] text-slate-500 mt-1">Pre-KG, Nursery, LKG, UKG, and Classes 1 to 12 can be configured.</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-medium">Pre-KG, Nursery, LKG, UKG, and Classes 1 to 12 can be configured.</p>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Numerical Sequence Order</label>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Numerical Sequence Order</label>
                   <input
                     type="number"
                     value={newClassOrder}
                     onChange={(e) => setNewClassOrder(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-semibold outline-none focus:bg-white focus:border-blue-600"
                   />
-                  <p className="text-[10px] text-slate-500 mt-1">Negative or low numbers for pre-primary (-3 for Pre-KG, -2 for Nursery, etc.)</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-medium">Negative or low numbers for pre-primary (-3 for Pre-KG, -2 for Nursery, etc.)</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                 >
                   {loading ? "Creating..." : "+ Create Academic Class"}
                 </button>
@@ -3621,37 +3384,37 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "attendance" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>📋</span> Student Attendance System
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Track month-wise aggregate attendance rates and conduct morning roll call.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => {
                     setAttendanceSubTab("monthly");
                     fetchMonthlyAttendance(monthlyAttendanceMonth);
                   }}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     attendanceSubTab === "monthly"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   📅 Monthly Register & Matrix
                 </button>
                 <button
                   onClick={() => setAttendanceSubTab("daily")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     attendanceSubTab === "daily"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ☀️ Daily Roll Call Entry
@@ -3662,9 +3425,9 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Monthly Register */}
             {attendanceSubTab === "monthly" && (
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400 font-bold">Select Month:</span>
+                    <span className="text-xs font-bold text-slate-700">Select Month:</span>
                     <input
                       type="month"
                       value={monthlyAttendanceMonth}
@@ -3672,7 +3435,7 @@ export default function SchoolDashboardPage() {
                         setMonthlyAttendanceMonth(e.target.value);
                         fetchMonthlyAttendance(e.target.value);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none font-mono"
+                      className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
 
@@ -3680,52 +3443,56 @@ export default function SchoolDashboardPage() {
                     <button
                       onClick={handleSeedMonthlyAttendance}
                       disabled={seedMonthlyLoading}
-                      className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+                      className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm"
                     >
                       {seedMonthlyLoading ? "Generating..." : "⚡ Generate Realistic Month Attendance"}
                     </button>
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                         <tr>
                           <th className="p-3.5">Student Name</th>
                           <th className="p-3.5">Admission No</th>
                           <th className="p-3.5">Class & Section</th>
                           <th className="p-3.5 text-center">Working Days</th>
-                          <th className="p-3.5 text-center text-emerald-400">Presents</th>
-                          <th className="p-3.5 text-center text-red-400">Absents</th>
-                          <th className="p-3.5 text-center text-amber-400">Late / Half</th>
+                          <th className="p-3.5 text-center text-emerald-800">Presents</th>
+                          <th className="p-3.5 text-center text-rose-800">Absents</th>
+                          <th className="p-3.5 text-center text-amber-800">Late / Half</th>
                           <th className="p-3.5 text-right">Attendance Rate</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
                         {monthlyAttendanceList.map((m) => {
                           const pct = m.attendancePercentage || 0;
                           return (
-                            <tr key={m.studentId} className="hover:bg-slate-800/30 transition">
-                              <td className="p-3.5 font-bold text-white">{m.studentName}</td>
-                              <td className="p-3.5 font-mono text-slate-400">{m.admissionNumber}</td>
+                            <tr key={m.studentId} className="hover:bg-blue-50/50 transition">
+                              <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">{m.studentName}</td>
                               <td className="p-3.5">
-                                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px]">
+                                <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300 inline-block shadow-2xs">
+                                  {m.admissionNumber}
+                                </span>
+                              </td>
+                              <td className="p-3.5">
+                                <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-100 text-indigo-900 border border-indigo-200 font-mono inline-block shadow-2xs">
                                   {m.classGrade} - {m.section}
                                 </span>
                               </td>
-                              <td className="p-3.5 text-center font-mono text-slate-300">{m.totalRecordedDays}</td>
-                              <td className="p-3.5 text-center font-mono text-emerald-400 font-bold">{m.presentCount}</td>
-                              <td className="p-3.5 text-center font-mono text-red-400">{m.absentCount}</td>
-                              <td className="p-3.5 text-center font-mono text-amber-400">{m.lateCount}</td>
+                              <td className="p-3.5 text-center font-mono font-bold text-slate-700">{m.totalRecordedDays}</td>
+                              <td className="p-3.5 text-center font-mono font-black text-emerald-700 text-sm">{m.presentCount}</td>
+                              <td className="p-3.5 text-center font-mono font-bold text-rose-600">{m.absentCount}</td>
+                              <td className="p-3.5 text-center font-mono font-bold text-amber-700">{m.lateCount}</td>
                               <td className="p-3.5 text-right">
                                 <span
-                                  className={`px-2.5 py-1 rounded text-[11px] font-bold ${
+                                  className={`px-2.5 py-1 rounded-md text-xs font-black font-mono border ${
                                     pct >= 75
-                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
+                                      ? "bg-emerald-100 text-emerald-900 border-emerald-300"
                                       : pct >= 60
-                                      ? "bg-amber-950 text-amber-400 border border-amber-800"
-                                      : "bg-red-950 text-red-400 border border-red-800"
+                                      ? "bg-amber-100 text-amber-900 border-amber-300"
+                                      : "bg-rose-100 text-rose-900 border-rose-300"
                                   }`}
                                 >
                                   {pct}%
@@ -3744,28 +3511,28 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 2: Daily Roll Call */}
             {attendanceSubTab === "daily" && (
               <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400 font-bold">Attendance Date:</span>
+                    <span className="text-xs font-bold text-slate-700">Attendance Date:</span>
                     <input
                       type="date"
                       value={attendanceDate}
                       onChange={(e) => setAttendanceDate(e.target.value)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-bold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <button
                     onClick={handleSaveAttendance}
                     disabled={loading}
-                    className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                   >
                     {loading ? "Saving..." : "Save Daily Roll Call"}
                   </button>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                       <tr>
                         <th className="p-3.5">Student</th>
                         <th className="p-3.5">Admission No</th>
@@ -3773,17 +3540,25 @@ export default function SchoolDashboardPage() {
                         <th className="p-3.5">Attendance Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                       {studentList.map((s) => {
                         const enrId = s.enrollments?.[0]?.id;
                         const status = attendanceStatusMap[enrId] || "PRESENT";
                         return (
-                          <tr key={s.id} className="hover:bg-slate-800/30 transition">
-                            <td className="p-3.5 font-semibold text-white">
+                          <tr key={s.id} className="hover:bg-blue-50/50 transition">
+                            <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">
                               {s.firstName} {s.lastName}
                             </td>
-                            <td className="p-3.5 font-mono text-slate-400">{s.admissionNumber}</td>
-                            <td className="p-3.5">{s.enrollments?.[0]?.section?.classGrade?.name || "Class 6"}</td>
+                            <td className="p-3.5">
+                              <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300 inline-block shadow-2xs">
+                                {s.admissionNumber}
+                              </span>
+                            </td>
+                            <td className="p-3.5">
+                              <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-100 text-indigo-900 border border-indigo-200 font-mono inline-block shadow-2xs">
+                                {s.enrollments?.[0]?.section?.classGrade?.name || "Class 6"}
+                              </span>
+                            </td>
                             <td className="p-3.5">
                               <div className="flex items-center gap-1.5">
                                 {["PRESENT", "ABSENT", "LATE", "HALF_DAY"].map((st) => (
@@ -3792,14 +3567,14 @@ export default function SchoolDashboardPage() {
                                     onClick={() =>
                                       setAttendanceStatusMap({ ...attendanceStatusMap, [enrId]: st })
                                     }
-                                    className={`px-2.5 py-1 rounded text-[11px] font-bold transition ${
+                                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition shadow-2xs ${
                                       status === st
                                         ? st === "PRESENT"
-                                          ? "bg-emerald-500 text-slate-950"
+                                          ? "bg-emerald-600 text-white"
                                           : st === "ABSENT"
-                                          ? "bg-red-500 text-white"
+                                          ? "bg-rose-600 text-white"
                                           : "bg-amber-500 text-slate-950"
-                                        : "bg-slate-800 text-slate-400 hover:text-white"
+                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300"
                                     }`}
                                   >
                                     {st}
@@ -3823,34 +3598,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "fees" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>💳</span> School Fees & Invoicing Ledger
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Manage fee structures, issue batch invoices, and record student fee payments.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setFeeSubTab("invoices")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     feeSubTab === "invoices"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   💳 Student Billing & Ledger ({invoices.length})
                 </button>
                 <button
                   onClick={() => setFeeSubTab("catalog")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     feeSubTab === "catalog"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ⚙️ Fee Structures & Catalog ({feeStructures.length})
@@ -3861,24 +3636,24 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Invoices */}
             {feeSubTab === "invoices" && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 border border-slate-800">
-                  <div className="text-xs text-slate-300">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                  <div className="text-xs text-slate-700 font-medium">
                     Showing all generated student fee vouchers and transaction ledgers.
                   </div>
                   {(isAdmin || isAccountant) && (
                     <button
                       onClick={() => setClassInvoiceGenModal(true)}
-                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5"
                     >
                       <span>⚡</span> Generate Invoices for Class
                     </button>
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                         <tr>
                           <th className="p-3.5">Invoice #</th>
                           <th className="p-3.5">Student</th>
@@ -3886,49 +3661,57 @@ export default function SchoolDashboardPage() {
                           <th className="p-3.5">Paid</th>
                           <th className="p-3.5">Balance</th>
                           <th className="p-3.5">Status</th>
-                          <th className="p-3.5 text-right">Actions & Receipt</th>
+                          <th className="p-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-100 text-slate-800">
                         {invoices.map((inv) => {
                           const stud = inv.enrollment?.student;
                           return (
-                            <tr key={inv.id} className="hover:bg-slate-800/30 transition">
-                              <td className="p-3.5 font-mono text-slate-400">{inv.invoiceNumber}</td>
-                              <td className="p-3.5 font-semibold text-white">
+                            <tr key={inv.id} className="hover:bg-blue-50/50 transition">
+                              <td className="p-3.5">
+                                <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300 inline-block shadow-2xs">
+                                  {inv.invoiceNumber}
+                                </span>
+                              </td>
+                              <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">
                                 {stud ? `${stud.firstName} ${stud.lastName}` : "Student"}
                               </td>
-                              <td className="p-3.5 font-mono font-bold text-white">₹{inv.totalAmount}</td>
-                              <td className="p-3.5 font-mono text-emerald-400">₹{inv.paidAmount}</td>
-                              <td className="p-3.5 font-mono text-amber-400 font-bold">
+                              <td className="p-3.5 font-mono font-black text-slate-950 text-sm">₹{inv.totalAmount}</td>
+                              <td className="p-3.5 font-mono font-black text-emerald-700 text-sm">₹{inv.paidAmount}</td>
+                              <td className="p-3.5 font-mono font-black text-amber-700 text-sm">
                                 ₹{inv.totalAmount - inv.paidAmount}
                               </td>
                               <td className="p-3.5">
                                 <span
-                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wide border ${
                                     inv.status === "PAID"
-                                      ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                                      : "bg-amber-950 text-amber-400 border border-amber-800"
+                                      ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                                      : "bg-amber-100 text-amber-900 border-amber-300"
                                   }`}
                                 >
                                   {inv.status}
                                 </span>
                               </td>
-                              <td className="p-3.5 text-right space-x-1.5">
-                                <button
-                                  onClick={() => setViewInvoiceReceipt(inv)}
-                                  className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-[11px] transition"
-                                >
-                                  🖨️ Receipt
-                                </button>
-                                {inv.status !== "PAID" && (
+                              <td className="p-3.5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1.5">
                                   <button
-                                    onClick={() => handleRecordPayment(inv.id, inv.totalAmount - inv.paidAmount)}
-                                    className="px-2.5 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-[11px] transition"
+                                    onClick={() => setViewInvoiceReceipt(inv)}
+                                    title="Print Fee Receipt"
+                                    className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
                                   >
-                                    Collect ₹{inv.totalAmount - inv.paidAmount}
+                                    🖨️
                                   </button>
-                                )}
+                                  {inv.status !== "PAID" && (
+                                    <button
+                                      onClick={() => handleRecordPayment(inv.id, inv.totalAmount - inv.paidAmount)}
+                                      title={`Collect ₹${inv.totalAmount - inv.paidAmount}`}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-2xs flex items-center gap-1"
+                                    >
+                                      <span>💰</span> Collect ₹{inv.totalAmount - inv.paidAmount}
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );
@@ -3944,28 +3727,28 @@ export default function SchoolDashboardPage() {
             {feeSubTab === "catalog" && (
               <div className="space-y-6">
                 {(currentUser.role === "SCHOOL_ADMIN" || currentUser.role === "ACCOUNTANT") && (
-                  <form onSubmit={handleCreateFeeStructure} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                  <form onSubmit={handleCreateFeeStructure} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                       + Configure New Fee Structure
                     </h3>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="md:col-span-2">
-                        <label className="block text-[11px] text-slate-400 mb-1">Fee Structure Title</label>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Fee Structure Title</label>
                         <input
                           type="text"
                           required
                           value={newFeeName}
                           onChange={(e) => setNewFeeName(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-400 mb-1">Applicable Class</label>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Applicable Class</label>
                         <select
                           value={newFeeClassGrade}
                           onChange={(e) => setNewFeeClassGrade(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                         >
                           {classesList.length > 0 ? (
                             classesList.map((c) => (
@@ -3979,11 +3762,11 @@ export default function SchoolDashboardPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-400 mb-1">Billing Frequency</label>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Billing Frequency</label>
                         <select
                           value={newFeeFrequency}
                           onChange={(e) => setNewFeeFrequency(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                         >
                           <option value="MONTHLY">Monthly</option>
                           <option value="QUARTERLY">Quarterly</option>
@@ -3993,15 +3776,15 @@ export default function SchoolDashboardPage() {
                     </div>
 
                     {/* Breakdown Components */}
-                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-slate-300 font-bold uppercase">
+                        <span className="text-[11px] text-slate-700 font-bold uppercase">
                           Itemized Breakdown Components
                         </span>
                         <button
                           type="button"
                           onClick={() => setFeeComponents([...feeComponents, { name: "Activity Fee", amount: "100" }])}
-                          className="text-xs text-emerald-400 font-bold"
+                          className="text-xs text-blue-700 font-bold hover:underline"
                         >
                           + Add Component
                         </button>
@@ -4017,7 +3800,7 @@ export default function SchoolDashboardPage() {
                                 copy[idx].name = e.target.value;
                                 setFeeComponents(copy);
                               }}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                              className="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                             />
                             <input
                               type="number"
@@ -4027,12 +3810,12 @@ export default function SchoolDashboardPage() {
                                 copy[idx].amount = e.target.value;
                                 setFeeComponents(copy);
                               }}
-                              className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white font-mono outline-none"
+                              className="w-24 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:border-blue-600"
                             />
                             <button
                               type="button"
                               onClick={() => setFeeComponents(feeComponents.filter((_, i) => i !== idx))}
-                              className="text-red-400 text-xs px-2"
+                              className="text-rose-600 hover:text-rose-800 text-xs font-bold px-2"
                             >
                               ✕
                             </button>
@@ -4044,16 +3827,16 @@ export default function SchoolDashboardPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                     >
                       {loading ? "Creating..." : "Save Fee Structure"}
                     </button>
                   </form>
                 )}
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                       <tr>
                         <th className="p-3.5">Structure Name</th>
                         <th className="p-3.5">Class Grade</th>
@@ -4062,17 +3845,17 @@ export default function SchoolDashboardPage() {
                         <th className="p-3.5 text-right">Batch Invoicing</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                       {feeStructures.map((f) => (
-                        <tr key={f.id} className="hover:bg-slate-800/30 transition">
-                          <td className="p-3.5 font-bold text-white">{f.name}</td>
-                          <td className="p-3.5">{f.classGrade?.name || "Class 6"}</td>
-                          <td className="p-3.5 font-mono text-emerald-400">{f.frequency || "QUARTERLY"}</td>
-                          <td className="p-3.5 font-mono font-bold text-white">₹{f.totalAmount}</td>
+                        <tr key={f.id} className="hover:bg-blue-50/50 transition">
+                          <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">{f.name}</td>
+                          <td className="p-3.5 font-bold text-slate-800">{f.classGrade?.name || "Class 6"}</td>
+                          <td className="p-3.5 font-mono font-bold text-blue-700">{f.frequency || "QUARTERLY"}</td>
+                          <td className="p-3.5 font-mono font-black text-slate-950 text-sm">₹{f.totalAmount}</td>
                           <td className="p-3.5 text-right">
                             <button
                               onClick={() => handleBatchIssueClassInvoices(f.id)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm"
                             >
                               ⚡ Issue Invoices to Class
                             </button>
@@ -4092,34 +3875,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "exams" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>📊</span> Academic Examinations & CBSE Report Cards
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Schedule term exams, record Theory & Practical marks, and print official report cards.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setExamSubTab("report_cards")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     examSubTab === "report_cards"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   📜 Student Report Cards Directory
                 </button>
                 <button
                   onClick={() => setExamSubTab("marks")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     examSubTab === "marks"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   📝 Record Subject Marks & Schedule Exam
@@ -4129,9 +3912,9 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 1: Report cards list */}
             {examSubTab === "report_cards" && (
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                  <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                     <tr>
                       <th className="p-3.5">Student</th>
                       <th className="p-3.5">Admission No</th>
@@ -4139,27 +3922,39 @@ export default function SchoolDashboardPage() {
                       <th className="p-3.5 text-right">Generate Report Card</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100 text-slate-800">
                     {studentList.map((st) => (
-                      <tr key={st.id} className="hover:bg-slate-800/30 transition">
-                        <td className="p-3.5 font-semibold text-white">
+                      <tr key={st.id} className="hover:bg-blue-50/50 transition">
+                        <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">
                           {st.firstName} {st.lastName}
                         </td>
-                        <td className="p-3.5 font-mono text-slate-400">{st.admissionNumber}</td>
-                        <td className="p-3.5">{st.enrollments?.[0]?.section?.classGrade?.name || "Class 6"}</td>
-                        <td className="p-3.5 text-right space-x-2">
-                          <button
-                            onClick={() => handleFetchReportCard(st.enrollments?.[0]?.id)}
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition inline-flex items-center gap-1"
-                          >
-                            <span>🖨️</span> Term Card
-                          </button>
-                          <button
-                            onClick={() => handleFetchAggregateReportCard(st.enrollments?.[0]?.id)}
-                            className="px-2.5 py-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 text-[11px] font-bold transition inline-flex items-center gap-1"
-                          >
-                            <span>📊</span> Cumulative Annual Card
-                          </button>
+                        <td className="p-3.5">
+                          <span className="font-mono font-black text-xs px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-300 inline-block shadow-2xs">
+                            {st.admissionNumber}
+                          </span>
+                        </td>
+                        <td className="p-3.5">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-indigo-100 text-indigo-900 border border-indigo-200 font-mono inline-block shadow-2xs">
+                            {st.enrollments?.[0]?.section?.classGrade?.name || "Class 6"}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleFetchReportCard(st.enrollments?.[0]?.id)}
+                              title="Print Term Report Card"
+                              className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                            >
+                              🖨️
+                            </button>
+                            <button
+                              onClick={() => handleFetchAggregateReportCard(st.enrollments?.[0]?.id)}
+                              title="View Cumulative Annual Report Card"
+                              className="w-8 h-8 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                            >
+                              📊
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -4173,36 +3968,36 @@ export default function SchoolDashboardPage() {
               <div className="space-y-6">
                 {/* Schedule Exam Term Form */}
                 {currentUser.role === "SCHOOL_ADMIN" && (
-                  <form onSubmit={handleCreateExam} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                  <form onSubmit={handleCreateExam} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                       + Schedule Examination Term
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                       <div className="sm:col-span-2">
-                        <label className="block text-[11px] text-slate-400 mb-1">Term Name</label>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Term Name</label>
                         <input
                           type="text"
                           required
                           value={newExamName}
                           onChange={(e) => setNewExamName(e.target.value)}
                           placeholder="e.g. Unit Test 1, Half-Yearly Exam, Annual Exam"
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-400 mb-1">Start Date</label>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Start Date</label>
                         <input
                           type="date"
                           value={newExamStartDate}
                           onChange={(e) => setNewExamStartDate(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                         />
                       </div>
                       <div>
                         <button
                           type="submit"
                           disabled={loading}
-                          className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                         >
                           Create Term
                         </button>
@@ -4212,20 +4007,20 @@ export default function SchoolDashboardPage() {
                 )}
 
                 {/* Batch 6-Subject Marks Entry Form with Live Percentage Calculator */}
-                <form onSubmit={handleRecordBatchMarks} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <form onSubmit={handleRecordBatchMarks} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
                     <div>
-                      <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                      <h3 className="text-sm font-extrabold text-slate-950 flex items-center gap-2">
                         <span>📝</span> Batch 6-Subject Academic Marks Entry
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">
                         Key in marks across all 6 core subjects with automatic real-time percentage and grade computation.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-slate-400">Authority Scope:</span>
-                      <span className="font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+                      <span className="text-slate-700 font-semibold">Authority Scope:</span>
+                      <span className="font-mono px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 font-bold">
                         {teacherScope.canAccessAll ? "ALL SUBJECTS (ADMIN/HOD)" : teacherScope.isClassTeacher ? "CLASS TEACHER" : "SUBJECT TEACHER"}
                       </span>
                     </div>
@@ -4233,11 +4028,11 @@ export default function SchoolDashboardPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">Select Examination Term *</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Select Examination Term *</label>
                       <select
                         value={selectedExamId}
                         onChange={(e) => setSelectedExamId(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                       >
                         {examsList.map((ex) => (
                           <option key={ex.id} value={ex.id}>
@@ -4248,11 +4043,11 @@ export default function SchoolDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 mb-1">Select Enrolled Student *</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Select Enrolled Student *</label>
                       <select
                         value={markStudentEnrollmentId}
                         onChange={(e) => setMarkStudentEnrollmentId(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                       >
                         <option value="">— Select Student —</option>
                         {studentList.map((st) => (
@@ -4265,9 +4060,9 @@ export default function SchoolDashboardPage() {
                   </div>
 
                   {/* 6 Subjects Table */}
-                  <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3">#</th>
                           <th className="p-3">Subject</th>
@@ -4278,7 +4073,7 @@ export default function SchoolDashboardPage() {
                           <th className="p-3">Grade</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60">
+                      <tbody className="divide-y divide-slate-100">
                         {batchMarks.map((bm, idx) => {
                           const th = parseFloat(bm.theoryMarks) || 0;
                           const pr = parseFloat(bm.practicalMarks) || 0;
@@ -4288,9 +4083,9 @@ export default function SchoolDashboardPage() {
                           const subGrade = subPct >= 90 ? "A+" : subPct >= 80 ? "A" : subPct >= 70 ? "B+" : subPct >= 60 ? "B" : subPct >= 50 ? "C" : "D";
 
                           return (
-                            <tr key={idx} className="hover:bg-slate-800/20">
-                              <td className="p-3 font-mono text-slate-500">{idx + 1}</td>
-                              <td className="p-3 font-bold text-white">{bm.subjectName}</td>
+                            <tr key={idx} className="hover:bg-blue-50/40">
+                              <td className="p-3 font-mono text-slate-500 font-bold">{idx + 1}</td>
+                              <td className="p-3 font-extrabold text-slate-950">{bm.subjectName}</td>
                               <td className="p-3">
                                 <input
                                   type="number"
@@ -4302,7 +4097,7 @@ export default function SchoolDashboardPage() {
                                     next[idx].theoryMarks = e.target.value;
                                     setBatchMarks(next);
                                   }}
-                                  className="w-24 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono outline-none"
+                                  className="w-24 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                                 />
                               </td>
                               <td className="p-3">
@@ -4316,15 +4111,15 @@ export default function SchoolDashboardPage() {
                                     next[idx].practicalMarks = e.target.value;
                                     setBatchMarks(next);
                                   }}
-                                  className="w-24 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white font-mono outline-none"
+                                  className="w-24 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                                 />
                               </td>
-                              <td className="p-3 font-mono text-slate-400">{bm.maxMarks}</td>
-                              <td className="p-3 font-mono font-bold text-emerald-400 text-sm">
+                              <td className="p-3 font-mono text-slate-600 font-bold">{bm.maxMarks}</td>
+                              <td className="p-3 font-mono font-black text-emerald-700 text-sm">
                                 {subTotal}
                               </td>
                               <td className="p-3">
-                                <span className="px-2 py-0.5 rounded font-black font-mono text-xs bg-emerald-950 text-emerald-400 border border-emerald-800">
+                                <span className="px-2 py-0.5 rounded font-black font-mono text-xs bg-emerald-100 text-emerald-900 border border-emerald-300">
                                   {subGrade}
                                 </span>
                               </td>
@@ -4349,25 +4144,25 @@ export default function SchoolDashboardPage() {
                     const status = numPct >= 33 ? "PASSED & PROMOTED" : "NEEDS IMPROVEMENT";
 
                     return (
-                      <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-emerald-900/60 flex flex-wrap items-center justify-between gap-4">
+                      <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-6">
                           <div>
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Grand Total Marks</span>
-                            <span className="text-xl font-black text-white font-mono">
-                              {totalObt} <span className="text-xs text-slate-400 font-normal">/ {totalMax}</span>
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Grand Total Marks</span>
+                            <span className="text-xl font-black text-slate-950 font-mono">
+                              {totalObt} <span className="text-xs text-slate-500 font-normal">/ {totalMax}</span>
                             </span>
                           </div>
-                          <div className="border-l border-slate-800 pl-6">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Overall Percentage</span>
-                            <span className="text-2xl font-black text-emerald-400 font-mono">{pct}%</span>
+                          <div className="border-l border-slate-200 pl-6">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Overall Percentage</span>
+                            <span className="text-2xl font-black text-blue-700 font-mono">{pct}%</span>
                           </div>
-                          <div className="border-l border-slate-800 pl-6">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">CBSE Grade</span>
-                            <span className="text-xl font-black text-amber-400 font-mono">{finalG}</span>
+                          <div className="border-l border-slate-200 pl-6">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">CBSE Grade</span>
+                            <span className="text-xl font-black text-amber-600 font-mono">{finalG}</span>
                           </div>
-                          <div className="border-l border-slate-800 pl-6">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Scholastic Status</span>
-                            <span className={`text-xs font-black px-2 py-0.5 rounded ${numPct >= 33 ? "bg-emerald-950 text-emerald-300 border border-emerald-800" : "bg-red-950 text-red-300 border border-red-800"}`}>
+                          <div className="border-l border-slate-200 pl-6">
+                            <span className="text-[10px] text-slate-500 uppercase font-bold block">Scholastic Status</span>
+                            <span className={`text-xs font-black px-2 py-0.5 rounded border ${numPct >= 33 ? "bg-emerald-100 text-emerald-900 border-emerald-300" : "bg-rose-100 text-rose-900 border-rose-300"}`}>
                               {status}
                             </span>
                           </div>
@@ -4376,7 +4171,7 @@ export default function SchoolDashboardPage() {
                         <button
                           type="submit"
                           disabled={loading || !markStudentEnrollmentId}
-                          className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20"
+                          className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider transition shadow-sm"
                         >
                           {loading ? "Recording..." : "Save All 6 Subject Marks →"}
                         </button>
@@ -4394,34 +4189,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "subjects" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>📚</span> Class Curriculum Subjects & Faculty
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Assign specialized teachers to curriculum subjects for every class grade.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setSubjectSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     subjectSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   📚 View Curriculum ({subjectsList.length})
                 </button>
                 <button
                   onClick={() => setSubjectSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     subjectSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ➕ Add New Subject
@@ -4432,15 +4227,15 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: List with reassign */}
             {subjectSubTab === "list" && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-xs text-slate-400 font-bold">Select Class Grade:</span>
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                  <span className="text-xs font-bold text-slate-700">Select Class Grade:</span>
                   <select
                     value={subjectClassGrade}
                     onChange={(e) => {
                       setSubjectClassGrade(e.target.value);
                       fetchSubjects(e.target.value);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-bold outline-none focus:bg-white focus:border-blue-600"
                   >
                     {classesList.length > 0 ? (
                       classesList.map((c) => (
@@ -4456,9 +4251,9 @@ export default function SchoolDashboardPage() {
                   </select>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                       <tr>
                         <th className="p-3.5">Subject</th>
                         <th className="p-3.5">Board</th>
@@ -4466,63 +4261,65 @@ export default function SchoolDashboardPage() {
                         {currentUser.role === "SCHOOL_ADMIN" && <th className="p-3.5 text-right">Faculty & Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                       {subjectsList.map((sub) => {
                         const teacher = sub.teacher;
                         const prof = teacher?.staffProfile;
                         return (
-                          <tr key={sub.id} className="hover:bg-slate-800/30 transition">
-                            <td className="p-3.5 font-bold text-white">{sub.name}</td>
+                          <tr key={sub.id} className="hover:bg-blue-50/50 transition">
+                            <td className="p-3.5 font-extrabold text-slate-950 text-sm tracking-tight">{sub.name}</td>
                             <td className="p-3.5">
-                              <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-mono">
+                              <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200 text-[10px] font-mono font-bold">
                                 {sub.board || "CBSE"}
                               </span>
                             </td>
                             <td className="p-3.5">
                               {teacher ? (
                                 <div className="flex items-center gap-2">
-                                  <div className="h-7 w-7 rounded-full bg-slate-800 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                                  <div className="h-7 w-7 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center justify-center font-bold text-xs shrink-0">
                                     {(prof?.fullName || teacher.email).charAt(0).toUpperCase()}
                                   </div>
                                   <div>
-                                    <p className="font-bold text-white text-xs">{prof?.fullName || teacher.email}</p>
-                                    <p className="text-[10px] text-slate-400">{prof?.department || teacher.phone || "Faculty"}</p>
+                                    <p className="font-extrabold text-slate-950 text-xs">{prof?.fullName || teacher.email}</p>
+                                    <p className="text-[10px] text-slate-600 font-medium">{prof?.department || teacher.phone || "Faculty"}</p>
                                   </div>
                                 </div>
                               ) : (
-                                <span className="text-amber-400/80 italic text-[11px]">Unassigned</span>
+                                <span className="text-amber-700 font-bold italic text-[11px]">Unassigned</span>
                               )}
                             </td>
                             {currentUser.role === "SCHOOL_ADMIN" && (
-                              <td className="p-3.5 text-right space-x-2">
-                                <select
-                                  value={sub.teacherId || ""}
-                                  onChange={(e) => handleAssignSubjectTeacher(sub.id, e.target.value)}
-                                  className="px-2 py-1 rounded bg-slate-800 text-xs text-white border border-slate-700 outline-none"
-                                >
-                                  <option value="">— Unassign —</option>
-                                  {staffList
-                                    .filter((s) => ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(s.role))
-                                    .map((t) => (
-                                      <option key={t.id} value={t.id}>
-                                        {t.staffProfile?.fullName || t.email} ({t.role.replace("_", " ")})
-                                      </option>
-                                    ))}
-                                </select>
-                                <button
-                                  onClick={() => setEditSubjectModal(sub)}
-                                  title="Edit Subject"
-                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold text-xs transition inline-flex items-center gap-1"
-                                >
-                                  <span>✏️</span> <span className="hidden sm:inline">Edit</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteSubject(sub.id, sub.name)}
-                                  title="Delete Subject"
-                                  className="px-2 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
-                                >
-                                  🗑️
-                                </button>
+                              <td className="p-3.5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-2">
+                                  <select
+                                    value={sub.teacherId || ""}
+                                    onChange={(e) => handleAssignSubjectTeacher(sub.id, e.target.value)}
+                                    className="px-2.5 py-1 rounded-lg bg-slate-50 text-xs text-slate-950 font-semibold border border-slate-300 outline-none focus:bg-white focus:border-blue-600"
+                                  >
+                                    <option value="">— Unassign —</option>
+                                    {staffList
+                                      .filter((s) => ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(s.role))
+                                      .map((t) => (
+                                        <option key={t.id} value={t.id}>
+                                          {t.staffProfile?.fullName || t.email} ({t.role.replace("_", " ")})
+                                        </option>
+                                      ))}
+                                  </select>
+                                  <button
+                                    onClick={() => setEditSubjectModal(sub)}
+                                    title="Edit Subject"
+                                    className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteSubject(sub.id, sub.name)}
+                                    title="Delete Subject"
+                                    className="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
                               </td>
                             )}
                           </tr>
@@ -4536,17 +4333,17 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Create Subject */}
             {subjectSubTab === "create" && currentUser.role === "SCHOOL_ADMIN" && (
-              <form onSubmit={handleCreateSubject} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleCreateSubject} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                   + Add Subject to Curriculum
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Target Class Grade *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Target Class Grade *</label>
                     <select
                       value={subjectClassGrade}
                       onChange={(e) => setSubjectClassGrade(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       {classesList.length > 0 ? (
                         classesList.map((c) => (
@@ -4562,22 +4359,22 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Subject Name *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Subject Name *</label>
                     <input
                       type="text"
                       required
                       value={newSubjectName}
                       onChange={(e) => setNewSubjectName(e.target.value)}
                       placeholder="e.g. Sanskrit, Moral Science"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Curriculum Board</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Curriculum Board</label>
                     <select
                       value={newSubjectBoard}
                       onChange={(e) => setNewSubjectBoard(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       <option value="CBSE">CBSE</option>
                       <option value="STATE_BOARD">State Board</option>
@@ -4585,11 +4382,11 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Assign Teacher</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Assign Teacher</label>
                     <select
                       value={newSubjectTeacherId}
                       onChange={(e) => setNewSubjectTeacherId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       <option value="">— Select Teacher —</option>
                       {staffList.map((t) => (
@@ -4604,7 +4401,7 @@ export default function SchoolDashboardPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                 >
                   Save Subject to Curriculum
                 </button>
@@ -4618,33 +4415,33 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "timetable" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>🗓️</span> Weekly Class Timetable Builder
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Six-day schedule (Monday to Saturday, Periods 1 to 7) with room allocations.
                 </p>
               </div>
 
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setTimetableSubTab("grid")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     timetableSubTab === "grid"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   🗓️ Schedule Matrix Grid
                 </button>
                 <button
                   onClick={() => setTimetableSubTab("edit")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     timetableSubTab === "edit"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ✏️ Period Slot Configurator
@@ -4655,8 +4452,8 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Grid */}
             {timetableSubTab === "grid" && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-xs text-slate-400 font-bold">Select Class Grade:</span>
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                  <span className="text-xs font-bold text-slate-700">Select Class Grade:</span>
                   <select
                     value={timetableClassGrade}
                     onChange={(e) => {
@@ -4664,7 +4461,7 @@ export default function SchoolDashboardPage() {
                       fetchTimetable(e.target.value);
                       fetchSubjects(e.target.value);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-bold outline-none focus:bg-white focus:border-blue-600"
                   >
                     {classesList.length > 0 ? (
                       classesList.map((c) => (
@@ -4678,23 +4475,23 @@ export default function SchoolDashboardPage() {
                   </select>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs min-w-[800px]">
-                      <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+                      <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                         <tr>
-                          <th className="p-3 w-28 font-bold text-white">Day</th>
+                          <th className="p-3 w-28 font-extrabold text-slate-900">Day</th>
                           {[1, 2, 3, 4, 5, 6, 7].map((p) => (
-                            <th key={p} className="p-3 text-center border-l border-slate-800">
+                            <th key={p} className="p-3 text-center border-l border-slate-200 font-bold text-slate-800">
                               Period {p}
                             </th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800">
+                      <tbody className="divide-y divide-slate-100">
                         {["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"].map((day) => (
-                          <tr key={day} className="hover:bg-slate-800/20">
-                            <td className="p-3 font-bold text-emerald-400 bg-slate-950/40">{day}</td>
+                          <tr key={day} className="hover:bg-blue-50/30">
+                            <td className="p-3 font-extrabold text-blue-900 bg-slate-50">{day}</td>
                             {[1, 2, 3, 4, 5, 6, 7].map((pNum) => {
                               const entry = timetableEntries.find(
                                 (e) => e.dayOfWeek === day && e.periodNumber === pNum
@@ -4718,18 +4515,18 @@ export default function SchoolDashboardPage() {
                                     });
                                     setTimetableSubTab("edit");
                                   }}
-                                  className="p-2 border-l border-slate-800 cursor-pointer hover:bg-slate-800/60 transition"
+                                  className="p-2 border-l border-slate-100 cursor-pointer hover:bg-blue-50 transition"
                                 >
                                   {entry ? (
                                     <div className="space-y-0.5 text-center">
-                                      <p className="font-bold text-white text-[11px] truncate">{entry.subjectName}</p>
-                                      <p className="text-[10px] text-slate-400 truncate">{entry.teacherName}</p>
+                                      <p className="font-extrabold text-slate-950 text-[11px] truncate">{entry.subjectName}</p>
+                                      <p className="text-[10px] text-blue-700 font-bold truncate">{entry.teacherName}</p>
                                       <span className="text-[9px] text-slate-500 font-mono block">
                                         {entry.roomNumber || entry.startTime}
                                       </span>
                                     </div>
                                   ) : (
-                                    <div className="text-center text-slate-600 text-[10px] py-2">+ Add Slot</div>
+                                    <div className="text-center text-slate-400 hover:text-blue-600 text-[10px] py-2 font-medium">+ Add Slot</div>
                                   )}
                                 </td>
                               );
@@ -4745,17 +4542,17 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Slot Form */}
             {timetableSubTab === "edit" && (
-              <form onSubmit={handleSaveTimetableSlot} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 max-w-xl">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleSaveTimetableSlot} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 max-w-xl">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                   Configure Period Slot for {timetableClassGrade}
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Day of Week</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Day of Week</label>
                     <select
                       value={editSlotModal?.dayOfWeek || "MONDAY"}
                       onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), dayOfWeek: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       {["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"].map((d) => (
                         <option key={d} value={d}>
@@ -4765,13 +4562,13 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Period Number</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Period Number</label>
                     <select
                       value={editSlotModal?.periodNumber || 1}
                       onChange={(e) =>
                         setEditSlotModal({ ...(editSlotModal || {}), periodNumber: parseInt(e.target.value) })
                       }
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     >
                       {[1, 2, 3, 4, 5, 6, 7].map((p) => (
                         <option key={p} value={p}>
@@ -4783,12 +4580,12 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Curriculum Subject *</label>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Curriculum Subject *</label>
                   <select
                     required
                     value={editSlotModal?.subjectName || ""}
                     onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), subjectName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                   >
                     <option value="">— Select Configured Subject —</option>
                     {subjectsList.map((s) => (
@@ -4805,7 +4602,7 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Assigned Teacher (Faculty) *</label>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Assigned Teacher (Faculty) *</label>
                   <select
                     value={editSlotModal?.teacherUserId || ""}
                     onChange={(e) => {
@@ -4817,7 +4614,7 @@ export default function SchoolDashboardPage() {
                         teacherName: staffMember ? (staffMember.staffProfile?.fullName || staffMember.email?.split("@")[0] || "") : editSlotModal?.teacherName || "",
                       });
                     }}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                   >
                     <option value="">— Select Teacher from Staff —</option>
                     {staffList
@@ -4829,29 +4626,29 @@ export default function SchoolDashboardPage() {
                       ))}
                   </select>
                   {editSlotModal?.teacherName && (
-                    <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                      Faculty Name: <strong className="text-emerald-400">{editSlotModal.teacherName}</strong>
+                    <p className="text-[10px] text-slate-600 mt-1 font-mono">
+                      Faculty Name: <strong className="text-blue-700 font-bold">{editSlotModal.teacherName}</strong>
                     </p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Start Time</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Start Time</label>
                     <input
                       type="text"
                       value={editSlotModal?.startTime || "08:30 AM"}
                       onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), startTime: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">End Time</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">End Time</label>
                     <input
                       type="text"
                       value={editSlotModal?.endTime || "09:15 AM"}
                       onChange={(e) => setEditSlotModal({ ...(editSlotModal || {}), endTime: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
@@ -4859,7 +4656,7 @@ export default function SchoolDashboardPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                 >
                   Save Period Slot
                 </button>
@@ -4872,55 +4669,35 @@ export default function SchoolDashboardPage() {
         {/* SECTION 8: TRANSPORT */}
         {/* ======================================================================= */}
         {activeSection === "transport" && (
-          <div
-            className={`space-y-6 transition-all ${
-              previewTheme === "showcase" || previewTheme === "option3"
-                ? "bg-[#0B132B] text-slate-100 p-6 rounded-3xl border border-[#3A506B]/50 shadow-2xl"
-                : ""
-            }`}
-          >
-            {/* Visual Palette Preview Banner for Transport */}
-            {(previewTheme === "showcase" || previewTheme === "option3") && (
-              <div className="p-3 rounded-2xl bg-[#1C2541]/90 border border-[#3A506B] text-[#6FFFE9] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-lg shadow-[#0B132B]">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#48E5C2] animate-pulse shadow-[0_0_8px_#48E5C2]"></span>
-                  <span className="font-bold">Palette Option 3 Active: Sophisticated Midnight Navy</span>
-                  <span className="text-slate-300 hidden sm:inline">• Deep space navy, elevated indigo glass & mint cyan accents</span>
-                </div>
-                <span className="text-[10px] font-mono uppercase bg-[#3A506B]/50 text-[#6FFFE9] px-2 py-0.5 rounded font-black tracking-wider self-start sm:self-auto">
-                  Midnight Tech Dark
-                </span>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-950 flex items-center gap-2">
                   <span>🚌</span> School Transport & Bus Routes
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Manage school bus routes, drivers, timings, stops, and transport fee schedules.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setTransportSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     transportSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   🚌 View Bus Routes ({busRoutesList.length})
                 </button>
                 <button
                   onClick={() => setTransportSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     transportSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "text-slate-700 hover:text-slate-950 font-semibold"
                   }`}
                 >
                   ➕ Configure New Route
@@ -4936,36 +4713,32 @@ export default function SchoolDashboardPage() {
                   return (
                     <div
                       key={route.id}
-                      className={`p-5 rounded-2xl flex flex-col justify-between transition ${
-                        previewTheme === "showcase" || previewTheme === "option3"
-                          ? "bg-[#1C2541] border border-[#3A506B]/70 shadow-xl"
-                          : "bg-slate-900 border border-slate-800"
-                      }`}
+                      className="p-5 rounded-2xl flex flex-col justify-between transition bg-white border border-slate-200 shadow-sm"
                     >
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="px-2.5 py-0.5 rounded font-bold font-mono text-xs bg-emerald-500 text-slate-950">
+                          <span className="px-2.5 py-0.5 rounded font-black font-mono text-xs bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs">
                             {route.routeNumber}
                           </span>
-                          <span className="font-mono text-xs text-slate-400">
-                            Vehicle: <strong className="text-white">{route.vehicleNumber}</strong>
+                          <span className="font-mono text-xs text-slate-600">
+                            Vehicle: <strong className="text-slate-950 font-bold">{route.vehicleNumber}</strong>
                           </span>
                         </div>
-                        <h4 className="font-bold text-sm text-white">{route.routeName}</h4>
-                        <p className="text-xs text-slate-400 mt-1">
-                          Driver: <strong className="text-slate-200">{route.driverName}</strong> ({route.driverPhone})
+                        <h4 className="font-extrabold text-sm text-slate-950">{route.routeName}</h4>
+                        <p className="text-xs text-slate-700 mt-1 font-medium">
+                          Driver: <strong className="text-slate-950 font-bold">{route.driverName}</strong> (<span className="text-blue-700 font-bold font-mono">📞 {route.driverPhone}</span>)
                           {route.conductorName && (
-                            <> • Conductor: <strong className="text-slate-200">{route.conductorName}</strong> {route.conductorPhone ? `(${route.conductorPhone})` : ""}</>
+                            <> • Conductor: <strong className="text-slate-950 font-bold">{route.conductorName}</strong> {route.conductorPhone ? `(${route.conductorPhone})` : ""}</>
                           )}
                         </p>
 
-                        <div className="flex items-center gap-4 text-xs text-slate-300 mt-2 font-mono">
+                        <div className="flex items-center gap-4 text-xs text-slate-700 mt-2 font-mono font-semibold">
                           <span>Pickup: {route.morningPickupTime}</span>
                           <span>Drop: {route.eveningDropTime}</span>
-                          <span>Fee: ₹{route.monthlyFee}/mo</span>
+                          <span className="text-blue-800 font-bold">Fee: ₹{route.monthlyFee}/mo</span>
                         </div>
 
-                        <div className="mt-3 pt-3 border-t border-slate-800">
+                        <div className="mt-3 pt-3 border-t border-slate-100">
                           <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">
                             Stops ({stops.length})
                           </span>
@@ -4973,7 +4746,7 @@ export default function SchoolDashboardPage() {
                             {stops.map((st: any, idx: number) => (
                               <span
                                 key={idx}
-                                className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-300"
+                                className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] text-slate-800 font-medium"
                               >
                                 {st.name} {st.time ? `(${st.time})` : ""}
                               </span>
@@ -4983,18 +4756,18 @@ export default function SchoolDashboardPage() {
                       </div>
 
                       {currentUser.role === "SCHOOL_ADMIN" && (
-                        <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end gap-2">
+                        <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-1.5">
                           <button
                             onClick={() => setEditRouteModal(route)}
                             title="Edit Bus Route"
-                            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-xs transition inline-flex items-center gap-1"
+                            className="w-8 h-8 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
                           >
-                            <span>✏️</span> <span className="hidden sm:inline">Edit</span>
+                            ✏️
                           </button>
                           <button
                             onClick={() => handleDeleteBusRoute(route.id)}
                             title="Delete Bus Route"
-                            className="px-2.5 py-1 rounded bg-red-950/80 hover:bg-red-900 text-red-400 border border-red-800 font-semibold text-xs transition"
+                            className="w-8 h-8 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-sm font-bold flex items-center justify-center transition shadow-2xs"
                           >
                             🗑️
                           </button>
@@ -5008,50 +4781,50 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Create Route Form */}
             {transportSubTab === "create" && currentUser.role === "SCHOOL_ADMIN" && (
-              <form onSubmit={handleCreateBusRoute} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleCreateBusRoute} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                   + Configure New Bus Route & Assign Driver / Conductor
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Route Number *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Route Number *</label>
                     <input
                       type="text"
                       required
                       value={newRouteNumber}
                       onChange={(e) => setNewRouteNumber(e.target.value)}
                       placeholder="e.g. R-03"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-[11px] text-slate-400 mb-1">Route Name *</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Route Name *</label>
                     <input
                       type="text"
                       required
                       value={newRouteName}
                       onChange={(e) => setNewRouteName(e.target.value)}
                       placeholder="e.g. Semliya - Hatod - Badgonda Express"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Vehicle Reg Number</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Vehicle Reg Number</label>
                     <input
                       type="text"
                       value={newVehicleNumber}
                       onChange={(e) => setNewVehicleNumber(e.target.value)}
                       placeholder="MP-09-EF-9012"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
 
                 {/* Driver & Conductor Select from Staff */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
                   {/* Driver Section */}
                   <div className="space-y-2">
-                    <label className="block text-[11px] text-orange-400 font-bold">
+                    <label className="block text-[11px] text-blue-900 font-bold">
                       🚌 Select Driver from Staff
                     </label>
                     <select
@@ -5065,7 +4838,7 @@ export default function SchoolDashboardPage() {
                           setNewDriverPhone(staffMember.phone || "");
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                     >
                       <option value="">— Select Registered Driver / Staff —</option>
                       {staffList.map((s: any) => (
@@ -5077,25 +4850,25 @@ export default function SchoolDashboardPage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Driver Name *</label>
+                        <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Driver Name *</label>
                         <input
                           type="text"
                           required
                           value={newDriverName}
                           onChange={(e) => setNewDriverName(e.target.value)}
                           placeholder="Driver Name"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Driver Phone *</label>
+                        <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Driver Phone *</label>
                         <input
                           type="tel"
                           required
                           value={newDriverPhone}
                           onChange={(e) => setNewDriverPhone(e.target.value)}
                           placeholder="+91..."
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                         />
                       </div>
                     </div>
@@ -5103,7 +4876,7 @@ export default function SchoolDashboardPage() {
 
                   {/* Conductor Section */}
                   <div className="space-y-2">
-                    <label className="block text-[11px] text-amber-400 font-bold">
+                    <label className="block text-[11px] text-indigo-900 font-bold">
                       🎫 Select Conductor from Staff
                     </label>
                     <select
@@ -5117,7 +4890,7 @@ export default function SchoolDashboardPage() {
                           setNewConductorPhone(staffMember.phone || "");
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                     >
                       <option value="">— Select Registered Conductor / Staff —</option>
                       {staffList.map((s: any) => (
@@ -5129,23 +4902,23 @@ export default function SchoolDashboardPage() {
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Name</label>
+                        <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Conductor Name</label>
                         <input
                           type="text"
                           value={newConductorName}
                           onChange={(e) => setNewConductorName(e.target.value)}
                           placeholder="Conductor Name"
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Phone</label>
+                        <label className="text-[10px] text-slate-700 font-bold block mb-0.5">Conductor Phone</label>
                         <input
                           type="tel"
                           value={newConductorPhone}
                           onChange={(e) => setNewConductorPhone(e.target.value)}
                           placeholder="+91..."
-                          className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:border-blue-600"
                         />
                       </div>
                     </div>
@@ -5154,46 +4927,46 @@ export default function SchoolDashboardPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Pickup Time</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Pickup Time</label>
                     <input
                       type="text"
                       value={newPickupTime}
                       onChange={(e) => setNewPickupTime(e.target.value)}
                       placeholder="07:20 AM"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Drop Time</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Drop Time</label>
                     <input
                       type="text"
                       value={newDropTime}
                       onChange={(e) => setNewDropTime(e.target.value)}
                       placeholder="02:35 PM"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Monthly Bus Fee (₹)</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Monthly Bus Fee (₹)</label>
                     <input
                       type="number"
                       value={newMonthlyFee}
                       onChange={(e) => setNewMonthlyFee(e.target.value)}
                       placeholder="500"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-mono font-bold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-[11px] text-slate-400 mb-1">Stops & Times (comma-separated)</label>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Stops & Times (comma-separated)</label>
                     <input
                       type="text"
                       value={newStopsInput}
                       onChange={(e) => setNewStopsInput(e.target.value)}
                       placeholder="Stop 1 (07:25 AM), Stop 2 (07:45 AM)"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-950 font-semibold outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                 </div>
@@ -5201,7 +4974,7 @@ export default function SchoolDashboardPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm"
                 >
                   Register Bus Route
                 </button>
@@ -5215,34 +4988,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "notices" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                   <span>📢</span> Digital Notice Board & Circulars
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 font-medium mt-1">
                   Broadcast notices for examinations, sports events, holidays, and urgent circulars.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setNoticeSubTab("list")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     noticeSubTab === "list"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   📢 Active Circulars ({noticesList.length})
                 </button>
                 <button
                   onClick={() => setNoticeSubTab("create")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     noticeSubTab === "create"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   ➕ Broadcast New Notice
@@ -5254,57 +5027,57 @@ export default function SchoolDashboardPage() {
             {noticeSubTab === "list" && (
               <div className="space-y-3">
                 {noticesList.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500 text-xs bg-slate-900/40 rounded-2xl border border-slate-800">
+                  <div className="p-8 text-center text-slate-500 text-xs bg-white rounded-2xl border border-slate-200">
                     No active notices broadcasted yet.
                   </div>
                 ) : (
                   noticesList.map((n) => (
                     <div
                       key={n.id}
-                      className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start justify-between gap-4"
+                      className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start justify-between gap-4 hover:border-blue-300 transition"
                     >
                       <div className="space-y-1.5 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           {n.isPinned && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-slate-950">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
                               📌 PINNED
                             </span>
                           )}
                           <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            className={`px-2 py-0.5 rounded text-[10px] font-black ${
                               n.priority === "URGENT"
-                                ? "bg-red-500/20 text-red-400 border border-red-500/40"
+                                ? "bg-red-100 text-red-800 border border-red-300"
                                 : n.priority === "HIGH"
-                                ? "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                                : "bg-slate-800 text-slate-300 border border-slate-700"
+                                ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                : "bg-slate-100 text-slate-700 border border-slate-300"
                             }`}
                           >
                             {n.priority}
                           </span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300">
                             {n.category}
                           </span>
-                          <span className="text-[11px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-slate-500 font-mono font-semibold">
                             Audience: {n.targetAudience} • {new Date(n.publishedAt || n.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <h4 className="font-bold text-sm text-white">{n.title}</h4>
-                        <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{n.content}</p>
+                        <h4 className="font-extrabold text-sm text-slate-950">{n.title}</h4>
+                        <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line">{n.content}</p>
                       </div>
 
                       {currentUser.role === "SCHOOL_ADMIN" && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
                           <button
                             onClick={() => setEditNoticeModal(n)}
                             title="Edit Notice"
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs transition font-semibold inline-flex items-center gap-1"
+                            className="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 transition flex items-center justify-center text-sm font-bold shadow-xs"
                           >
-                            <span>✏️</span> <span className="hidden sm:inline">Edit</span>
+                            ✏️
                           </button>
                           <button
                             onClick={() => handleDeleteNotice(n.id)}
                             title="Delete Notice"
-                            className="px-2.5 py-1 rounded-lg bg-red-950/80 hover:bg-red-900 text-red-400 text-xs transition font-semibold"
+                            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 transition flex items-center justify-center text-sm font-bold shadow-xs"
                           >
                             🗑️
                           </button>
@@ -5318,29 +5091,29 @@ export default function SchoolDashboardPage() {
 
             {/* Sub-tab 2: Create Notice Form */}
             {noticeSubTab === "create" && (
-              <form onSubmit={handleCreateNotice} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <form onSubmit={handleCreateNotice} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-blue-900">
                   + Publish New Announcement / Circular
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="md:col-span-2">
-                    <label className="block text-[11px] text-slate-400 mb-1">Notice Title *</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Notice Title *</label>
                     <input
                       type="text"
                       required
                       value={newNoticeTitle}
                       onChange={(e) => setNewNoticeTitle(e.target.value)}
                       placeholder="e.g. Dussehra & Diwali Autumn Break Schedule 2026"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Category</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Category</label>
                     <select
                       value={newNoticeCategory}
                       onChange={(e) => setNewNoticeCategory(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-500"
                     >
                       <option value="GENERAL">General Notice</option>
                       <option value="ACADEMIC">Academic / Curriculum</option>
@@ -5350,11 +5123,11 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Priority Level</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Priority Level</label>
                     <select
                       value={newNoticePriority}
                       onChange={(e) => setNewNoticePriority(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-500"
                     >
                       <option value="NORMAL">Normal</option>
                       <option value="HIGH">High Priority</option>
@@ -5364,24 +5137,24 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Notice Content *</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Notice Content *</label>
                   <textarea
                     rows={3}
                     required
                     value={newNoticeContent}
                     onChange={(e) => setNewNoticeContent(e.target.value)}
                     placeholder="Details of instructions, timings, affected classes..."
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-bold">
                     <input
                       type="checkbox"
                       checked={newNoticeIsPinned}
                       onChange={(e) => setNewNoticeIsPinned(e.target.checked)}
-                      className="rounded border-slate-700 text-emerald-500"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span>📌 Pin to top alert banner</span>
                   </label>
@@ -5389,7 +5162,7 @@ export default function SchoolDashboardPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                   >
                     Broadcast Notice
                   </button>
@@ -5404,34 +5177,34 @@ export default function SchoolDashboardPage() {
         {/* ======================================================================= */}
         {activeSection === "website" && currentUser.role === "SCHOOL_ADMIN" && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                   <span>🌐</span> School Website, Facilities & Media
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 font-medium mt-1">
                   Manage the public landing page, campus infrastructure, photo albums, and video highlights.
                 </p>
               </div>
 
               {/* Two-tab switcher */}
-              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   onClick={() => setWebsiteSubTab("facilities")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     websiteSubTab === "facilities"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   🏛️ World-Class Facilities ({(landingConfig.facilities || []).length})
                 </button>
                 <button
                   onClick={() => setWebsiteSubTab("media")}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
                     websiteSubTab === "media"
-                      ? "bg-emerald-500 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   📸 Campus Info & Media Gallery
@@ -5442,13 +5215,13 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 1: Facilities */}
             {websiteSubTab === "facilities" && (
               <div className="space-y-6">
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Icon / Emoji</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Icon / Emoji</label>
                     <select
                       value={newFacilityIcon}
                       onChange={(e) => setNewFacilityIcon(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-sm text-slate-900 font-medium outline-none focus:border-blue-500"
                     >
                       <option value="🔬">🔬 Science Laboratory</option>
                       <option value="💻">💻 Smart AI Computer Lab</option>
@@ -5461,30 +5234,30 @@ export default function SchoolDashboardPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Facility Title</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Facility Title</label>
                     <input
                       type="text"
                       value={newFacilityName}
                       onChange={(e) => setNewFacilityName(e.target.value)}
                       placeholder="e.g. Modern Physics Lab"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Detailed Description</label>
+                    <label className="block text-[11px] text-slate-700 font-bold mb-1">Detailed Description</label>
                     <input
                       type="text"
                       value={newFacilityDesc}
                       onChange={(e) => setNewFacilityDesc(e.target.value)}
                       placeholder="Equipped with hands-on experiment stations..."
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <button
                       type="button"
                       onClick={handleAddFacility}
-                      className="w-full py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+                      className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                     >
                       + Add Facility
                     </button>
@@ -5496,20 +5269,21 @@ export default function SchoolDashboardPage() {
                   {(landingConfig.facilities || []).map((fac: any) => (
                     <div
                       key={fac.id}
-                      className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between group"
+                      className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-blue-300 transition"
                     >
                       <div className="flex items-start justify-between">
                         <div className="text-2xl mb-2">{fac.icon}</div>
                         <button
                           type="button"
                           onClick={() => handleDeleteFacility(fac.id)}
-                          className="text-red-400 text-xs opacity-0 group-hover:opacity-100 transition p-1"
+                          title="Delete Facility"
+                          className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs flex items-center justify-center transition shadow-xs"
                         >
-                          ✕
+                          🗑️
                         </button>
                       </div>
-                      <h4 className="font-bold text-xs text-white">{fac.name}</h4>
-                      <p className="text-[11px] text-slate-400 mt-1">{fac.description}</p>
+                      <h4 className="font-extrabold text-xs text-slate-950">{fac.name}</h4>
+                      <p className="text-[11px] text-slate-600 font-medium mt-1">{fac.description}</p>
                     </div>
                   ))}
                 </div>
@@ -5518,7 +5292,7 @@ export default function SchoolDashboardPage() {
                   <button
                     onClick={handleSaveLanding}
                     disabled={loading}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                   >
                     Save All Facilities to Public Portal
                   </button>
@@ -5529,60 +5303,60 @@ export default function SchoolDashboardPage() {
             {/* Sub-tab 2: Campus Info & Media */}
             {websiteSubTab === "media" && (
               <div className="space-y-6">
-                <form onSubmit={handleSaveLanding} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                <form onSubmit={handleSaveLanding} className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-blue-900">
                     Campus Narrative & Contact
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Tagline</label>
+                      <label className="block text-xs text-slate-700 font-bold mb-1">Tagline</label>
                       <input
                         type="text"
                         value={landingConfig.tagline || ""}
                         onChange={(e) => setLandingConfig({ ...landingConfig, tagline: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1">Principal Name</label>
+                      <label className="block text-xs text-slate-700 font-bold mb-1">Principal Name</label>
                       <input
                         type="text"
                         value={landingConfig.principalName || ""}
                         onChange={(e) => setLandingConfig({ ...landingConfig, principalName: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">About Narrative</label>
+                    <label className="block text-xs text-slate-700 font-bold mb-1">About Narrative</label>
                     <textarea
                       rows={2}
                       value={landingConfig.aboutText || ""}
                       onChange={(e) => setLandingConfig({ ...landingConfig, aboutText: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                   >
                     Save Information
                   </button>
                 </form>
 
                 {/* Photo Gallery & Video Gallery sections */}
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-blue-900">
                     Photos of the Fun & Learning
                   </h3>
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="md:col-span-2">
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] text-slate-400">Photo URL</label>
-                        <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                        <label className="text-[11px] text-slate-700 font-bold">Photo URL</label>
+                        <label className="text-[10px] text-blue-700 hover:text-blue-800 cursor-pointer font-black flex items-center gap-1">
                           <span>📁 Upload Desktop</span>
                           <input
                             type="file"
@@ -5597,23 +5371,23 @@ export default function SchoolDashboardPage() {
                         value={newPhotoUrl}
                         onChange={(e) => setNewPhotoUrl(e.target.value)}
                         placeholder="https://... or uploaded file"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">Caption</label>
+                      <label className="block text-[11px] text-slate-700 font-bold mb-1">Caption</label>
                       <input
                         type="text"
                         value={newPhotoCaption}
                         onChange={(e) => setNewPhotoCaption(e.target.value)}
                         placeholder="Science Fair 2026"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleAddPhoto}
-                      className="py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+                      className="py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                     >
                       + Add Photo
                     </button>
@@ -5621,13 +5395,14 @@ export default function SchoolDashboardPage() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {(landingConfig.galleryImages || []).map((img: any) => (
-                      <div key={img.id} className="relative group rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                      <div key={img.id} className="relative group rounded-xl overflow-hidden bg-white border border-slate-200 shadow-xs">
                         <img src={img.url} alt="" className="w-full aspect-[4/3] object-cover" />
-                        <div className="p-2 text-[10px] truncate">{img.caption}</div>
+                        <div className="p-2 text-[10px] truncate text-slate-700 font-bold">{img.caption}</div>
                         <button
                           type="button"
                           onClick={() => handleDeletePhoto(img.id)}
-                          className="absolute top-2 right-2 h-5 w-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                          title="Delete Photo"
+                          className="absolute top-2 right-2 h-6 w-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow"
                         >
                           ✕
                         </button>
@@ -5636,25 +5411,25 @@ export default function SchoolDashboardPage() {
                   </div>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-blue-900">
                     Video Showcase Embeds & Desktop Videos
                   </h3>
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                     <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">Title</label>
+                      <label className="block text-[11px] text-slate-700 font-bold mb-1">Title</label>
                       <input
                         type="text"
                         value={newVideoTitle}
                         onChange={(e) => setNewVideoTitle(e.target.value)}
                         placeholder="Cultural Fest 2026"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="text-[11px] text-slate-400">Video File / URL</label>
-                        <label className="text-[10px] text-emerald-400 hover:text-emerald-300 cursor-pointer font-bold flex items-center gap-1">
+                        <label className="text-[11px] text-slate-700 font-bold">Video File / URL</label>
+                        <label className="text-[10px] text-blue-700 hover:text-blue-800 cursor-pointer font-black flex items-center gap-1">
                           <span>📁 Upload Video</span>
                           <input
                             type="file"
@@ -5669,13 +5444,13 @@ export default function SchoolDashboardPage() {
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                         placeholder="https://www.youtube.com/... or uploaded file"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-500"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleAddVideo}
-                      className="py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+                      className="py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition shadow-sm"
                     >
                       + Add Video
                     </button>
@@ -5683,18 +5458,19 @@ export default function SchoolDashboardPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {(landingConfig.videoGallery || []).map((vid: any) => (
-                      <div key={vid.id} className="rounded-xl overflow-hidden bg-slate-950 border border-slate-800 p-2">
-                        <div className="aspect-video w-full">
+                      <div key={vid.id} className="rounded-xl overflow-hidden bg-white border border-slate-200 shadow-xs p-2">
+                        <div className="aspect-video w-full rounded-lg overflow-hidden">
                           <iframe src={vid.videoUrl} title="" className="w-full h-full border-0"></iframe>
                         </div>
                         <div className="flex items-center justify-between pt-2 text-xs">
-                          <span className="font-bold truncate">{vid.title}</span>
+                          <span className="font-extrabold truncate text-slate-950">{vid.title}</span>
                           <button
                             type="button"
                             onClick={() => handleDeleteVideo(vid.id)}
-                            className="text-red-400 hover:text-red-300 text-[11px]"
+                            title="Delete Video"
+                            className="w-6 h-6 rounded bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-xs flex items-center justify-center transition"
                           >
-                            Delete
+                            🗑️
                           </button>
                         </div>
                       </div>
@@ -5712,20 +5488,20 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {editModalStudent && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setEditModalStudent(null)}
         >
           <div
-            className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4"
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-4 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-sm text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900">
                 Edit Student Record: {editModalStudent.admissionNumber}
               </h3>
               <button
                 onClick={() => setEditModalStudent(null)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕ Close
               </button>
@@ -5734,55 +5510,55 @@ export default function SchoolDashboardPage() {
             <form onSubmit={handleUpdateStudent} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">First Name</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">First Name</label>
                   <input
                     type="text"
                     required
                     value={editModalStudent.firstName}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, firstName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Last Name</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Last Name</label>
                   <input
                     type="text"
                     required
                     value={editModalStudent.lastName}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, lastName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Parent Phone</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Parent Phone</label>
                   <input
                     type="tel"
                     value={editModalStudent.parentPhone || ""}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, parentPhone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Father's Name</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Father's Name</label>
                   <input
                     type="text"
                     value={editModalStudent.fatherName || ""}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, fatherName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Class Grade</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Class Grade</label>
                   <select
                     value={editModalStudent.classGradeName || "Class 6"}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, classGradeName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   >
                     {classesList.length > 0 ? (
                       classesList.map((c) => (
@@ -5796,11 +5572,11 @@ export default function SchoolDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Section</label>
+                  <label className="block text-[11px] text-slate-700 font-bold mb-1">Section</label>
                   <select
                     value={editModalStudent.sectionName || "A"}
                     onChange={(e) => setEditModalStudent({ ...editModalStudent, sectionName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   >
                     {["A", "B", "C", "D"].map((s) => (
                       <option key={s} value={s}>
@@ -5812,12 +5588,12 @@ export default function SchoolDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Village & Address</label>
+                <label className="block text-[11px] text-slate-700 font-bold mb-1">Village & Address</label>
                 <input
                   type="text"
                   value={editModalStudent.addressText || ""}
                   onChange={(e) => setEditModalStudent({ ...editModalStudent, addressText: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
 
@@ -5825,14 +5601,14 @@ export default function SchoolDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalStudent(null)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   Save Changes
                 </button>
@@ -5847,16 +5623,16 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {profileModalStudent && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setProfileModalStudent(null)}
         >
           <div
-            className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4"
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-4 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 text-lg">
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-200 overflow-hidden flex items-center justify-center font-black text-blue-700 text-lg">
                   {profileModalStudent.avatarUrl ? (
                     <img src={profileModalStudent.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -5864,10 +5640,10 @@ export default function SchoolDashboardPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-white">
+                  <h3 className="font-extrabold text-base text-slate-950">
                     {profileModalStudent.firstName} {profileModalStudent.lastName}
                   </h3>
-                  <p className="text-xs font-mono text-emerald-400">{profileModalStudent.admissionNumber}</p>
+                  <p className="text-xs font-mono font-bold text-blue-700">{profileModalStudent.admissionNumber}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -5877,13 +5653,13 @@ export default function SchoolDashboardPage() {
                     setProfileModalStudent(null);
                     setViewIdCardStudent(st);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-800 hover:bg-emerald-900 text-xs font-bold inline-flex items-center gap-1 transition"
+                  className="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-xs font-bold inline-flex items-center gap-1 transition"
                 >
                   🪪 Print ID Card
                 </button>
                 <button
                   onClick={() => setProfileModalStudent(null)}
-                  className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+                  className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
                 >
                   ✕ Close
                 </button>
@@ -5891,44 +5667,44 @@ export default function SchoolDashboardPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Class & Section</span>
-                <span className="font-semibold text-white">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Class & Section</span>
+                <span className="font-bold text-slate-900">
                   {profileModalStudent.enrollments?.[0]?.section?.classGrade?.name || "Class 6"} - Section{" "}
                   {profileModalStudent.enrollments?.[0]?.section?.name || "A"}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Aadhar Number</span>
-                <span className="font-semibold text-white font-mono">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Aadhar Number</span>
+                <span className="font-bold text-slate-900 font-mono">
                   {profileModalStudent.aadharNumber || "Not Provided"}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Father's Name</span>
-                <span className="font-semibold text-white">{profileModalStudent.fatherName || "—"}</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Father's Name</span>
+                <span className="font-bold text-slate-900">{profileModalStudent.fatherName || "—"}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Mother's Name</span>
-                <span className="font-semibold text-white">{profileModalStudent.motherName || "—"}</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Mother's Name</span>
+                <span className="font-bold text-slate-900">{profileModalStudent.motherName || "—"}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Parent Contact</span>
-                <span className="font-semibold text-white font-mono">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Parent Contact</span>
+                <span className="font-bold text-blue-700 font-mono">
                   {profileModalStudent.parentPhone || profileModalStudent.user?.phone || "—"}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Category</span>
-                <span className="font-semibold text-white">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Category</span>
+                <span className="font-bold text-slate-900">
                   {profileModalStudent.category || "GENERAL"} ({profileModalStudent.bloodGroup || "O+"})
                 </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-              <span className="text-[10px] text-slate-500 uppercase font-bold block">Village & Address</span>
-              <p className="text-white mt-1">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="text-[10px] text-slate-500 uppercase font-black block">Village & Address</span>
+              <p className="text-slate-800 font-medium mt-1">
                 {profileModalStudent.villageCity ? `${profileModalStudent.villageCity}, ` : ""}
                 {profileModalStudent.addressText || "Campus Area"}
                 {profileModalStudent.pincode ? ` - ${profileModalStudent.pincode}` : ""}
@@ -5943,16 +5719,16 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {profileModalStaff && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setProfileModalStaff(null)}
         >
           <div
-            className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl p-6 space-y-4"
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-4 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-emerald-400 text-lg">
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-200 overflow-hidden flex items-center justify-center font-black text-blue-700 text-lg">
                   {profileModalStaff.staffProfile?.avatarUrl ? (
                     <img src={profileModalStaff.staffProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -5960,10 +5736,10 @@ export default function SchoolDashboardPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-white">
+                  <h3 className="font-extrabold text-base text-slate-950">
                     {profileModalStaff.staffProfile?.fullName || profileModalStaff.email?.split("@")[0]}
                   </h3>
-                  <p className="text-xs text-emerald-400">
+                  <p className="text-xs font-bold text-blue-700">
                     {profileModalStaff.staffProfile?.designation || profileModalStaff.role}
                   </p>
                 </div>
@@ -5975,13 +5751,13 @@ export default function SchoolDashboardPage() {
                     setProfileModalStaff(null);
                     handleOpenAssignModal(st);
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800 hover:bg-indigo-900 text-xs font-bold inline-flex items-center gap-1 transition"
+                  className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 text-xs font-bold inline-flex items-center gap-1 transition"
                 >
                   🎯 Workload & Role
                 </button>
                 <button
                   onClick={() => setProfileModalStaff(null)}
-                  className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"
+                  className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
                 >
                   ✕ Close
                 </button>
@@ -5989,36 +5765,36 @@ export default function SchoolDashboardPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Department</span>
-                <span className="font-semibold text-white">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Department</span>
+                <span className="font-bold text-slate-900">
                   {profileModalStaff.staffProfile?.department || "General"}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Qualification</span>
-                <span className="font-semibold text-white">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Qualification</span>
+                <span className="font-bold text-slate-900">
                   {profileModalStaff.staffProfile?.qualification || "Faculty Degree"}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Email & Phone</span>
-                <span className="font-semibold text-white font-mono block">{profileModalStaff.email}</span>
-                <span className="text-slate-400 font-mono">{profileModalStaff.phone || "—"}</span>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Email & Phone</span>
+                <span className="font-bold text-slate-900 font-mono block">{profileModalStaff.email}</span>
+                <span className="text-blue-700 font-mono font-bold">{profileModalStaff.phone || "—"}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-500 uppercase font-bold block">Aadhar & Experience</span>
-                <span className="font-semibold text-white font-mono block">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-black block">Aadhar & Experience</span>
+                <span className="font-bold text-slate-900 font-mono block">
                   {profileModalStaff.staffProfile?.aadharNumber || "—"}
                 </span>
-                <span className="text-slate-400">
+                <span className="text-slate-600 font-medium">
                   {profileModalStaff.staffProfile?.experienceYears || 0} Years Experience
                 </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Escalate / Switch Role:</span>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700">Escalate / Switch Role:</span>
               <div className="flex gap-1.5">
                 {["TEACHER", "ACCOUNTANT", "SCHOOL_ADMIN"].map((r) => (
                   <button
@@ -6027,10 +5803,10 @@ export default function SchoolDashboardPage() {
                       handleUpdateRole(profileModalStaff.id, r);
                       setProfileModalStaff(null);
                     }}
-                    className={`px-2.5 py-1 rounded text-[10px] font-bold transition ${
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition ${
                       profileModalStaff.role === r
-                        ? "bg-emerald-500 text-slate-950"
-                        : "bg-slate-800 text-slate-300 hover:text-white"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
                     }`}
                   >
                     {r}
@@ -6354,14 +6130,14 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {resetModalUser && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setResetModalUser(null)}
         >
           <div
-            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4"
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-bold text-sm text-white">
+            <h3 className="font-extrabold text-sm text-slate-900">
               Reset Password for {resetModalUser.email || resetModalUser.phone}
             </h3>
             <form onSubmit={handleAdminResetPassword} className="space-y-3">
@@ -6371,19 +6147,19 @@ export default function SchoolDashboardPage() {
                 placeholder="Enter new password (min 6 chars)"
                 value={overridePassword}
                 onChange={(e) => setOverridePassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
               />
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setResetModalUser(null)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   Set New Password
                 </button>
@@ -6398,27 +6174,27 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {editClassModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setEditClassModal(null)}
         >
           <div
-            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4"
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                 <span>🏛️</span> Edit Academic Class / Grade
               </h3>
               <button
                 onClick={() => setEditClassModal(null)}
-                className="text-slate-400 hover:text-white text-xs"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleUpdateClass} className="space-y-4">
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Class / Grade Name
                 </label>
                 <input
@@ -6427,11 +6203,11 @@ export default function SchoolDashboardPage() {
                   placeholder="e.g., Pre-KG, Nursery, LKG, UKG, Class 1..."
                   value={editClassModal.name || ""}
                   onChange={(e) => setEditClassModal({ ...editClassModal, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Numerical Order (0 for Pre-KG, 1 for Class 1, etc.)
                 </label>
                 <input
@@ -6439,21 +6215,21 @@ export default function SchoolDashboardPage() {
                   required
                   value={editClassModal.numericalOrder || 1}
                   onChange={(e) => setEditClassModal({ ...editClassModal, numericalOrder: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setEditClassModal(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Updating..." : "Save Changes"}
                 </button>
@@ -6468,27 +6244,27 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {editNoticeModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setEditNoticeModal(null)}
         >
           <div
-            className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4"
+            className="max-w-lg w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                 <span>📢</span> Edit Notice Circular
               </h3>
               <button
                 onClick={() => setEditNoticeModal(null)}
-                className="text-slate-400 hover:text-white text-xs"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleUpdateNotice} className="space-y-4">
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Circular Title
                 </label>
                 <input
@@ -6496,16 +6272,16 @@ export default function SchoolDashboardPage() {
                   required
                   value={editNoticeModal.title || ""}
                   onChange={(e) => setEditNoticeModal({ ...editNoticeModal, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Category</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Category</label>
                   <select
                     value={editNoticeModal.category || "GENERAL"}
                     onChange={(e) => setEditNoticeModal({ ...editNoticeModal, category: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                   >
                     <option value="GENERAL">General</option>
                     <option value="ACADEMIC">Academic</option>
@@ -6515,11 +6291,11 @@ export default function SchoolDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Priority</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Priority</label>
                   <select
                     value={editNoticeModal.priority || "NORMAL"}
                     onChange={(e) => setEditNoticeModal({ ...editNoticeModal, priority: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                   >
                     <option value="NORMAL">Normal</option>
                     <option value="HIGH">High</option>
@@ -6527,11 +6303,11 @@ export default function SchoolDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Audience</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Audience</label>
                   <select
                     value={editNoticeModal.targetAudience || "ALL"}
                     onChange={(e) => setEditNoticeModal({ ...editNoticeModal, targetAudience: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                   >
                     <option value="ALL">All (Public)</option>
                     <option value="STUDENTS">Students & Parents</option>
@@ -6540,7 +6316,7 @@ export default function SchoolDashboardPage() {
                 </div>
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Circular Content & Details
                 </label>
                 <textarea
@@ -6548,7 +6324,7 @@ export default function SchoolDashboardPage() {
                   required
                   value={editNoticeModal.content || ""}
                   onChange={(e) => setEditNoticeModal({ ...editNoticeModal, content: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -6557,24 +6333,24 @@ export default function SchoolDashboardPage() {
                   id="editNoticePin"
                   checked={Boolean(editNoticeModal.isPinned)}
                   onChange={(e) => setEditNoticeModal({ ...editNoticeModal, isPinned: e.target.checked })}
-                  className="rounded border-slate-800 bg-slate-950 text-emerald-500"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <label htmlFor="editNoticePin" className="text-xs text-slate-300">
+                <label htmlFor="editNoticePin" className="text-xs text-slate-700 font-bold">
                   Pin to top of school notice board
                 </label>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setEditNoticeModal(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Updating..." : "Save Notice"}
                 </button>
@@ -6589,20 +6365,20 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {editRouteModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setEditRouteModal(null)}
         >
           <div
-            className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+            className="max-w-lg w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                 <span>🚌</span> Edit Bus Route Details
               </h3>
               <button
                 onClick={() => setEditRouteModal(null)}
-                className="text-slate-400 hover:text-white text-xs"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
@@ -6610,41 +6386,41 @@ export default function SchoolDashboardPage() {
             <form onSubmit={handleUpdateRoute} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] text-slate-400 font-medium block mb-1">Route Number</label>
+                  <label className="text-[11px] text-slate-700 font-bold block mb-1">Route Number</label>
                   <input
                     type="text"
                     required
                     value={editRouteModal.routeNumber || ""}
                     onChange={(e) => setEditRouteModal({ ...editRouteModal, routeNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400 font-medium block mb-1">Vehicle Plate No</label>
+                  <label className="text-[11px] text-slate-700 font-bold block mb-1">Vehicle Plate No</label>
                   <input
                     type="text"
                     required
                     value={editRouteModal.vehicleNumber || ""}
                     onChange={(e) => setEditRouteModal({ ...editRouteModal, vehicleNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">Route Corridor / Name</label>
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">Route Corridor / Name</label>
                 <input
                   type="text"
                   required
                   value={editRouteModal.routeName || ""}
                   onChange={(e) => setEditRouteModal({ ...editRouteModal, routeName: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
               {/* Driver & Conductor selection */}
-              <div className="space-y-3 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+              <div className="space-y-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
                 {/* Driver */}
                 <div className="space-y-2">
-                  <label className="block text-[11px] text-orange-400 font-bold">
+                  <label className="block text-[11px] text-blue-900 font-bold">
                     🚌 Driver Selection from Staff
                   </label>
                   <select
@@ -6659,7 +6435,7 @@ export default function SchoolDashboardPage() {
                         driverPhone: staffMember ? (staffMember.phone || "") : editRouteModal.driverPhone,
                       });
                     }}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                   >
                     <option value="">— Select Registered Driver / Staff (or Enter Below) —</option>
                     {staffList.map((s: any) => (
@@ -6670,31 +6446,31 @@ export default function SchoolDashboardPage() {
                   </select>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-400 block mb-0.5">Driver Name *</label>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Driver Name *</label>
                       <input
                         type="text"
                         required
                         value={editRouteModal.driverName || ""}
                         onChange={(e) => setEditRouteModal({ ...editRouteModal, driverName: e.target.value })}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 block mb-0.5">Driver Phone *</label>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Driver Phone *</label>
                       <input
                         type="text"
                         required
                         value={editRouteModal.driverPhone || ""}
                         onChange={(e) => setEditRouteModal({ ...editRouteModal, driverPhone: e.target.value })}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Conductor */}
-                <div className="space-y-2 pt-2 border-t border-slate-800/60">
-                  <label className="block text-[11px] text-amber-400 font-bold">
+                <div className="space-y-2 pt-2 border-t border-slate-200">
+                  <label className="block text-[11px] text-blue-900 font-bold">
                     🎫 Conductor Selection from Staff
                   </label>
                   <select
@@ -6709,7 +6485,7 @@ export default function SchoolDashboardPage() {
                         conductorPhone: staffMember ? (staffMember.phone || "") : editRouteModal.conductorPhone,
                       });
                     }}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                   >
                     <option value="">— Select Registered Conductor / Staff (or Enter Below) —</option>
                     {staffList.map((s: any) => (
@@ -6720,21 +6496,21 @@ export default function SchoolDashboardPage() {
                   </select>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Name</label>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Conductor Name</label>
                       <input
                         type="text"
                         value={editRouteModal.conductorName || ""}
                         onChange={(e) => setEditRouteModal({ ...editRouteModal, conductorName: e.target.value })}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 block mb-0.5">Conductor Phone</label>
+                      <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Conductor Phone</label>
                       <input
                         type="tel"
                         value={editRouteModal.conductorPhone || ""}
                         onChange={(e) => setEditRouteModal({ ...editRouteModal, conductorPhone: e.target.value })}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white outline-none"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                       />
                     </div>
                   </div>
@@ -6742,45 +6518,45 @@ export default function SchoolDashboardPage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Pickup Time</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Pickup Time</label>
                   <input
                     type="text"
                     value={editRouteModal.morningPickupTime || ""}
                     onChange={(e) => setEditRouteModal({ ...editRouteModal, morningPickupTime: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Drop Time</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Drop Time</label>
                   <input
                     type="text"
                     value={editRouteModal.eveningDropTime || ""}
                     onChange={(e) => setEditRouteModal({ ...editRouteModal, eveningDropTime: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-medium block mb-1">Monthly Fee (₹)</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">Monthly Fee (₹)</label>
                   <input
                     type="number"
                     value={editRouteModal.monthlyFee || ""}
                     onChange={(e) => setEditRouteModal({ ...editRouteModal, monthlyFee: e.target.value })}
-                    className="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                    className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-bold outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setEditRouteModal(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Updating..." : "Save Route"}
                 </button>
@@ -6795,27 +6571,27 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {editSubjectModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setEditSubjectModal(null)}
         >
           <div
-            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4"
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
                 <span>📚</span> Edit Academic Subject
               </h3>
               <button
                 onClick={() => setEditSubjectModal(null)}
-                className="text-slate-400 hover:text-white text-xs"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
             </div>
             <form onSubmit={handleUpdateSubject} className="space-y-4">
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Subject Title
                 </label>
                 <input
@@ -6823,17 +6599,17 @@ export default function SchoolDashboardPage() {
                   required
                   value={editSubjectModal.name || ""}
                   onChange={(e) => setEditSubjectModal({ ...editSubjectModal, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Curriculum / Board
                 </label>
                 <select
                   value={editSubjectModal.board || "CBSE"}
                   onChange={(e) => setEditSubjectModal({ ...editSubjectModal, board: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                 >
                   <option value="CBSE">CBSE (Central Board)</option>
                   <option value="ICSE">ICSE / CISCE</option>
@@ -6842,13 +6618,13 @@ export default function SchoolDashboardPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 font-medium block mb-1">
+                <label className="text-[11px] text-slate-700 font-bold block mb-1">
                   Assigned Faculty / Subject Teacher
                 </label>
                 <select
                   value={editSubjectModal.teacherId || ""}
                   onChange={(e) => setEditSubjectModal({ ...editSubjectModal, teacherId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:border-blue-600"
                 >
                   <option value="">— Unassigned Teacher —</option>
                   {staffList
@@ -6862,18 +6638,18 @@ export default function SchoolDashboardPage() {
                     ))}
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setEditSubjectModal(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Updating..." : "Save Subject"}
                 </button>
@@ -7186,33 +6962,33 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {assignModalStaff && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setAssignModalStaff(null)}
         >
           <div
-            className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-white"
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                   <span>🎯</span> Assign Role & Faculty Workload
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
                   Configure administrative authority, class teacher section, subject specialization, or transport driver routes.
                 </p>
               </div>
               <button
                 onClick={() => setAssignModalStaff(null)}
-                className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-slate-800"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
             </div>
 
             {/* Profile Overview Card */}
-            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-emerald-400 text-lg shrink-0 overflow-hidden">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center font-black text-blue-700 text-lg shrink-0 overflow-hidden">
                 {assignModalStaff.staffProfile?.avatarUrl ? (
                   <img src={assignModalStaff.staffProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -7220,13 +6996,13 @@ export default function SchoolDashboardPage() {
                 )}
               </div>
               <div className="space-y-0.5">
-                <h4 className="font-bold text-sm text-white">
+                <h4 className="font-extrabold text-sm text-slate-950">
                   {assignModalStaff.staffProfile?.fullName || assignModalStaff.email?.split("@")[0]}
                 </h4>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-600 font-medium">
                   {assignModalStaff.staffProfile?.qualification || "Faculty"} • {assignModalStaff.staffProfile?.designation || assignModalStaff.role}
                 </p>
-                <p className="text-[10px] text-emerald-400 font-mono">
+                <p className="text-[10px] text-blue-700 font-mono font-bold">
                   {assignModalStaff.email} {assignModalStaff.phone ? `• ${assignModalStaff.phone}` : ""}
                 </p>
               </div>
@@ -7235,13 +7011,13 @@ export default function SchoolDashboardPage() {
             <form onSubmit={handleSaveStaffAssignments} className="space-y-4 text-xs">
               {/* 1. Role Selection */}
               <div>
-                <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                <label className="block text-[11px] text-slate-700 font-bold mb-1">
                   Primary Role & Authority *
                 </label>
                 <select
                   value={assignRole}
                   onChange={(e) => setAssignRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none focus:border-emerald-500 font-semibold"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 outline-none focus:border-blue-600 font-semibold"
                 >
                   <option value="PRINCIPAL">👑 Principal / Headmaster (Full Administrative Command)</option>
                   <option value="ADMIN">🛡️ School Admin / Co-Admin</option>
@@ -7255,17 +7031,17 @@ export default function SchoolDashboardPage() {
 
               {/* 2. Class Teacher Assignment */}
               {(assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                    <label className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
                       <span>🏛️</span> Assign as Class Teacher for Section:
                     </label>
-                    <span className="text-[10px] text-slate-500">Marks daily attendance & class reports</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Marks daily attendance & class reports</span>
                   </div>
                   <select
                     value={assignSectionId}
                     onChange={(e) => setAssignSectionId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   >
                     <option value="">— None / Not Heading a Class —</option>
                     {classesList.flatMap((cls: any) =>
@@ -7281,14 +7057,14 @@ export default function SchoolDashboardPage() {
 
               {/* 3. Subject Teacher Assignment */}
               {(assignRole === "SUBJECT_TEACHER" || assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
+                    <label className="text-[11px] font-bold text-blue-900 flex items-center gap-1.5">
                       <span>📚</span> Assign Curriculum Subjects to Teach:
                     </label>
-                    <span className="text-[10px] text-slate-500">Selected: {assignSubjectIds.length} subjects</span>
+                    <span className="text-[10px] text-slate-600 font-bold">Selected: {assignSubjectIds.length} subjects</span>
                   </div>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-slate-900 border border-slate-800">
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 p-2 rounded-xl bg-white border border-slate-200">
                     {subjectsList.length === 0 ? (
                       <p className="text-[11px] text-slate-500 text-center py-2">
                         No subjects created yet. Add subjects in "Subjects & Teachers" tab.
@@ -7300,11 +7076,11 @@ export default function SchoolDashboardPage() {
                           <label
                             key={sub.id}
                             className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition ${
-                              checked ? "bg-sky-950/70 border border-sky-800/80 text-white" : "hover:bg-slate-800/50 text-slate-300"
+                              checked ? "bg-blue-50 border border-blue-200 text-blue-950 font-bold" : "hover:bg-slate-50 text-slate-700"
                             }`}
                           >
-                            <span className="font-semibold text-xs">
-                              {sub.name} <span className="text-[10px] text-slate-400 font-normal">({sub.classGrade?.name || subjectClassGrade})</span>
+                            <span className="text-xs">
+                              {sub.name} <span className="text-[10px] text-slate-500 font-normal">({sub.classGrade?.name || subjectClassGrade})</span>
                             </span>
                             <input
                               type="checkbox"
@@ -7316,7 +7092,7 @@ export default function SchoolDashboardPage() {
                                   setAssignSubjectIds([...assignSubjectIds, sub.id]);
                                 }
                               }}
-                              className="accent-sky-500 h-4 w-4"
+                              className="accent-blue-600 h-4 w-4 rounded"
                             />
                           </label>
                         );
@@ -7328,17 +7104,17 @@ export default function SchoolDashboardPage() {
 
               {/* 4. Bus Driver Route Assignment */}
               {(assignRole === "DRIVER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-orange-300 flex items-center gap-1.5">
+                    <label className="text-[11px] font-bold text-orange-900 flex items-center gap-1.5">
                       <span>🚌</span> Assign Bus Transport Route (Driver):
                     </label>
-                    <span className="text-[10px] text-slate-500">Route & vehicle assignment</span>
+                    <span className="text-[10px] text-slate-500 font-medium">Route & vehicle assignment</span>
                   </div>
                   <select
                     value={assignBusRouteId}
                     onChange={(e) => setAssignBusRouteId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white outline-none focus:border-orange-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                   >
                     <option value="">— None / No Route Assigned —</option>
                     {busRoutesList.map((r: any) => (
@@ -7350,18 +7126,18 @@ export default function SchoolDashboardPage() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setAssignModalStaff(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Saving Workload..." : "Save Role & Assignments"}
                 </button>
@@ -7376,25 +7152,25 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {classInvoiceGenModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setClassInvoiceGenModal(false)}
         >
           <div
-            className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-white"
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl my-8 text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                   <span>⚡</span> Generate Class Invoices
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
                   Batch issue fee vouchers for all enrolled students in a class grade.
                 </p>
               </div>
               <button
                 onClick={() => setClassInvoiceGenModal(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-slate-800"
+                className="text-slate-500 hover:text-slate-800 text-xs px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold"
               >
                 ✕
               </button>
@@ -7402,11 +7178,11 @@ export default function SchoolDashboardPage() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Target Academic Class Grade</label>
+                <label className="block text-[11px] text-slate-700 font-bold mb-1">Target Academic Class Grade</label>
                 <select
                   value={classInvoiceGenClass}
                   onChange={(e) => setClassInvoiceGenClass(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 >
                   <option value="">— Select Academic Class Grade —</option>
                   {classesList.length > 0 ? (
@@ -7424,11 +7200,11 @@ export default function SchoolDashboardPage() {
               </div>
 
               <div>
-                <label className="block text-[11px] text-slate-400 font-semibold mb-1">Applicable Fee Structure *</label>
+                <label className="block text-[11px] text-slate-700 font-bold mb-1">Applicable Fee Structure *</label>
                 <select
                   value={classInvoiceGenStructureId}
                   onChange={(e) => setClassInvoiceGenStructureId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
                 >
                   <option value="">— Select Fee Structure —</option>
                   {feeStructures.map((f: any) => (
@@ -7439,11 +7215,11 @@ export default function SchoolDashboardPage() {
                 </select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setClassInvoiceGenModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
@@ -7451,7 +7227,7 @@ export default function SchoolDashboardPage() {
                   type="button"
                   disabled={loading}
                   onClick={handleGenerateClassInvoices}
-                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-sm transition"
                 >
                   {loading ? "Generating..." : "⚡ Issue Invoices"}
                 </button>
@@ -7465,25 +7241,25 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {studentImportModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setStudentImportModalOpen(false)}
         >
           <div
-            className="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="max-w-4xl w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div>
-                <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                   <span>📥</span> Bulk Import Students from Excel / CSV
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Upload your school's student roster spreadsheet. Download our sample template for standard columns.
                 </p>
               </div>
               <button
                 onClick={() => setStudentImportModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-800"
+                className="text-slate-500 hover:text-slate-800 text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200"
               >
                 ✕
               </button>
@@ -7491,34 +7267,34 @@ export default function SchoolDashboardPage() {
 
             {/* Template Download & File Upload Box */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
                 <div>
-                  <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider block mb-1">
+                  <span className="text-[10px] text-blue-700 uppercase font-black tracking-wider block mb-1">
                     Step 1: Download Standard Format
                   </span>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-slate-600 font-medium">
                     Get the pre-formatted Excel template with sample student records, admission numbers, and grade columns.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleDownloadStudentTemplate}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-950 transition"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
                 >
                   <span>⬇️</span> Download Student_Template.xlsx
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
                 <div>
-                  <span className="text-[10px] text-blue-400 uppercase font-bold tracking-wider block mb-1">
+                  <span className="text-[10px] text-indigo-700 uppercase font-black tracking-wider block mb-1">
                     Step 2: Choose Excel / CSV File
                   </span>
-                  <p className="text-xs text-slate-300">
-                    Supports <span className="font-mono text-emerald-300">.xlsx</span>, <span className="font-mono text-emerald-300">.xls</span>, and <span className="font-mono text-emerald-300">.csv</span>.
+                  <p className="text-xs text-slate-600 font-medium">
+                    Supports <span className="font-mono text-blue-700 font-bold">.xlsx</span>, <span className="font-mono text-blue-700 font-bold">.xls</span>, and <span className="font-mono text-blue-700 font-bold">.csv</span>.
                   </p>
                 </div>
-                <label className="cursor-pointer px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-950 transition">
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
                   <span>📂</span> {studentImportFileName ? `Selected: ${studentImportFileName}` : "Browse & Upload Spreadsheet"}
                   <input
                     type="file"
@@ -7535,23 +7311,23 @@ export default function SchoolDashboardPage() {
               <div
                 className={`p-4 rounded-2xl border text-xs ${
                   studentImportResult.skippedCount > 0
-                    ? "bg-amber-950/40 border-amber-800/80 text-amber-200"
-                    : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
+                    ? "bg-amber-50 border-amber-200 text-amber-900"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-900"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-sm">
+                  <span className="font-extrabold text-sm">
                     {studentImportResult.message}
                   </span>
-                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black">
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-600 text-white font-black">
                     +{studentImportResult.importedCount} Imported
                   </span>
                 </div>
                 {studentImportResult.errors?.length > 0 && (
                   <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                    <span className="font-bold text-[11px] block text-amber-400">Skipped Rows:</span>
+                    <span className="font-bold text-[11px] block text-amber-900">Skipped Rows:</span>
                     {studentImportResult.errors.map((err: any, i: number) => (
-                      <div key={i} className="text-[11px] text-amber-300">
+                      <div key={i} className="text-[11px] text-amber-800">
                         • Row {err.row} ({err.admissionNumber || err.name || "Unknown"}): {err.reason}
                       </div>
                     ))}
@@ -7564,24 +7340,24 @@ export default function SchoolDashboardPage() {
             {studentImportRows.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-2">
+                  <span className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
                     <span>🔍</span> Spreadsheet Live Data Preview ({studentImportRows.length} rows detected)
                   </span>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold font-mono">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold font-mono">
                       ✓ {studentImportRows.filter((r) => r.isValid).length} Valid
                     </span>
                     {studentImportRows.some((r) => !r.isValid) && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono">
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 font-bold font-mono">
                         ✕ {studentImportRows.filter((r) => !r.isValid).length} Invalid
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="border border-slate-800 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
+                <div className="border border-slate-200 rounded-2xl overflow-hidden max-h-60 overflow-y-auto bg-white">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200 font-bold">
                       <tr>
                         <th className="p-2.5 w-12 font-mono">#</th>
                         <th className="p-2.5">Status</th>
@@ -7593,34 +7369,34 @@ export default function SchoolDashboardPage() {
                         <th className="p-2.5">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                    <tbody className="divide-y divide-slate-100 font-mono">
                       {studentImportRows.map((r) => (
                         <tr
                           key={r.rowNum}
-                          className={r.isValid ? "hover:bg-slate-950/40" : "bg-red-950/20 hover:bg-red-950/30"}
+                          className={r.isValid ? "hover:bg-slate-50" : "bg-red-50 hover:bg-red-100/60"}
                         >
                           <td className="p-2.5 text-slate-500">{r.rowNum}</td>
                           <td className="p-2.5">
                             {r.isValid ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                                 READY
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300">
                                 ERROR
                               </span>
                             )}
                           </td>
-                          <td className="p-2.5 text-white font-bold">{r.admissionNumber || "—"}</td>
-                          <td className="p-2.5 text-slate-200">
+                          <td className="p-2.5 text-slate-950 font-bold">{r.admissionNumber || "—"}</td>
+                          <td className="p-2.5 text-slate-900 font-bold">
                             {r.firstName} {r.lastName}
                           </td>
-                          <td className="p-2.5 text-slate-300">
+                          <td className="p-2.5 text-slate-700 font-medium">
                             {r.classGradeName} - {r.sectionName}
                           </td>
-                          <td className="p-2.5 text-slate-400">{r.rollNumber || "—"}</td>
-                          <td className="p-2.5 text-slate-400">{r.parentPhone || "—"}</td>
-                          <td className="p-2.5 text-[11px] text-amber-400">{r.reason || "—"}</td>
+                          <td className="p-2.5 text-slate-700">{r.rollNumber || "—"}</td>
+                          <td className="p-2.5 text-blue-700 font-bold">{r.parentPhone || "—"}</td>
+                          <td className="p-2.5 text-[11px] text-amber-800 font-medium">{r.reason || "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -7630,15 +7406,15 @@ export default function SchoolDashboardPage() {
             )}
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-              <span className="text-[11px] text-slate-400">
-                Default portal login password for students is <code className="text-emerald-400">student123</code>.
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+              <span className="text-[11px] text-slate-600 font-medium">
+                Default portal login password for students is <code className="text-blue-700 font-bold">student123</code>.
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setStudentImportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
@@ -7646,11 +7422,11 @@ export default function SchoolDashboardPage() {
                   type="button"
                   disabled={studentImportLoading || studentImportRows.filter((r) => r.isValid).length === 0}
                   onClick={handleExecuteStudentImport}
-                  className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950 transition flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black text-xs shadow-sm transition flex items-center gap-2"
                 >
                   {studentImportLoading ? (
                     <>
-                      <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Importing...</span>
                     </>
                   ) : (
@@ -7670,25 +7446,25 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {staffImportModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setStaffImportModalOpen(false)}
         >
           <div
-            className="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
+            className="max-w-4xl w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div>
-                <h3 className="font-extrabold text-base text-white flex items-center gap-2">
+                <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                   <span>📥</span> Bulk Import Faculty & Staff from Excel / CSV
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Onboard teachers, principals, drivers, and accounts staff in batch with automatic credentials generation.
                 </p>
               </div>
               <button
                 onClick={() => setStaffImportModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-800"
+                className="text-slate-500 hover:text-slate-800 text-xs font-bold px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200"
               >
                 ✕
               </button>
@@ -7696,34 +7472,34 @@ export default function SchoolDashboardPage() {
 
             {/* Template Download & File Upload Box */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
                 <div>
-                  <span className="text-[10px] text-amber-400 uppercase font-bold tracking-wider block mb-1">
+                  <span className="text-[10px] text-blue-700 uppercase font-black tracking-wider block mb-1">
                     Step 1: Download Staff Format
                   </span>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-slate-600 font-medium">
                     Get pre-formatted template with faculty roles, qualifications, and mobile columns.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleDownloadStaffTemplate}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-amber-950 transition"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
                 >
                   <span>⬇️</span> Download Staff_Template.xlsx
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
                 <div>
-                  <span className="text-[10px] text-indigo-400 uppercase font-bold tracking-wider block mb-1">
+                  <span className="text-[10px] text-indigo-700 uppercase font-black tracking-wider block mb-1">
                     Step 2: Choose Excel / CSV File
                   </span>
-                  <p className="text-xs text-slate-300">
-                    Supports <span className="font-mono text-amber-300">.xlsx</span>, <span className="font-mono text-amber-300">.xls</span>, and <span className="font-mono text-amber-300">.csv</span>.
+                  <p className="text-xs text-slate-600 font-medium">
+                    Supports <span className="font-mono text-blue-700 font-bold">.xlsx</span>, <span className="font-mono text-blue-700 font-bold">.xls</span>, and <span className="font-mono text-blue-700 font-bold">.csv</span>.
                   </p>
                 </div>
-                <label className="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-indigo-950 transition">
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition">
                   <span>📂</span> {staffImportFileName ? `Selected: ${staffImportFileName}` : "Browse & Upload Spreadsheet"}
                   <input
                     type="file"
@@ -7740,23 +7516,23 @@ export default function SchoolDashboardPage() {
               <div
                 className={`p-4 rounded-2xl border text-xs ${
                   staffImportResult.skippedCount > 0
-                    ? "bg-amber-950/40 border-amber-800/80 text-amber-200"
-                    : "bg-emerald-950/40 border-emerald-800/80 text-emerald-200"
+                    ? "bg-amber-50 border-amber-200 text-amber-900"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-900"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-sm">
+                  <span className="font-extrabold text-sm">
                     {staffImportResult.message}
                   </span>
-                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black">
+                  <span className="font-mono text-xs px-2.5 py-0.5 rounded bg-emerald-600 text-white font-black">
                     +{staffImportResult.importedCount} Imported
                   </span>
                 </div>
                 {staffImportResult.errors?.length > 0 && (
                   <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
-                    <span className="font-bold text-[11px] block text-amber-400">Skipped Rows:</span>
+                    <span className="font-bold text-[11px] block text-amber-900">Skipped Rows:</span>
                     {staffImportResult.errors.map((err: any, i: number) => (
-                      <div key={i} className="text-[11px] text-amber-300">
+                      <div key={i} className="text-[11px] text-amber-800">
                         • Row {err.row} ({err.email || err.name || "Unknown"}): {err.reason}
                       </div>
                     ))}
@@ -7769,24 +7545,24 @@ export default function SchoolDashboardPage() {
             {staffImportRows.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-2">
+                  <span className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
                     <span>🔍</span> Staff Spreadsheet Live Preview ({staffImportRows.length} rows detected)
                   </span>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold font-mono">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold font-mono">
                       ✓ {staffImportRows.filter((r) => r.isValid).length} Valid
                     </span>
                     {staffImportRows.some((r) => !r.isValid) && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono">
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 font-bold font-mono">
                         ✕ {staffImportRows.filter((r) => !r.isValid).length} Invalid
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="border border-slate-800 rounded-2xl overflow-hidden max-h-60 overflow-y-auto">
+                <div className="border border-slate-200 rounded-2xl overflow-hidden max-h-60 overflow-y-auto bg-white">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                    <thead className="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200 font-bold">
                       <tr>
                         <th className="p-2.5 w-12 font-mono">#</th>
                         <th className="p-2.5">Status</th>
@@ -7798,34 +7574,34 @@ export default function SchoolDashboardPage() {
                         <th className="p-2.5">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 font-mono">
+                    <tbody className="divide-y divide-slate-100 font-mono">
                       {staffImportRows.map((r) => (
                         <tr
                           key={r.rowNum}
-                          className={r.isValid ? "hover:bg-slate-950/40" : "bg-red-950/20 hover:bg-red-950/30"}
+                          className={r.isValid ? "hover:bg-slate-50" : "bg-red-50 hover:bg-red-100/60"}
                         >
                           <td className="p-2.5 text-slate-500">{r.rowNum}</td>
                           <td className="p-2.5">
                             {r.isValid ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                                 READY
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300">
                                 ERROR
                               </span>
                             )}
                           </td>
-                          <td className="p-2.5 text-white font-bold">{r.fullName}</td>
+                          <td className="p-2.5 text-slate-950 font-bold">{r.fullName}</td>
                           <td className="p-2.5">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300">
                               {r.role}
                             </span>
                           </td>
-                          <td className="p-2.5 text-slate-300">{r.designation || "—"}</td>
-                          <td className="p-2.5 text-slate-400">{r.email || "(auto-generate)"}</td>
-                          <td className="p-2.5 text-slate-400">{r.phone || "—"}</td>
-                          <td className="p-2.5 text-[11px] text-amber-400">{r.reason || "—"}</td>
+                          <td className="p-2.5 text-slate-700 font-medium">{r.designation || "—"}</td>
+                          <td className="p-2.5 text-blue-700 font-bold">{r.email || "(auto-generate)"}</td>
+                          <td className="p-2.5 text-slate-700">{r.phone || "—"}</td>
+                          <td className="p-2.5 text-[11px] text-amber-800 font-medium">{r.reason || "—"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -7835,15 +7611,15 @@ export default function SchoolDashboardPage() {
             )}
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-              <span className="text-[11px] text-slate-400">
-                Default portal login password for faculty is <code className="text-amber-400">Staff@123</code>.
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+              <span className="text-[11px] text-slate-600 font-medium">
+                Default portal login password for faculty is <code className="text-blue-700 font-bold">Staff@123</code>.
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setStaffImportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200"
                 >
                   Cancel
                 </button>
@@ -7851,11 +7627,11 @@ export default function SchoolDashboardPage() {
                   type="button"
                   disabled={staffImportLoading || staffImportRows.filter((r) => r.isValid).length === 0}
                   onClick={handleExecuteStaffImport}
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md shadow-amber-950 transition flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-black text-xs shadow-sm transition flex items-center gap-2"
                 >
                   {staffImportLoading ? (
                     <>
-                      <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Importing...</span>
                     </>
                   ) : (
