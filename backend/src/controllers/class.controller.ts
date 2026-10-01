@@ -107,6 +107,7 @@ export async function listClasses(req: Request, res: Response) {
         studentCount,
         sections: c.sections.map((s) => ({ id: s.id, name: s.name, studentCount: s._count.enrollments })),
         subjects: c.subjects.map((sub) => sub.name),
+        subjectList: c.subjects.map((sub) => ({ id: sub.id, name: sub.name })),
       };
     });
 

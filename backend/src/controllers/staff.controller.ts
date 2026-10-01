@@ -196,7 +196,8 @@ export async function createStaff(req: Request, res: Response) {
 export async function updateStaffRole(req: Request, res: Response) {
   try {
     const tenantId = req.user?.tenantId;
-    const { userId, newRole } = req.body;
+    const userId = req.body.userId || req.body.targetUserId;
+    const { newRole, roles } = req.body;
 
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
@@ -222,6 +223,7 @@ export async function updateStaffRole(req: Request, res: Response) {
 
     const user = await prisma.user.findFirst({
       where: { id: userId, tenantId },
+      include: { staffProfile: true },
     });
 
     if (!user) {
@@ -239,6 +241,13 @@ export async function updateStaffRole(req: Request, res: Response) {
         status: true,
       },
     });
+
+    if (user.staffProfile && Array.isArray(roles) && roles.length > 0) {
+      await prisma.staffProfile.update({
+        where: { id: user.staffProfile.id },
+        data: { designation: roles.join(', ') },
+      });
+    }
 
     return res.json({
       message: `Role for ${updated.email || updated.phone} updated to ${updated.role} successfully.`,

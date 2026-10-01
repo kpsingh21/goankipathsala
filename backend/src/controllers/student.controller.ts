@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { Gender, EnrollmentStatus } from '@prisma/client';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
- * List all students enrolled in the school
+ * List all students enrolled in the school (scoped to teacher's class if role is TEACHER)
  */
 export async function listStudents(req: Request, res: Response) {
   try {
@@ -13,8 +14,27 @@ export async function listStudents(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+
+    // For teacher: if not assigned to any class/section, return empty array immediately
+    if (!scope.hasAccessToAll && scope.classGradeIds.length === 0 && scope.sectionIds.length === 0) {
+      return res.json({ students: [] });
+    }
+
+    const whereClause: any = { tenantId };
+    if (!scope.hasAccessToAll) {
+      whereClause.enrollments = {
+        some: {
+          OR: [
+            ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+            ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+          ],
+        },
+      };
+    }
+
     const students = await prisma.studentProfile.findMany({
-      where: { tenantId },
+      where: whereClause,
       include: {
         user: {
           select: { email: true, phone: true, status: true },
@@ -33,7 +53,17 @@ export async function listStudents(req: Request, res: Response) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return res.json({ students });
+    const studentsWithDocs = students.map((s) => {
+      const addr = (s.address && typeof s.address === 'object') ? (s.address as any) : {};
+      return {
+        ...s,
+        aadharDoc: addr.aadharDoc || null,
+        tcDoc: addr.tcDoc || null,
+        marksheetDoc: addr.marksheetDoc || null,
+      };
+    });
+
+    return res.json({ students: studentsWithDocs });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
@@ -47,6 +77,11 @@ export async function registerStudent(req: Request, res: Response) {
     const tenantId = req.user?.tenantId || req.tenantId;
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    if (!scope.hasAccessToAll) {
+      return res.status(403).json({ error: 'Access denied: Teachers are not authorized to enroll new students.' });
     }
 
     const {
@@ -72,6 +107,9 @@ export async function registerStudent(req: Request, res: Response) {
       password,
       classGradeName,
       sectionName,
+      aadharDoc,
+      tcDoc,
+      marksheetDoc,
     } = req.body;
 
     if (!admissionNumber || !firstName || !lastName || !dob || !gender) {
@@ -131,6 +169,12 @@ export async function registerStudent(req: Request, res: Response) {
           villageCity: villageCity ? villageCity.trim() : null,
           pincode: pincode ? pincode.trim() : null,
           addressText: addressText ? addressText.trim() : null,
+          address: {
+            text: addressText ? addressText.trim() : null,
+            aadharDoc: aadharDoc ? aadharDoc.trim() : null,
+            tcDoc: tcDoc ? tcDoc.trim() : null,
+            marksheetDoc: marksheetDoc ? marksheetDoc.trim() : null,
+          },
           emergencyContact: emergencyContact || parentPhone || null,
         },
       });
@@ -215,6 +259,11 @@ export async function updateStudent(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    if (!scope.hasAccessToAll) {
+      return res.status(403).json({ error: 'Access denied: Teachers are not authorized to update student profiles.' });
+    }
+
     const student = await prisma.studentProfile.findFirst({
       where: { id, tenantId },
     });
@@ -241,9 +290,21 @@ export async function updateStudent(req: Request, res: Response) {
       addressText,
       classGradeName,
       sectionName,
+      aadharDoc,
+      tcDoc,
+      marksheetDoc,
     } = req.body;
 
     const updated = await prisma.$transaction(async (tx) => {
+      const existingAddress = (student.address && typeof student.address === 'object') ? (student.address as any) : {};
+      const newAddress = {
+        ...existingAddress,
+        ...(addressText !== undefined ? { text: addressText } : {}),
+        ...(aadharDoc !== undefined ? { aadharDoc } : {}),
+        ...(tcDoc !== undefined ? { tcDoc } : {}),
+        ...(marksheetDoc !== undefined ? { marksheetDoc } : {}),
+      };
+
       const prof = await tx.studentProfile.update({
         where: { id: student.id },
         data: {
@@ -262,6 +323,7 @@ export async function updateStudent(req: Request, res: Response) {
           villageCity: villageCity !== undefined ? villageCity : student.villageCity,
           pincode: pincode !== undefined ? pincode : student.pincode,
           addressText: addressText !== undefined ? addressText : student.addressText,
+          address: newAddress,
         },
       });
 
@@ -299,7 +361,15 @@ export async function updateStudent(req: Request, res: Response) {
       return prof;
     });
 
-    return res.json({ message: 'Student particulars updated successfully', student: updated });
+    const finalAddr = (updated.address && typeof updated.address === 'object') ? (updated.address as any) : {};
+    const studentWithDocs = {
+      ...updated,
+      aadharDoc: finalAddr.aadharDoc || null,
+      tcDoc: finalAddr.tcDoc || null,
+      marksheetDoc: finalAddr.marksheetDoc || null,
+    };
+
+    return res.json({ message: 'Student particulars updated successfully', student: studentWithDocs });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }

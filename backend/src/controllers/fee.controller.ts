@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { InvoiceStatus } from '@prisma/client';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
- * List all fee structures configured in the school
+ * List all fee structures configured in the school (scoped to teacher class if TEACHER)
  */
 export async function listFeeStructures(req: Request, res: Response) {
   try {
@@ -12,8 +13,19 @@ export async function listFeeStructures(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+
+    if (!scope.hasAccessToAll && scope.classGradeIds.length === 0) {
+      return res.json({ feeStructures: [] });
+    }
+
+    const whereClause: any = { tenantId };
+    if (!scope.hasAccessToAll) {
+      whereClause.classGradeId = { in: scope.classGradeIds };
+    }
+
     const feeStructures = await prisma.feeStructure.findMany({
-      where: { tenantId },
+      where: whereClause,
       include: {
         classGrade: { select: { id: true, name: true } },
         academicYear: { select: { id: true, name: true } },
@@ -214,8 +226,24 @@ export async function listInvoices(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+
+    if (!scope.hasAccessToAll && scope.classGradeIds.length === 0 && scope.sectionIds.length === 0) {
+      return res.json({ invoices: [] });
+    }
+
+    const whereClause: any = { tenantId };
+    if (!scope.hasAccessToAll) {
+      whereClause.enrollment = {
+        OR: [
+          ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+          ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+        ],
+      };
+    }
+
     const invoices = await prisma.feeInvoice.findMany({
-      where: { tenantId },
+      where: whereClause,
       include: {
         feeStructure: { select: { name: true, dueDate: true } },
         enrollment: {

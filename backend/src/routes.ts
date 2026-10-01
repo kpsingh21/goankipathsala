@@ -119,19 +119,19 @@ router.get(
 router.post(
   '/students',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
+  authorize(UserRole.SCHOOL_ADMIN),
   registerStudent
 );
 router.post(
   '/students/bulk-import',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
+  authorize(UserRole.SCHOOL_ADMIN),
   bulkImportStudents
 );
 router.put(
   '/students/:id',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
+  authorize(UserRole.SCHOOL_ADMIN),
   updateStudent
 );
 router.delete(
@@ -175,7 +175,7 @@ router.post(
 router.get(
   '/fees/structures',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.ACCOUNTANT),
+  authorize(UserRole.SCHOOL_ADMIN, UserRole.ACCOUNTANT, UserRole.TEACHER),
   listFeeStructures
 );
 router.post(
@@ -193,7 +193,7 @@ router.post(
 router.get(
   '/fees/invoices',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.ACCOUNTANT),
+  authorize(UserRole.SCHOOL_ADMIN, UserRole.ACCOUNTANT, UserRole.TEACHER),
   listInvoices
 );
 router.post(
@@ -328,6 +328,12 @@ router.delete(
   authorize(UserRole.SCHOOL_ADMIN),
   deleteSubject
 );
+router.delete(
+  '/subjects',
+  authenticate,
+  authorize(UserRole.SCHOOL_ADMIN),
+  deleteSubject
+);
 router.post(
   '/subjects/assign-teacher',
   authenticate,
@@ -346,7 +352,7 @@ router.get(
 router.post(
   '/timetable/entry',
   authenticate,
-  authorize(UserRole.SCHOOL_ADMIN, UserRole.TEACHER),
+  authorize(UserRole.SCHOOL_ADMIN),
   upsertTimetableEntry
 );
 

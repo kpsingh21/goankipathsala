@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
  * List all bus routes for the school
@@ -134,6 +135,67 @@ export async function listBusRoutes(req: Request, res: Response) {
       });
     }
 
+    if (req.user && req.user.userId) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        // Teacher role: filter routes to only those used by students of their assigned class/section
+        const enrolledStudents = await prisma.studentEnrollment.findMany({
+          where: {
+            tenantId,
+            status: 'ENROLLED',
+            ...(scope.sectionIds.length > 0
+              ? { sectionId: { in: scope.sectionIds } }
+              : scope.classGradeIds.length > 0
+              ? { section: { classGradeId: { in: scope.classGradeIds } } }
+              : { id: 'no-match' }),
+          },
+          include: {
+            student: {
+              select: {
+                villageCity: true,
+                addressText: true,
+                address: true,
+              },
+            },
+          },
+        });
+
+        const locations = new Set<string>();
+        for (const enr of enrolledStudents) {
+          if (enr.student.villageCity) {
+            locations.add(enr.student.villageCity.trim().toLowerCase());
+          }
+          if (enr.student.addressText) {
+            locations.add(enr.student.addressText.trim().toLowerCase());
+          }
+          const addr = enr.student.address as any;
+          if (addr && typeof addr === 'object') {
+            if (addr.village) locations.add(String(addr.village).trim().toLowerCase());
+            if (addr.busStop) locations.add(String(addr.busStop).trim().toLowerCase());
+            if (addr.busRoute) locations.add(String(addr.busRoute).trim().toLowerCase());
+            if (addr.routeNumber) locations.add(String(addr.routeNumber).trim().toLowerCase());
+          }
+        }
+
+        // Filter routes where any stop name or route name/number intersects with student's village / stops / route
+        routes = routes.filter((route) => {
+          const rName = (route.routeName || '').toLowerCase();
+          const rNum = (route.routeNumber || '').toLowerCase();
+          const stops = Array.isArray(route.stops) ? (route.stops as Array<{ name?: string }>) : [];
+          const stopNames = stops.map((s) => (s.name || '').toLowerCase());
+
+          for (const loc of locations) {
+            if (!loc || loc.length < 2) continue;
+            if (rNum === loc || rName.includes(loc) || loc.includes(rName)) return true;
+            for (const sn of stopNames) {
+              if (sn.includes(loc) || loc.includes(sn)) return true;
+            }
+          }
+          return false;
+        });
+      }
+    }
+
     return res.json({ routes });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
@@ -148,6 +210,13 @@ export async function createOrUpdateBusRoute(req: Request, res: Response) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to configure bus routes.' });
+      }
     }
 
     const {
@@ -300,6 +369,13 @@ export async function deleteBusRoute(req: Request, res: Response) {
       return res.status(400).json({ error: 'Route ID and tenant context required.' });
     }
 
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to delete bus routes.' });
+      }
+    }
+
     const route = await prisma.busRoute.findFirst({
       where: { id: id as string, tenantId },
     });
@@ -342,6 +418,13 @@ export async function updateBusRoute(req: Request, res: Response) {
 
     if (!tenantId || !id) {
       return res.status(400).json({ error: 'Route ID and tenant context required.' });
+    }
+
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to configure bus routes.' });
+      }
     }
 
     const existing = await prisma.busRoute.findFirst({

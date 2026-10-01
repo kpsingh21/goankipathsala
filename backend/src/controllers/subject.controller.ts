@@ -14,7 +14,7 @@ export async function listSubjects(req: Request, res: Response) {
     }
 
     const whereClause: any = { tenantId };
-    if (classGradeName) {
+    if (classGradeName && classGradeName !== 'ALL') {
       whereClause.classGrade = { name: classGradeName as string };
     }
 
@@ -287,14 +287,30 @@ export async function deleteSubject(req: Request, res: Response) {
   try {
     const tenantId = req.user?.tenantId;
     const { id } = req.params;
+    const { classGradeName, classGradeId, name } = req.query;
 
-    if (!tenantId || !id) {
-      return res.status(400).json({ error: 'Subject ID and tenant context required.' });
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant context required.' });
     }
 
-    const existing = await prisma.curriculumSubject.findFirst({
-      where: { id: id as string, tenantId },
-    });
+    let existing = null;
+    if (id && id !== 'by-name' && id !== 'undefined') {
+      existing = await prisma.curriculumSubject.findFirst({
+        where: { id: id as string, tenantId },
+      });
+    }
+
+    if (!existing && (classGradeName || classGradeId) && name) {
+      existing = await prisma.curriculumSubject.findFirst({
+        where: {
+          tenantId,
+          name: (name as string).trim(),
+          ...(classGradeId
+            ? { classGradeId: classGradeId as string }
+            : { classGrade: { name: (classGradeName as string).trim() } }),
+        },
+      });
+    }
 
     if (!existing) {
       return res.status(404).json({ error: 'Subject not found.' });

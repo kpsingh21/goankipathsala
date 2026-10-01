@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { AttendanceStatus } from '@prisma/client';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
- * Get daily attendance for a specific date and section
+ * Get daily attendance for a specific date and section (scoped to teacher's class if role is TEACHER)
  */
 export async function getDailyAttendance(req: Request, res: Response) {
   try {
@@ -14,17 +15,46 @@ export async function getDailyAttendance(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
     const targetDate = date ? new Date(date as string) : new Date();
     // Normalize to date-only string YYYY-MM-DD
     const dateStr = targetDate.toISOString().split('T')[0];
 
+    if (!scope.hasAccessToAll && scope.classGradeIds.length === 0 && scope.sectionIds.length === 0) {
+      return res.json({ date: dateStr, records: [] });
+    }
+
+    const whereClause: any = {
+      tenantId,
+      date: new Date(dateStr),
+    };
+
+    if (sectionId) {
+      if (!scope.hasAccessToAll) {
+        const allowed = scope.sectionIds.includes(sectionId as string);
+        if (!allowed) {
+          const sec = await prisma.section.findUnique({
+            where: { id: sectionId as string },
+            select: { classGradeId: true },
+          });
+          if (!sec || !scope.classGradeIds.includes(sec.classGradeId)) {
+            return res.status(403).json({ error: 'Access denied: You are only authorized to view attendance for your assigned class.' });
+          }
+        }
+      }
+      whereClause.enrollment = { sectionId: sectionId as string };
+    } else if (!scope.hasAccessToAll) {
+      whereClause.enrollment = {
+        OR: [
+          ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+          ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+        ],
+      };
+    }
+
     // Fetch students with attendance on that day
     const records = await prisma.attendanceRecord.findMany({
-      where: {
-        tenantId,
-        date: new Date(dateStr),
-        ...(sectionId ? { enrollment: { sectionId: sectionId as string } } : {}),
-      },
+      where: whereClause,
       include: {
         enrollment: {
           include: {
@@ -42,7 +72,7 @@ export async function getDailyAttendance(req: Request, res: Response) {
 }
 
 /**
- * Mark or Bulk Mark Attendance for Students
+ * Mark or Bulk Mark Attendance for Students (Teacher can only mark for their class)
  */
 export async function markAttendance(req: Request, res: Response) {
   try {
@@ -57,6 +87,29 @@ export async function markAttendance(req: Request, res: Response) {
 
     if (!records || !Array.isArray(records) || records.length === 0) {
       return res.status(400).json({ error: 'Attendance records array is required.' });
+    }
+
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    if (!scope.hasAccessToAll) {
+      if (scope.classGradeIds.length === 0 && scope.sectionIds.length === 0) {
+        return res.status(403).json({ error: 'Access denied: You are not assigned to any class yet.' });
+      }
+      const enrollmentIds = records.map((r: any) => r.enrollmentId);
+      const invalidEnrollment = await prisma.studentEnrollment.findFirst({
+        where: {
+          id: { in: enrollmentIds },
+          tenantId,
+          NOT: {
+            OR: [
+              ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+              ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+            ],
+          },
+        },
+      });
+      if (invalidEnrollment) {
+        return res.status(403).json({ error: 'Access denied: You can only take attendance for students in your assigned class.' });
+      }
     }
 
     const targetDate = date ? new Date(date) : new Date();
@@ -101,7 +154,7 @@ export async function markAttendance(req: Request, res: Response) {
 }
 
 /**
- * Get monthly attendance matrix & percentage for all students in school
+ * Get monthly attendance matrix & percentage for students in school
  */
 export async function getMonthlyAttendance(req: Request, res: Response) {
   try {
@@ -112,6 +165,7 @@ export async function getMonthlyAttendance(req: Request, res: Response) {
       return res.status(400).json({ error: 'School tenant context missing.' });
     }
 
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
     const currentYearMonth = month ? (month as string) : new Date().toISOString().slice(0, 7); // "YYYY-MM"
     const [yearStr, monthStr] = currentYearMonth.split('-');
     const year = parseInt(yearStr);
@@ -121,9 +175,31 @@ export async function getMonthlyAttendance(req: Request, res: Response) {
     const endDate = new Date(year, monthNum, 0); // Last day of month
     const totalDaysInMonth = endDate.getDate();
 
+    if (!scope.hasAccessToAll && scope.classGradeIds.length === 0 && scope.sectionIds.length === 0) {
+      return res.json({ month: currentYearMonth, totalDaysInMonth, students: [] });
+    }
+
+    const studentWhere: any = { tenantId };
+    if (!scope.hasAccessToAll) {
+      studentWhere.enrollments = {
+        some: {
+          OR: [
+            ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+            ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+          ],
+        },
+      };
+    } else if (classGradeName && classGradeName !== 'ALL') {
+      studentWhere.enrollments = {
+        some: {
+          section: { classGrade: { name: classGradeName as string } },
+        },
+      };
+    }
+
     // Fetch enrolled students
     const students = await prisma.studentProfile.findMany({
-      where: { tenantId },
+      where: studentWhere,
       include: {
         enrollments: {
           include: {

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
  * List notices for the school (Public/Tenant-scoped)
@@ -33,6 +34,13 @@ export async function createNotice(req: Request, res: Response) {
     const tenantId = req.user?.tenantId;
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to configure or broadcast notices.' });
+      }
     }
 
     const {
@@ -83,6 +91,13 @@ export async function deleteNotice(req: Request, res: Response) {
       return res.status(400).json({ error: 'Notice ID and tenant context required.' });
     }
 
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to delete notices.' });
+      }
+    }
+
     const notice = await prisma.notice.findFirst({
       where: { id: id as string, tenantId },
     });
@@ -110,6 +125,13 @@ export async function updateNotice(req: Request, res: Response) {
 
     if (!tenantId || !id) {
       return res.status(400).json({ error: 'Notice ID and tenant context required.' });
+    }
+
+    if (req.user && req.user.role) {
+      const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
+      if (!scope.hasAccessToAll) {
+        return res.status(403).json({ error: 'Access forbidden: Teachers are not authorized to edit notices.' });
+      }
     }
 
     const existing = await prisma.notice.findFirst({

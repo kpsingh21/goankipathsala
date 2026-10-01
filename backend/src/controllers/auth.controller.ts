@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma.js';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
 
@@ -73,6 +74,8 @@ export async function login(req: Request, res: Response) {
       { expiresIn: '7d' }
     );
 
+    const teacherScope = await getTeacherClassScope(tenant.id, user.id, user.role);
+
     return res.json({
       message: 'Login successful',
       token,
@@ -84,6 +87,11 @@ export async function login(req: Request, res: Response) {
         tenantId: tenant.id,
         schoolName: tenant.name,
         schoolSlug: tenant.slug,
+        teacherScope: teacherScope.isTeacher ? {
+          classGradeNames: teacherScope.classGradeNames,
+          classGradeIds: teacherScope.classGradeIds,
+          sectionIds: teacherScope.sectionIds,
+        } : null,
       },
     });
   } catch (error: any) {
@@ -124,7 +132,18 @@ export async function getMe(req: Request, res: Response) {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    return res.json({ user });
+    const teacherScope = await getTeacherClassScope(user.tenant.id, user.id, user.role);
+
+    return res.json({
+      user: {
+        ...user,
+        teacherScope: teacherScope.isTeacher ? {
+          classGradeNames: teacherScope.classGradeNames,
+          classGradeIds: teacherScope.classGradeIds,
+          sectionIds: teacherScope.sectionIds,
+        } : null,
+      },
+    });
   } catch (error: any) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }

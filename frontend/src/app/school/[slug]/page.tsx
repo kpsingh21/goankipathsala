@@ -37,6 +37,7 @@ export default function SchoolPortalPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("ALL");
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -118,7 +119,7 @@ export default function SchoolPortalPage() {
       : gallery.filter((g) => (g.category || "General") === activeCategory);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans scroll-smooth">
       {/* 1. Header / Navbar */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-6 sm:px-10 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3.5">
@@ -136,6 +137,7 @@ export default function SchoolPortalPage() {
           </div>
         </div>
 
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-300">
           <a href="#about" className="hover:text-emerald-400 transition">About School</a>
           <a href="#facilities" className="hover:text-emerald-400 transition">Facilities</a>
@@ -144,24 +146,72 @@ export default function SchoolPortalPage() {
           <a href="#gallery" className="hover:text-emerald-400 transition">Gallery</a>
           <a href="#contact" className="hover:text-emerald-400 transition">Contact</a>
         </nav>
+
+        {/* Mobile Navigation Toggle */}
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? (
+              <span className="text-base font-bold leading-none block w-4 text-center">✕</span>
+            ) : (
+              <span className="text-base font-bold leading-none block w-4 text-center">☰</span>
+            )}
+          </button>
+        </div>
       </header>
 
-      {/* 2. Notice Board Alert Banner (If urgent/pinned notice exists) */}
-      {notices.length > 0 && (
-        <div className="bg-amber-950/40 border-b border-amber-900/50 px-6 py-2.5">
-          <div className="max-w-6xl mx-auto flex items-center gap-3 text-xs overflow-hidden">
-            <span className="px-2 py-0.5 rounded font-black text-[10px] bg-amber-500 text-slate-950 uppercase tracking-wider shrink-0 flex items-center gap-1">
-              <span>📢</span> Notice Board
-            </span>
-            <div className="truncate text-amber-200">
-              <span className="font-bold">{notices[0].title}:</span> {notices[0].content}
-            </div>
-            <a href="#notice-board" className="shrink-0 text-amber-400 hover:text-amber-300 font-semibold underline text-[11px]">
-              View All ({notices.length}) →
-            </a>
-          </div>
+      {/* Mobile Navigation Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-b border-slate-800 bg-slate-900/95 backdrop-blur px-6 py-4 space-y-3 text-xs font-semibold text-slate-200 sticky top-[69px] z-30 shadow-2xl">
+          <a
+            href="#about"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            🏫 About School
+          </a>
+          <a
+            href="#facilities"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            🏛️ Facilities
+          </a>
+          <a
+            href="#transport"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            🚌 Bus Routes
+          </a>
+          <a
+            href="#notices"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            📢 Notices & Circulars
+          </a>
+          <a
+            href="#gallery"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            🖼️ Photo Gallery
+          </a>
+          <a
+            href="#contact"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block py-1.5 hover:text-emerald-400 transition"
+          >
+            📍 Contact & Location
+          </a>
         </div>
       )}
+
 
       {/* 3. Hero Section with Banner */}
       <section className="relative overflow-hidden border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 py-16 sm:py-20 px-6 sm:px-12">
@@ -177,21 +227,6 @@ export default function SchoolPortalPage() {
           <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
             {landing.aboutText}
           </p>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href={`/school/${school.slug}/login`}
-              className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-emerald-500/30"
-            >
-              Access Campus ERP Portal
-            </Link>
-            <Link
-              href={`/school/${school.slug}/dashboard`}
-              className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition"
-            >
-              School Command Center
-            </Link>
-          </div>
         </div>
 
         {/* 4. Live Stats Counter Bar */}
@@ -232,7 +267,8 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 5. Digital Notice Board & Circulars Section */}
-      <section id="notice-board" className="py-12 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+      <section id="notices" className="scroll-mt-20 py-12 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+        <div id="notice-board" className="-mt-24 pt-24" />
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-1">
@@ -290,7 +326,7 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 6. Leadership & About Section */}
-      <section className="py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+      <section id="about" className="scroll-mt-20 py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           <div className="md:col-span-2 space-y-4">
             <div className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -337,7 +373,7 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 7. Photo Gallery ("Images of the Fun & Learning") */}
-      <section className="py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+      <section id="gallery" className="scroll-mt-20 py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <div className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
@@ -445,7 +481,7 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 9. Campus Facilities & Infrastructure (Fully Admin-Managed) */}
-      <section className="py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+      <section id="facilities" className="scroll-mt-20 py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <div className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
             Campus Infrastructure
@@ -475,7 +511,7 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 10. School Bus Routes & Transport Network */}
-      <section className="py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
+      <section id="transport" className="scroll-mt-20 py-14 px-6 sm:px-12 max-w-6xl mx-auto w-full border-b border-slate-900">
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1">
@@ -547,7 +583,7 @@ export default function SchoolPortalPage() {
       </section>
 
       {/* 11. Contact & Campus Location Footer */}
-      <section className="py-12 px-6 sm:px-12 max-w-6xl mx-auto w-full">
+      <section id="contact" className="scroll-mt-20 py-12 px-6 sm:px-12 max-w-6xl mx-auto w-full">
         <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h4 className="text-lg font-bold text-white">{school.name} Campus</h4>
@@ -558,21 +594,6 @@ export default function SchoolPortalPage() {
               <span>📞 {landing.contactPhone || "+91 91113 93176"}</span>
               <span>✉️ {landing.contactEmail || `contact@${school.slug}.goankipathsala.in`}</span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/school/${school.slug}/dashboard`}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 transition"
-            >
-              Manage Details (Admin) ↗
-            </Link>
-            <Link
-              href={`/school/${school.slug}/login`}
-              className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-xs font-bold text-slate-950 transition"
-            >
-              Student / Staff Login →
-            </Link>
           </div>
         </div>
       </section>

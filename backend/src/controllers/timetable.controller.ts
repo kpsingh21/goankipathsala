@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
  * Get weekly timetable for a class grade
@@ -119,6 +120,11 @@ export async function upsertTimetableEntry(req: Request, res: Response) {
 
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    if (!scope.hasAccessToAll) {
+      return res.status(403).json({ error: 'Access denied: Teachers are not authorized to edit timetable schedules.' });
     }
 
     if (!classGradeName || !dayOfWeek || !periodNumber || !subjectName) {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { Gender, UserRole, EnrollmentStatus } from '@prisma/client';
+import { getTeacherClassScope } from '../lib/teacher-scope.js';
 
 /**
  * Bulk Import Students via JSON or parsed spreadsheet rows
@@ -11,6 +12,11 @@ export async function bulkImportStudents(req: Request, res: Response) {
     const tenantId = req.user?.tenantId || req.tenantId;
     if (!tenantId) {
       return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    if (!scope.hasAccessToAll) {
+      return res.status(403).json({ error: 'Access denied: Teachers are not authorized to import student records.' });
     }
 
     const rows = Array.isArray(req.body.students) ? req.body.students : req.body;
