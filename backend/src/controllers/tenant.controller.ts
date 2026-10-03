@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 import { prisma } from '../lib/prisma.js';
 
 /**
@@ -127,6 +129,7 @@ export async function getCurrentTenant(req: Request, res: Response) {
 
     // Defaults for vibrant school presentation
     const enrichedLanding = {
+      logoUrl: landing.logoUrl || null,
       tagline: landing.tagline || `Inspiring Excellence & Transforming Education at ${tenant.name}`,
       aboutText: landing.aboutText || `${tenant.name} is dedicated to delivering world-class, digitally enabled education. We blend quality academics with character building, digital literacy, sports, and holistic rural empowerment.`,
       principalName: landing.principalName || "Principal / Headmaster",
@@ -134,6 +137,11 @@ export async function getCurrentTenant(req: Request, res: Response) {
       contactAddress: landing.contactAddress || "School Campus, Main Village Road",
       contactPhone: landing.contactPhone || "+91 91113 93176",
       contactEmail: landing.contactEmail || `info@${tenant.slug}.goankipathsala.in`,
+      contactHelpdeskTitle: landing.contactHelpdeskTitle || "Campus Office & Helpdesk",
+      contactWelcomeText: landing.contactWelcomeText || "We welcome parents and guardians to visit our campus during official visiting hours.",
+      admissionHours: landing.admissionHours || "Mon – Sat, 8:00 AM – 3:30 PM",
+      feeCounterHours: landing.feeCounterHours || "Mon – Sat, 8:30 AM – 2:00 PM",
+      admissionDocumentsText: landing.admissionDocumentsText || "1. Child's Birth Certificate • 2. Two Passport Photos • 3. Previous School TC & Report Card • 4. Aadhaar Card copy",
       heroImage: landing.heroImage || "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1600&q=80",
       galleryImages: landing.galleryImages && landing.galleryImages.length > 0 ? landing.galleryImages : [
         { id: "g1", url: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80", caption: "Smart Digital Classrooms & Active Learning", category: "Classroom" },
@@ -196,6 +204,7 @@ export async function updateTenantLanding(req: Request, res: Response) {
     }
 
     const {
+      logoUrl,
       tagline,
       aboutText,
       principalName,
@@ -203,6 +212,11 @@ export async function updateTenantLanding(req: Request, res: Response) {
       contactAddress,
       contactPhone,
       contactEmail,
+      contactHelpdeskTitle,
+      contactWelcomeText,
+      admissionHours,
+      feeCounterHours,
+      admissionDocumentsText,
       heroImage,
       galleryImages,
       videoGallery,
@@ -223,6 +237,7 @@ export async function updateTenantLanding(req: Request, res: Response) {
 
     const updatedLanding = {
       ...existingLanding,
+      ...(logoUrl !== undefined && { logoUrl }),
       ...(tagline !== undefined && { tagline }),
       ...(aboutText !== undefined && { aboutText }),
       ...(principalName !== undefined && { principalName }),
@@ -230,6 +245,11 @@ export async function updateTenantLanding(req: Request, res: Response) {
       ...(contactAddress !== undefined && { contactAddress }),
       ...(contactPhone !== undefined && { contactPhone }),
       ...(contactEmail !== undefined && { contactEmail }),
+      ...(contactHelpdeskTitle !== undefined && { contactHelpdeskTitle }),
+      ...(contactWelcomeText !== undefined && { contactWelcomeText }),
+      ...(admissionHours !== undefined && { admissionHours }),
+      ...(feeCounterHours !== undefined && { feeCounterHours }),
+      ...(admissionDocumentsText !== undefined && { admissionDocumentsText }),
       ...(heroImage !== undefined && { heroImage }),
       ...(galleryImages !== undefined && { galleryImages }),
       ...(videoGallery !== undefined && { videoGallery }),
@@ -270,7 +290,20 @@ export async function listTenants(req: Request, res: Response) {
         customDomain: true,
         plan: true,
         status: true,
+        settings: true,
         createdAt: true,
+        users: {
+          where: {
+            role: { in: ['SCHOOL_ADMIN', 'ADMIN', 'PRINCIPAL'] },
+          },
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+          take: 1,
+        },
         _count: {
           select: {
             users: true,
@@ -381,5 +414,309 @@ export async function updateTenantDetails(req: Request, res: Response) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
+
+/**
+ * SuperAdmin: Reset Password for School Administrator
+ */
+export async function resetSchoolAdminPassword(req: Request, res: Response) {
+  try {
+    const id = req.params.id as string;
+    const { newPassword, adminUserId } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Tenant ID is required.' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) {
+      return res.status(404).json({ error: 'School tenant not found.' });
+    }
+
+    let adminUser = null;
+    if (adminUserId) {
+      adminUser = await prisma.user.findFirst({
+        where: { id: adminUserId, tenantId: id },
+      });
+    } else {
+      adminUser = await prisma.user.findFirst({
+        where: {
+          tenantId: id,
+          role: { in: ['SCHOOL_ADMIN', 'ADMIN', 'PRINCIPAL'] },
+        },
+      });
+    }
+
+    if (!adminUser) {
+      return res.status(404).json({ error: 'No school administrator account found for this school.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: adminUser.id },
+      data: { passwordHash },
+    });
+
+    return res.json({
+      success: true,
+      message: `Password for ${adminUser.email || 'School Administrator'} has been successfully updated!`,
+      adminEmail: adminUser.email,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+}
+
+// -------------------------------------------------------------------------
+// School Contact & Admission Inquiries
+// -------------------------------------------------------------------------
+
+const SCHOOL_INQUIRIES_DIR = path.resolve(process.cwd(), 'data', 'school-inquiries');
+
+function readSchoolInquiriesFile(slug: string): any[] {
+  try {
+    const filePath = path.join(SCHOOL_INQUIRIES_DIR, `${slug}.json`);
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    }
+  } catch (err) {
+    console.error('Error reading school inquiries file:', err);
+  }
+  return [];
+}
+
+function writeSchoolInquiriesFile(slug: string, inquiries: any[]) {
+  try {
+    if (!fs.existsSync(SCHOOL_INQUIRIES_DIR)) {
+      fs.mkdirSync(SCHOOL_INQUIRIES_DIR, { recursive: true });
+    }
+    const filePath = path.join(SCHOOL_INQUIRIES_DIR, `${slug}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(inquiries, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error writing school inquiries file:', err);
+  }
+}
+
+/**
+ * Public: Submit admission / fees / general inquiry for a specific school
+ */
+export async function submitSchoolInquiry(req: Request, res: Response) {
+  try {
+    const slug = (req.params.slug || req.headers['x-tenant-slug'] || req.body.slug) as string;
+    const { parentName, studentName, phone, email, gradeSeeking, inquiryType, message } = req.body;
+
+    if (!slug) {
+      return res.status(400).json({ error: 'School subdomain or slug is required.' });
+    }
+
+    if (!parentName || !phone || !message) {
+      return res.status(400).json({ error: 'Please provide Parent / Guardian name, contact phone number, and inquiry message.' });
+    }
+
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { slug: String(slug).toLowerCase() },
+          { id: String(slug) },
+        ],
+      },
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'School not found.' });
+    }
+
+    const newInquiry = {
+      id: `sch_inq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      parentName: String(parentName).trim(),
+      studentName: studentName ? String(studentName).trim() : null,
+      phone: String(phone).trim(),
+      email: email ? String(email).trim() : null,
+      gradeSeeking: gradeSeeking ? String(gradeSeeking).trim() : null,
+      inquiryType: inquiryType ? String(inquiryType).trim() : 'Admission Inquiry',
+      message: String(message).trim(),
+      status: 'NEW', // NEW, CONTACTED, ADMITTED, CLOSED
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to tenant settings (Postgres)
+    const existingSettings = (tenant.settings as Record<string, any>) || {};
+    const existingInquiries = Array.isArray(existingSettings.inquiries) ? existingSettings.inquiries : [];
+    const updatedInquiries = [newInquiry, ...existingInquiries];
+
+    try {
+      await prisma.tenant.update({
+        where: { id: tenant.id },
+        data: {
+          settings: {
+            ...existingSettings,
+            inquiries: updatedInquiries,
+          },
+        },
+      });
+    } catch (dbErr) {
+      console.error('Error saving inquiry to DB settings:', dbErr);
+    }
+
+    // Also persist to local backup file
+    writeSchoolInquiriesFile(tenant.slug, updatedInquiries);
+
+    return res.status(201).json({
+      success: true,
+      message: `Your inquiry has been submitted to the administration of ${tenant.name}. We will reach out to you shortly.`,
+      inquiry: newInquiry,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to submit inquiry.' });
+  }
+}
+
+/**
+ * School Admin: List inquiries received for this school
+ */
+export async function listSchoolInquiries(req: Request, res: Response) {
+  try {
+    const tenantId = (req as any).user?.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant context required.' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, slug: true, name: true, settings: true },
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
+
+    const existingSettings = (tenant.settings as Record<string, any>) || {};
+    let inquiries = Array.isArray(existingSettings.inquiries) ? existingSettings.inquiries : [];
+
+    // Fallback to file if empty
+    if (inquiries.length === 0) {
+      inquiries = readSchoolInquiriesFile(tenant.slug);
+    }
+
+    return res.json({ inquiries });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to fetch school inquiries.' });
+  }
+}
+
+/**
+ * School Admin: Update status of an inquiry
+ */
+export async function updateSchoolInquiryStatus(req: Request, res: Response) {
+  try {
+    const tenantId = (req as any).user?.tenantId;
+    const { id } = req.params;
+    const { status, notes } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant context required.' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
+
+    const existingSettings = (tenant.settings as Record<string, any>) || {};
+    let inquiries: any[] = Array.isArray(existingSettings.inquiries) ? existingSettings.inquiries : [];
+
+    if (inquiries.length === 0) {
+      inquiries = readSchoolInquiriesFile(tenant.slug);
+    }
+
+    const index = inquiries.findIndex((inq) => inq.id === id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Inquiry not found.' });
+    }
+
+    inquiries[index] = {
+      ...inquiries[index],
+      status: status || inquiries[index].status,
+      ...(notes !== undefined && { notes }),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: {
+        settings: {
+          ...existingSettings,
+          inquiries,
+        },
+      },
+    });
+
+    writeSchoolInquiriesFile(tenant.slug, inquiries);
+
+    return res.json({
+      success: true,
+      message: 'Inquiry status updated successfully.',
+      inquiry: inquiries[index],
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to update inquiry status.' });
+  }
+}
+
+/**
+ * School Admin: Delete an inquiry
+ */
+export async function deleteSchoolInquiry(req: Request, res: Response) {
+  try {
+    const tenantId = (req as any).user?.tenantId;
+    const { id } = req.params;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant context required.' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
+
+    const existingSettings = (tenant.settings as Record<string, any>) || {};
+    let inquiries: any[] = Array.isArray(existingSettings.inquiries) ? existingSettings.inquiries : [];
+
+    inquiries = inquiries.filter((inq) => inq.id !== id);
+
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: {
+        settings: {
+          ...existingSettings,
+          inquiries,
+        },
+      },
+    });
+
+    writeSchoolInquiriesFile(tenant.slug, inquiries);
+
+    return res.json({
+      success: true,
+      message: 'Inquiry deleted successfully.',
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to delete inquiry.' });
+  }
+}
+
+
 
 

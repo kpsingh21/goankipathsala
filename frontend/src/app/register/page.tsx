@@ -247,23 +247,6 @@ export default function RegisterTenantPage() {
                     className="w-full px-3.5 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-emerald-500"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Subscription Tier
-                  </label>
-                  <select
-                    value={formData.plan}
-                    onChange={(e) =>
-                      setFormData({ ...formData, plan: e.target.value as any })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="FREE">Free Pilot (Up to 100 students)</option>
-                    <option value="STANDARD">Standard School (Full ERP + Offline LMS)</option>
-                    <option value="PREMIUM">Premium Network (Multiple campuses + AI Tutors)</option>
-                  </select>
-                </div>
               </div>
             </div>
 

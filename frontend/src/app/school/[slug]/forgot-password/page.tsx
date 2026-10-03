@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
           <span className="font-bold text-sm tracking-tight">Goan Ki Pathshala</span>
         </Link>
         <Link
-          href={`/school/${slug}/login`}
+          href={`/school/${slug}/portal/login`}
           className="text-xs text-slate-400 hover:text-emerald-400 transition"
         >
           ← Back to Login
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
             </p>
             <div className="pt-2">
               <Link
-                href={`/school/${slug}/login`}
+                href={`/school/${slug}/portal/login`}
                 className="inline-block w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow-lg shadow-emerald-500/20"
               >
                 Go to Login Page →

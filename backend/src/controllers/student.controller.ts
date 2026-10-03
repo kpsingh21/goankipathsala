@@ -431,3 +431,158 @@ export async function deleteStudent(req: Request, res: Response) {
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
+
+/**
+ * Promote students from one class/session to the next class or graduate
+ */
+export async function promoteStudents(req: Request, res: Response) {
+  try {
+    const tenantId = req.user?.tenantId || req.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    const {
+      studentIds,
+      targetClassGradeName,
+      targetSectionName,
+      targetAcademicYearName,
+      isGraduation,
+    } = req.body;
+
+    if (!Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ error: 'Please select at least one student to promote.' });
+    }
+
+    if (!isGraduation && (!targetClassGradeName || !targetSectionName)) {
+      return res.status(400).json({
+        error: 'Target class and section are required unless marking as graduated/passed out.',
+      });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      let targetSectionId: string | null = null;
+      let targetYearId: string | null = null;
+
+      if (!isGraduation) {
+        // 1. Resolve or create target academic year
+        const yearName = targetAcademicYearName?.trim() || '2027-2028';
+        let academicYear = await tx.academicYear.findFirst({
+          where: { tenantId, name: yearName },
+        });
+
+        if (!academicYear) {
+          academicYear = await tx.academicYear.create({
+            data: {
+              tenantId,
+              name: yearName,
+              startDate: new Date('2027-04-01'),
+              endDate: new Date('2028-03-31'),
+              isCurrent: true,
+            },
+          });
+        }
+        targetYearId = academicYear.id;
+
+        // 2. Resolve or create target class
+        let classGrade = await tx.classGrade.findFirst({
+          where: { tenantId, name: targetClassGradeName.trim() },
+        });
+
+        if (!classGrade) {
+          classGrade = await tx.classGrade.create({
+            data: {
+              tenantId,
+              name: targetClassGradeName.trim(),
+              numericalOrder: 1,
+            },
+          });
+        }
+
+        // 3. Resolve or create target section
+        let section = await tx.section.findFirst({
+          where: {
+            tenantId,
+            classGradeId: classGrade.id,
+            name: targetSectionName.trim(),
+          },
+        });
+
+        if (!section) {
+          section = await tx.section.create({
+            data: {
+              tenantId,
+              classGradeId: classGrade.id,
+              name: targetSectionName.trim(),
+            },
+          });
+        }
+        targetSectionId = section.id;
+      }
+
+      let promotedCount = 0;
+
+      for (const studentId of studentIds) {
+        // Mark previous enrollment as PROMOTED
+        const latestEnrollment = await tx.studentEnrollment.findFirst({
+          where: { tenantId, studentId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (latestEnrollment) {
+          await tx.studentEnrollment.update({
+            where: { id: latestEnrollment.id },
+            data: { status: EnrollmentStatus.PROMOTED },
+          });
+        }
+
+        if (!isGraduation && targetSectionId && targetYearId) {
+          // Check if already enrolled in this target academic year
+          const existingTarget = await tx.studentEnrollment.findFirst({
+            where: {
+              tenantId,
+              studentId,
+              academicYearId: targetYearId,
+            },
+          });
+
+          if (existingTarget) {
+            await tx.studentEnrollment.update({
+              where: { id: existingTarget.id },
+              data: {
+                sectionId: targetSectionId,
+                status: EnrollmentStatus.ENROLLED,
+              },
+            });
+          } else {
+            await tx.studentEnrollment.create({
+              data: {
+                tenantId,
+                studentId,
+                academicYearId: targetYearId,
+                sectionId: targetSectionId,
+                status: EnrollmentStatus.ENROLLED,
+              },
+            });
+          }
+        }
+
+        promotedCount++;
+      }
+
+      return {
+        promotedCount,
+        targetClass: isGraduation ? 'Alumni / Graduated' : `${targetClassGradeName} - ${targetSectionName}`,
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully promoted ${result.promotedCount} student(s) to ${result.targetClass}.`,
+      ...result,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Failed to promote students.' });
+  }
+}
+

@@ -1,0 +1,156 @@
+{
+  "salaryStructures": {},
+  "monthlyRuns": [
+    {
+      "id": "run_2026_10",
+      "month": "2026-10",
+      "monthLabel": "October 2026",
+      "generatedAt": "2026-10-02T21:08:25.363Z",
+      "staffCount": 4,
+      "totalGross": 121700,
+      "totalDeductions": 11480,
+      "totalNet": 110220,
+      "paidCount": 0,
+      "unpaidCount": 4,
+      "status": "GENERATED",
+      "payslips": [
+        {
+          "id": "slip_202610_a6302025",
+          "staffId": "a6302025-6492-4b4a-9613-fc0bf01fb23a",
+          "userId": "34bdbb25-820e-45be-9586-096b5bf4c063",
+          "staffName": "verma",
+          "role": "TEACHER",
+          "designation": "Senior Teacher",
+          "department": "Science & Maths",
+          "month": "2026-10",
+          "monthLabel": "October 2026",
+          "baseSalary": 24000,
+          "allowances": {
+            "hra": 4800,
+            "da": 2400,
+            "travel": 1000,
+            "special": 500
+          },
+          "deductions": {
+            "pf": 2880,
+            "tax": 200,
+            "unpaidLeaves": 0
+          },
+          "grossSalary": 32700,
+          "totalDeductions": 3080,
+          "netSalary": 29620,
+          "paymentStatus": "UNPAID",
+          "paymentMode": "BANK_TRANSFER",
+          "paymentDate": null,
+          "transactionRef": null,
+          "bankAccountNo": "",
+          "bankIfsc": "",
+          "panNumber": "",
+          "remarks": ""
+        },
+        {
+          "id": "slip_202610_ab8b5eec",
+          "staffId": "ab8b5eec-0b12-4efa-8bfa-28da5043b942",
+          "userId": "b7999284-af58-4b4c-8352-95e0eb619830",
+          "staffName": "ramu",
+          "role": "DRIVER",
+          "designation": "Driver",
+          "department": "Transposrt",
+          "month": "2026-10",
+          "monthLabel": "October 2026",
+          "baseSalary": 16000,
+          "allowances": {
+            "hra": 3200,
+            "da": 1600,
+            "travel": 1000,
+            "special": 500
+          },
+          "deductions": {
+            "pf": 1920,
+            "tax": 200,
+            "unpaidLeaves": 0
+          },
+          "grossSalary": 22300,
+          "totalDeductions": 2120,
+          "netSalary": 20180,
+          "paymentStatus": "UNPAID",
+          "paymentMode": "BANK_TRANSFER",
+          "paymentDate": null,
+          "transactionRef": null,
+          "bankAccountNo": "",
+          "bankIfsc": "",
+          "panNumber": "",
+          "remarks": ""
+        },
+        {
+          "id": "slip_202610_13517138",
+          "staffId": "13517138-6908-48b6-82a6-8961e8db5453",
+          "userId": "7c7d1994-3d2e-4257-a127-b3ba468ceb41",
+          "staffName": "teacher",
+          "role": "SUBJECT_TEACHER",
+          "designation": "Senior Teacher",
+          "department": "Science & Maths",
+          "month": "2026-10",
+          "monthLabel": "October 2026",
+          "baseSalary": 24000,
+          "allowances": {
+            "hra": 4800,
+            "da": 2400,
+            "travel": 1000,
+            "special": 500
+          },
+          "deductions": {
+            "pf": 2880,
+            "tax": 200,
+            "unpaidLeaves": 0
+          },
+          "grossSalary": 32700,
+          "totalDeductions": 3080,
+          "netSalary": 29620,
+          "paymentStatus": "UNPAID",
+          "paymentMode": "BANK_TRANSFER",
+          "paymentDate": null,
+          "transactionRef": null,
+          "bankAccountNo": "",
+          "bankIfsc": "",
+          "panNumber": "",
+          "remarks": ""
+        },
+        {
+          "id": "slip_202610_39a7efda",
+          "staffId": "39a7efda-1d72-4f86-8245-44d004997001",
+          "userId": "4429007d-1029-4679-bbd4-98c6010f8da8",
+          "staffName": "wewe",
+          "role": "ACCOUNTANT",
+          "designation": "acc",
+          "department": "Science & Maths",
+          "month": "2026-10",
+          "monthLabel": "October 2026",
+          "baseSalary": 25000,
+          "allowances": {
+            "hra": 5000,
+            "da": 2500,
+            "travel": 1000,
+            "special": 500
+          },
+          "deductions": {
+            "pf": 3000,
+            "tax": 200,
+            "unpaidLeaves": 0
+          },
+          "grossSalary": 34000,
+          "totalDeductions": 3200,
+          "netSalary": 30800,
+          "paymentStatus": "UNPAID",
+          "paymentMode": "BANK_TRANSFER",
+          "paymentDate": null,
+          "transactionRef": null,
+          "bankAccountNo": "",
+          "bankIfsc": "",
+          "panNumber": "",
+          "remarks": ""
+        }
+      ]
+    }
+  ]
+}

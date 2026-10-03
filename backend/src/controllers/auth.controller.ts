@@ -87,6 +87,7 @@ export async function login(req: Request, res: Response) {
         tenantId: tenant.id,
         schoolName: tenant.name,
         schoolSlug: tenant.slug,
+        logoUrl: (tenant.settings as any)?.landingConfig?.logoUrl || null,
         teacherScope: teacherScope.isTeacher ? {
           classGradeNames: teacherScope.classGradeNames,
           classGradeIds: teacherScope.classGradeIds,

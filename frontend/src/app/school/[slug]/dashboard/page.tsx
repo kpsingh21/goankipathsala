@@ -13,7 +13,7 @@ interface FeeComponent {
 }
 
 
-const SECTION_MAP: Record<string, "students" | "staff" | "classes" | "attendance" | "fees" | "exams" | "subjects" | "timetable" | "transport" | "notices" | "website"> = {
+const SECTION_MAP: Record<string, "students" | "staff" | "classes" | "attendance" | "fees" | "exams" | "subjects" | "timetable" | "transport" | "notices" | "website" | "calendar" | "inquiries" | "payroll"> = {
   students: "students",
   student: "students",
   staff: "staff",
@@ -38,6 +38,22 @@ const SECTION_MAP: Record<string, "students" | "staff" | "classes" | "attendance
   notice: "notices",
   website: "website",
   site: "website",
+  calendar: "calendar",
+  cal: "calendar",
+  holiday: "calendar",
+  holidays: "calendar",
+  planner: "calendar",
+  events: "calendar",
+  inquiries: "inquiries",
+  inquiry: "inquiries",
+  admissions: "inquiries",
+  admission: "inquiries",
+  leads: "inquiries",
+  payroll: "payroll",
+  salaries: "payroll",
+  salary: "payroll",
+  payslip: "payroll",
+  payslips: "payroll",
 };
 
 export default function SchoolDashboardPage() {
@@ -60,6 +76,9 @@ export default function SchoolDashboardPage() {
     | "transport"
     | "notices"
     | "website"
+    | "calendar"
+    | "inquiries"
+    | "payroll"
   >(initialSection);
 
   // Sync state whenever URL section parameter changes
@@ -71,38 +90,76 @@ export default function SchoolDashboardPage() {
 
   // Navigate to section and update browser URL without full page reload
   const navigateToSection = (section: typeof activeSection) => {
-    setActiveSection(section);
-    if (typeof window !== "undefined" && slug) {
-      const targetUrl = `/school/${slug}/dashboard/${section}`;
-      if (window.location.pathname !== targetUrl) {
-        window.history.pushState({ section }, "", targetUrl);
+    let allowedSection = section;
+    const userRole = currentUser?.role;
+    if (userRole === "DRIVER") {
+      allowedSection = "transport";
+    } else if (userRole === "ACCOUNTANT" || userRole === "CASHIER") {
+      allowedSection = "fees";
+    } else if (["CLASS_TEACHER", "SUBJECT_TEACHER", "TEACHER"].includes(userRole) && !["SCHOOL_ADMIN", "ADMIN", "PRINCIPAL", "SUPERADMIN"].includes(userRole)) {
+      if (allowedSection === "staff" || allowedSection === "classes") {
+        allowedSection = "students";
+      }
+    }
+
+    setActiveSection(allowedSection);
+    setMobileSidebarOpen(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      const mainEl = document.getElementById("dashboard-main-content");
+      if (mainEl) mainEl.scrollTop = 0;
+      if (slug) {
+        const targetUrl = `/school/${slug}/dashboard/${allowedSection}`;
+        if (window.location.pathname !== targetUrl) {
+          window.history.pushState({ section: allowedSection }, "", targetUrl);
+        }
       }
     }
   };
+
+  // Ensure scroll resets to top whenever active section changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      const mainEl = document.getElementById("dashboard-main-content");
+      if (mainEl) mainEl.scrollTop = 0;
+    }
+  }, [activeSection]);
 
   // Listen for browser forward/back button navigation
   useEffect(() => {
     const handlePopState = () => {
       const parts = window.location.pathname.split("/dashboard/");
+      const userRole = currentUser?.role;
       if (parts.length > 1) {
         const sec = parts[1].split("/")[0].toLowerCase();
         if (SECTION_MAP[sec]) {
-          setActiveSection(SECTION_MAP[sec]);
+          let target = SECTION_MAP[sec];
+          if (userRole === "DRIVER") target = "transport";
+          if (userRole === "ACCOUNTANT" || userRole === "CASHIER") target = "fees";
+          if (["CLASS_TEACHER", "SUBJECT_TEACHER", "TEACHER"].includes(userRole) && (target === "staff" || target === "classes")) {
+            target = "students";
+          }
+          setActiveSection(target);
         }
       } else if (window.location.pathname.endsWith("/dashboard")) {
-        setActiveSection("students");
+        let defSec: typeof activeSection = "students";
+        if (userRole === "DRIVER") defSec = "transport";
+        if (userRole === "ACCOUNTANT" || userRole === "CASHIER") defSec = "fees";
+        setActiveSection(defSec);
       }
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [currentUser]);
 
   // Two-tab state for each section
   const [studentSubTab, setStudentSubTab] = useState<"list" | "create">("list");
   const [staffSubTab, setStaffSubTab] = useState<"list" | "create">("list");
   const [classSubTab, setClassSubTab] = useState<"list" | "create">("list");
   const [attendanceSubTab, setAttendanceSubTab] = useState<"monthly" | "daily">("monthly");
-  const [feeSubTab, setFeeSubTab] = useState<"invoices" | "catalog">("invoices");
+  const [feeSubTab, setFeeSubTab] = useState<"overview" | "invoices" | "catalog">("overview");
+  const [feeRevenueSummary, setFeeRevenueSummary] = useState<any>(null);
   const [examSubTab, setExamSubTab] = useState<"report_cards" | "marks">("report_cards");
   const [subjectSubTab, setSubjectSubTab] = useState<"list" | "create">("list");
   const [timetableSubTab, setTimetableSubTab] = useState<"grid" | "edit">("grid");
@@ -138,6 +195,81 @@ export default function SchoolDashboardPage() {
 
   const [editSubjectModal, setEditSubjectModal] = useState<any | null>(null);
 
+  // Mobile & Tablet Sidebar State
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("agy_sidebar_collapsed");
+      if (saved !== null) {
+        setDesktopSidebarCollapsed(saved === "true");
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleDesktopSidebar = () => {
+    setDesktopSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("agy_sidebar_collapsed", String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        toggleDesktopSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Global Confirmation / Alert Modal Popup State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
+
+  const requestConfirm = ({
+    title = "Confirm Action",
+    message,
+    confirmText = "Delete",
+    cancelText = "Cancel",
+    isDanger = true,
+    onConfirm,
+  }: {
+    title?: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDanger?: boolean;
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      isDanger,
+      onConfirm,
+    });
+  };
+
   // Excel Bulk Import state for Students
   const [studentImportModalOpen, setStudentImportModalOpen] = useState(false);
   const [studentImportRows, setStudentImportRows] = useState<any[]>([]);
@@ -151,6 +283,23 @@ export default function SchoolDashboardPage() {
   const [staffImportLoading, setStaffImportLoading] = useState(false);
   const [staffImportResult, setStaffImportResult] = useState<any | null>(null);
   const [staffImportFileName, setStaffImportFileName] = useState("");
+
+  // Map Subject Modal State
+  const [mapSubjectModalOpen, setMapSubjectModalOpen] = useState(false);
+  const [mapSubjectClassGrade, setMapSubjectClassGrade] = useState("");
+  const [mapSubjectName, setMapSubjectName] = useState("");
+  const [mapSubjectBoard, setMapSubjectBoard] = useState("CBSE");
+  const [mapSubjectTeacherId, setMapSubjectTeacherId] = useState("");
+  const [mapSubjectLoading, setMapSubjectLoading] = useState(false);
+
+  // Student Export with Filters State
+  const [studentExportModalOpen, setStudentExportModalOpen] = useState(false);
+  const [exportFilterClass, setExportFilterClass] = useState("ALL");
+  const [exportFilterSection, setExportFilterSection] = useState("ALL");
+  const [exportFilterGender, setExportFilterGender] = useState("ALL");
+  const [exportFilterCategory, setExportFilterCategory] = useState("ALL");
+  const [exportFilterBloodGroup, setExportFilterBloodGroup] = useState("ALL");
+  const [exportFilterStatus, setExportFilterStatus] = useState("ALL");
 
   // Teacher scope & Batch Marks & Cumulative report card
   const [teacherScope, setTeacherScope] = useState<any>({
@@ -174,6 +323,7 @@ export default function SchoolDashboardPage() {
   // 1. Website & Facilities state
   // ==========================================
   const [landingConfig, setLandingConfig] = useState<any>({
+    logoUrl: "",
     tagline: "",
     aboutText: "",
     principalName: "",
@@ -221,7 +371,7 @@ export default function SchoolDashboardPage() {
   const [newStaffEmail, setNewStaffEmail] = useState("");
   const [newStaffPhone, setNewStaffPhone] = useState("");
   const [newStaffPassword, setNewStaffPassword] = useState("");
-  const [newStaffRole, setNewStaffRole] = useState("TEACHER");
+  const [newStaffRole, setNewStaffRole] = useState("CLASS_TEACHER");
   const [newStaffDesignation, setNewStaffDesignation] = useState("Senior Teacher");
   const [newStaffQualification, setNewStaffQualification] = useState("B.Ed, M.Sc");
   const [newStaffDepartment, setNewStaffDepartment] = useState("Science & Maths");
@@ -232,6 +382,7 @@ export default function SchoolDashboardPage() {
   const [newStaffAvatarUrl, setNewStaffAvatarUrl] = useState("");
   const [newStaffAddress, setNewStaffAddress] = useState("");
   const [newStaffSectionId, setNewStaffSectionId] = useState("");
+  const [newStaffClassFilter, setNewStaffClassFilter] = useState("");
   const [newStaffSubjectIds, setNewStaffSubjectIds] = useState<string[]>([]);
   const [newStaffBusRouteId, setNewStaffBusRouteId] = useState("");
 
@@ -347,10 +498,39 @@ export default function SchoolDashboardPage() {
   // Staff Attendance states
   const [attendanceType, setAttendanceType] = useState<"students" | "staff">("students");
   const [staffAttendanceDate, setStaffAttendanceDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [staffAttendanceStatus, setStaffAttendanceStatus] = useState<Record<string, "PRESENT" | "ABSENT" | "LATE" | "ON_LEAVE" | "HALF_DAY">>({});
+  const [staffAttendanceStatus, setStaffAttendanceStatus] = useState<Record<string, "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY">>({});
   const [staffAttendanceNotes, setStaffAttendanceNotes] = useState<Record<string, string>>({});
   const [studentAttendanceNotes, setStudentAttendanceNotes] = useState<Record<string, string>>({});
   const [studentAttendanceClassFilter, setStudentAttendanceClassFilter] = useState<string>("ALL");
+
+  // School Calendar & Holiday Planner states
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
+  const [calendarViewMode, setCalendarViewMode] = useState<"month" | "list">("month");
+  const [calendarCurrentDate, setCalendarCurrentDate] = useState(() => new Date());
+  const [calendarFilter, setCalendarFilter] = useState<string>("ALL");
+  const [addCalendarModal, setAddCalendarModal] = useState(false);
+  const [newCalTitle, setNewCalTitle] = useState("");
+  const [newCalCategory, setNewCalCategory] = useState("HOLIDAY");
+  const [newCalStartDate, setNewCalStartDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [newCalEndDate, setNewCalEndDate] = useState("");
+  const [newCalDesc, setNewCalDesc] = useState("");
+  const [newCalTargetAudience, setNewCalTargetAudience] = useState("ALL");
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<{ dateStr: string; events: any[] } | null>(null);
+  const [editCalendarModal, setEditCalendarModal] = useState<any | null>(null);
+  const [editCalTitle, setEditCalTitle] = useState("");
+  const [editCalCategory, setEditCalCategory] = useState("HOLIDAY");
+  const [editCalStartDate, setEditCalStartDate] = useState("");
+  const [editCalEndDate, setEditCalEndDate] = useState("");
+  const [editCalDesc, setEditCalDesc] = useState("");
+  const [editCalTargetAudience, setEditCalTargetAudience] = useState("ALL");
+
+  // School Admission & Contact Inquiries states
+  const [schoolInquiries, setSchoolInquiries] = useState<any[]>([]);
+  const [inquiriesLoading, setInquiriesLoading] = useState(false);
+  const [inquiryStatusFilter, setInquiryStatusFilter] = useState<string>("ALL");
+  const [inquiryTypeFilter, setInquiryTypeFilter] = useState<string>("ALL");
+  const [inquirySearch, setInquirySearch] = useState<string>("");
+  const [selectedInquiry, setSelectedInquiry] = useState<any | null>(null);
 
   // Template Designer / Look & Feel Settings
   const [templateCustomizerModal, setTemplateCustomizerModal] = useState<"id_card" | "report_card" | null>(null);
@@ -428,15 +608,62 @@ export default function SchoolDashboardPage() {
   const [viewIdCardStudent, setViewIdCardStudent] = useState<any | null>(null);
   const [viewInvoiceReceipt, setViewInvoiceReceipt] = useState<any | null>(null);
   const [assignModalStaff, setAssignModalStaff] = useState<any | null>(null);
-  const [assignRole, setAssignRole] = useState("TEACHER");
+  const [assignRole, setAssignRole] = useState("CLASS_TEACHER");
   const [assignSectionId, setAssignSectionId] = useState("");
+  const [assignClassFilter, setAssignClassFilter] = useState("");
   const [assignSubjectIds, setAssignSubjectIds] = useState<string[]>([]);
   const [assignBusRouteId, setAssignBusRouteId] = useState("");
+
+  // Staff Payroll & Salary Management States
+  const [payrollRuns, setPayrollRuns] = useState<any[]>([]);
+  const [payrollStaffList, setPayrollStaffList] = useState<any[]>([]);
+  const [payrollLoading, setPayrollLoading] = useState(false);
+  const [selectedPayrollMonth, setSelectedPayrollMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [payrollSubTab, setPayrollSubTab] = useState<"runs" | "structures">("runs");
+  const [viewPayslipModal, setViewPayslipModal] = useState<any | null>(null);
+  const [markPaidModal, setMarkPaidModal] = useState<any | null>(null);
+  const [markPaymentMode, setMarkPaymentMode] = useState<string>("BANK_TRANSFER");
+  const [markTxnRef, setMarkTxnRef] = useState<string>("");
+  const [markPayRemarks, setMarkPayRemarks] = useState<string>("");
+  const [editSalaryStructureStaff, setEditSalaryStructureStaff] = useState<any | null>(null);
+  const [editStructureForm, setEditStructureForm] = useState({
+    baseSalary: 25000,
+    hra: 5000,
+    da: 2500,
+    travelAllowance: 1000,
+    specialAllowance: 500,
+    pfDeduction: 3000,
+    taxDeduction: 200,
+    paymentMode: "BANK_TRANSFER",
+    bankAccountNo: "",
+    bankIfsc: "",
+    panNumber: "",
+  });
+  const [payrollSearch, setPayrollSearch] = useState<string>("");
+  const [payrollStatusFilter, setPayrollStatusFilter] = useState<string>("ALL");
+  const [generatingPayroll, setGeneratingPayroll] = useState(false);
   const [uploadingDesktopMedia, setUploadingDesktopMedia] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [classInvoiceGenModal, setClassInvoiceGenModal] = useState(false);
   const [classInvoiceGenClass, setClassInvoiceGenClass] = useState("Class 6");
   const [classInvoiceGenStructureId, setClassInvoiceGenStructureId] = useState("");
+  const [adjustInvoiceModal, setAdjustInvoiceModal] = useState<any | null>(null);
+  const [adjustType, setAdjustType] = useState<"ADD" | "SUBTRACT" | "SET_REMAINING">("ADD");
+  const [adjustAmount, setAdjustAmount] = useState<string>("500");
+  const [adjustReason, setAdjustReason] = useState<string>("");
+
+  // Student Promotion & Academic Session Rollover States
+  const [promoteModalOpen, setPromoteModalOpen] = useState(false);
+  const [promoteSourceClass, setPromoteSourceClass] = useState("");
+  const [promoteSelectedStudentIds, setPromoteSelectedStudentIds] = useState<string[]>([]);
+  const [promoteTargetClass, setPromoteTargetClass] = useState("");
+  const [promoteTargetSection, setPromoteTargetSection] = useState("A");
+  const [promoteTargetYear, setPromoteTargetYear] = useState("2027-2028");
+  const [promoteIsGraduation, setPromoteIsGraduation] = useState(false);
+  const [promotingStudents, setPromotingStudents] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -445,12 +672,14 @@ export default function SchoolDashboardPage() {
 
   // Role authorization helpers
   const isAdmin = currentUser && ["SCHOOL_ADMIN", "ADMIN", "PRINCIPAL", "SUPERADMIN"].includes(currentUser.role);
-  const isTeacher = currentUser && ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isTeacher = currentUser && ["CLASS_TEACHER", "SUBJECT_TEACHER", "TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
   const isClassTeacher = currentUser && ["CLASS_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
-  const isSubjectTeacher = currentUser && ["SUBJECT_TEACHER", "TEACHER", "CLASS_TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
-  const isAccountant = currentUser && ["ACCOUNTANT", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isSubjectTeacher = currentUser && ["SUBJECT_TEACHER", "CLASS_TEACHER", "TEACHER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isAccountant = currentUser && ["ACCOUNTANT", "CASHIER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
+  const isAccountantOnly = currentUser && ["ACCOUNTANT", "CASHIER"].includes(currentUser.role) && !isAdmin;
   const isDriver = currentUser && ["DRIVER", "SCHOOL_ADMIN", "ADMIN", "PRINCIPAL"].includes(currentUser.role);
-  const isTeacherOnly = currentUser && ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER"].includes(currentUser.role) && !isAdmin && !isAccountant;
+  const isDriverOnly = currentUser && currentUser.role === "DRIVER" && !isAdmin;
+  const isTeacherOnly = currentUser && ["CLASS_TEACHER", "SUBJECT_TEACHER", "TEACHER"].includes(currentUser.role) && !isAdmin && !isAccountant;
 
   const teacherClassNames: string[] = Array.from(
     new Set([
@@ -463,11 +692,14 @@ export default function SchoolDashboardPage() {
   useEffect(() => {
     const storedUser = localStorage.getItem("gkp_user");
     if (!token || !storedUser) {
-      router.push(`/school/${slug}/login`);
+      router.push(`/school/${slug}/portal/login`);
       return;
     }
     const user = JSON.parse(storedUser);
     setCurrentUser(user);
+    if (user.logoUrl) {
+      setLandingConfig((prev: any) => ({ ...prev, logoUrl: user.logoUrl }));
+    }
 
     try {
       const savedIdCard = localStorage.getItem("gkp_id_card_config");
@@ -478,23 +710,22 @@ export default function SchoolDashboardPage() {
       console.warn("Failed to parse template configs", e);
     }
 
-    const mappedFromUrl = rawSection && SECTION_MAP[rawSection.toLowerCase()];
-    if (mappedFromUrl) {
-      setActiveSection(mappedFromUrl);
-    } else {
-      let defaultSec: typeof activeSection = "students";
-      if (user.role === "DRIVER") {
-        defaultSec = "transport";
-      } else if (user.role === "ACCOUNTANT") {
-        defaultSec = "fees";
+    // Role-based section enforcement:
+    // Accountant/Cashier sees fees only; Driver sees transport only; Teachers cannot see staff/classes
+    let targetSec: typeof activeSection = (rawSection && SECTION_MAP[rawSection.toLowerCase()]) || "students";
+    if (user.role === "DRIVER") {
+      targetSec = "transport";
+    } else if (user.role === "ACCOUNTANT" || user.role === "CASHIER") {
+      targetSec = "fees";
+    } else if (["CLASS_TEACHER", "SUBJECT_TEACHER", "TEACHER"].includes(user.role) && !["SCHOOL_ADMIN", "ADMIN", "PRINCIPAL", "SUPERADMIN"].includes(user.role)) {
+      if (targetSec === "staff" || targetSec === "classes") {
+        targetSec = "students";
       }
-      if (["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER"].includes(user.role)) {
-        setFeeSubTab("catalog");
-      }
-      setActiveSection(defaultSec);
-      if (typeof window !== "undefined" && slug) {
-        window.history.replaceState({ section: defaultSec }, "", `/school/${slug}/dashboard/${defaultSec}`);
-      }
+      setFeeSubTab("catalog");
+    }
+    setActiveSection(targetSec);
+    if (typeof window !== "undefined" && slug) {
+      window.history.replaceState({ section: targetSec }, "", `/school/${slug}/dashboard/${targetSec}`);
     }
 
     fetchLandingData();
@@ -508,7 +739,11 @@ export default function SchoolDashboardPage() {
     fetchTimetable(timetableClassGrade);
     fetchMonthlyAttendance(monthlyAttendanceMonth);
     fetchFeeData();
+    fetchFeeRevenueSummary();
     fetchExams();
+    fetchCalendarEvents();
+    fetchSchoolInquiries();
+    fetchPayrollData();
   }, [slug]);
 
   // ==========================================
@@ -574,10 +809,525 @@ export default function SchoolDashboardPage() {
     } catch (e) {}
   };
 
+  const fetchCalendarEvents = async () => {
+    try {
+      const headers: Record<string, string> = { "X-Tenant-Slug": slug };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/calendar/events`, { headers });
+      if (res.ok) {
+        const text = await res.text();
+        try {
+          const d = JSON.parse(text);
+          if (d && Array.isArray(d.events)) {
+            setCalendarEvents(d.events);
+          }
+        } catch (parseErr) {
+          console.warn("Calendar API returned non-JSON response:", text.slice(0, 100));
+        }
+      }
+    } catch (e) {}
+  };
+
+  const fetchSchoolInquiries = async () => {
+    try {
+      setInquiriesLoading(true);
+      const headers: Record<string, string> = { "X-Tenant-Slug": slug };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/tenants/inquiries`, { headers });
+      if (res.ok) {
+        const text = await res.text();
+        try {
+          const d = JSON.parse(text);
+          if (d && Array.isArray(d.inquiries)) {
+            setSchoolInquiries(d.inquiries);
+          }
+        } catch (parseErr) {
+          console.warn("Inquiries API returned non-JSON response:", text.slice(0, 100));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load school inquiries", e);
+    } finally {
+      setInquiriesLoading(false);
+    }
+  };
+
+  const handleUpdateSchoolInquiryStatus = async (id: string, newStatus: string, notes?: string) => {
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Tenant-Slug": slug,
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/tenants/inquiries/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status: newStatus, notes }),
+      });
+      if (res.ok) {
+        setSchoolInquiries((prev) =>
+          prev.map((inq) =>
+            inq.id === id ? { ...inq, status: newStatus, ...(notes !== undefined && { notes }) } : inq
+          )
+        );
+        setMsg({ type: "success", text: "Inquiry status updated successfully!" });
+      }
+    } catch (e) {
+      console.error("Failed to update inquiry status", e);
+    }
+  };
+
+  const handleDeleteSchoolInquiry = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this inquiry record?")) return;
+    try {
+      const headers: Record<string, string> = { "X-Tenant-Slug": slug };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/tenants/inquiries/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (res.ok) {
+        setSchoolInquiries((prev) => prev.filter((inq) => inq.id !== id));
+        setSelectedInquiry(null);
+        setMsg({ type: "success", text: "Inquiry record deleted successfully!" });
+      }
+    } catch (e) {
+      console.error("Failed to delete inquiry", e);
+    }
+  };
+
+  // Staff Payroll & Salary Handlers
+  const fetchPayrollData = async () => {
+    if (!token) return;
+    try {
+      setPayrollLoading(true);
+      const [runsRes, staffRes] = await Promise.all([
+        fetch(`${API_BASE}/api/payroll/runs`, {
+          headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+        }),
+        fetch(`${API_BASE}/api/payroll/staff`, {
+          headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+        }),
+      ]);
+      if (runsRes.ok) {
+        const rData = await runsRes.json();
+        setPayrollRuns(rData.runs || []);
+      }
+      if (staffRes.ok) {
+        const sData = await staffRes.json();
+        setPayrollStaffList(sData.staff || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch payroll data:", err);
+    } finally {
+      setPayrollLoading(false);
+    }
+  };
+
+  const handleGeneratePayroll = async (targetMonth?: string) => {
+    if (!token) return;
+    const month = targetMonth || selectedPayrollMonth;
+    try {
+      setGeneratingPayroll(true);
+      const res = await fetch(`${API_BASE}/api/payroll/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({ month }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: data.message || `Payroll calculated for ${month}!` });
+        fetchPayrollData();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to generate payroll." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to generate payroll." });
+    } finally {
+      setGeneratingPayroll(false);
+    }
+  };
+
+  const handleOpenSalaryStructureModal = (staff: any) => {
+    setEditSalaryStructureStaff(staff);
+    const existing = staff.salaryStructure;
+    setEditStructureForm({
+      baseSalary: existing?.baseSalary ?? 25000,
+      hra: existing?.hra ?? 5000,
+      da: existing?.da ?? 2500,
+      travelAllowance: existing?.travelAllowance ?? 1000,
+      specialAllowance: existing?.specialAllowance ?? 500,
+      pfDeduction: existing?.pfDeduction ?? 3000,
+      taxDeduction: existing?.taxDeduction ?? 200,
+      paymentMode: existing?.paymentMode || "BANK_TRANSFER",
+      bankAccountNo: existing?.bankAccountNo || "",
+      bankIfsc: existing?.bankIfsc || "",
+      panNumber: existing?.panNumber || "",
+    });
+  };
+
+  const handleSaveSalaryStructure = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !editSalaryStructureStaff) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/payroll/structure/${editSalaryStructureStaff.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify(editStructureForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: `Salary structure updated for ${editSalaryStructureStaff.fullName}!` });
+        setEditSalaryStructureStaff(null);
+        fetchPayrollData();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to save salary structure." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to save salary structure." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenMarkPaidModal = (payslip: any) => {
+    setMarkPaidModal(payslip);
+    setMarkPaymentMode(payslip.paymentMode || "BANK_TRANSFER");
+    setMarkTxnRef(payslip.transactionRef || "");
+    setMarkPayRemarks(payslip.remarks || "");
+  };
+
+  const handleSaveMarkPaid = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !markPaidModal) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/api/payroll/payslips/${markPaidModal.id}/pay`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          paymentStatus: "PAID",
+          paymentMode: markPaymentMode,
+          transactionRef: markTxnRef,
+          remarks: markPayRemarks,
+          paymentDate: new Date().toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: `Payment recorded as PAID for ${markPaidModal.staffName}!` });
+        setMarkPaidModal(null);
+        fetchPayrollData();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to record payment." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to update payment status." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Student Promotion Handlers
+  const handleOpenPromotionModal = (sourceClass?: string) => {
+    const defaultSource = sourceClass || (classesList[0]?.name || "");
+    setPromoteSourceClass(defaultSource);
+    const classStudents = studentList.filter((s) => {
+      const clsName = s.enrollments?.[0]?.section?.classGrade?.name;
+      return clsName && defaultSource ? clsName.trim().toLowerCase() === defaultSource.trim().toLowerCase() : false;
+    });
+    setPromoteSelectedStudentIds(classStudents.map((s) => s.id));
+    const currentIndex = classesList.findIndex(
+      (c) => c.name.trim().toLowerCase() === defaultSource.trim().toLowerCase()
+    );
+    if (currentIndex !== -1 && currentIndex < classesList.length - 1) {
+      setPromoteTargetClass(classesList[currentIndex + 1].name);
+    } else {
+      setPromoteTargetClass("");
+    }
+    setPromoteTargetSection("A");
+    setPromoteTargetYear("2027-2028");
+    setPromoteIsGraduation(false);
+    setPromoteModalOpen(true);
+  };
+
+  const handleSourceClassChange = (newSource: string) => {
+    setPromoteSourceClass(newSource);
+    const classStudents = studentList.filter((s) => {
+      const clsName = s.enrollments?.[0]?.section?.classGrade?.name;
+      return clsName && newSource ? clsName.trim().toLowerCase() === newSource.trim().toLowerCase() : false;
+    });
+    setPromoteSelectedStudentIds(classStudents.map((s) => s.id));
+    const currentIndex = classesList.findIndex(
+      (c) => c.name.trim().toLowerCase() === newSource.trim().toLowerCase()
+    );
+    if (currentIndex !== -1 && currentIndex < classesList.length - 1) {
+      setPromoteTargetClass(classesList[currentIndex + 1].name);
+    } else {
+      setPromoteTargetClass("");
+    }
+  };
+
+  const handleToggleSelectAllPromote = () => {
+    const classStudents = studentList.filter((s) => {
+      const clsName = s.enrollments?.[0]?.section?.classGrade?.name;
+      return clsName && promoteSourceClass
+        ? clsName.trim().toLowerCase() === promoteSourceClass.trim().toLowerCase()
+        : false;
+    });
+    if (promoteSelectedStudentIds.length === classStudents.length) {
+      setPromoteSelectedStudentIds([]);
+    } else {
+      setPromoteSelectedStudentIds(classStudents.map((s) => s.id));
+    }
+  };
+
+  const handleToggleStudentPromote = (id: string) => {
+    setPromoteSelectedStudentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleExecutePromotion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (promoteSelectedStudentIds.length === 0) {
+      setMsg({ type: "error", text: "Please select at least one student to promote." });
+      return;
+    }
+    if (!promoteIsGraduation && (!promoteTargetClass.trim() || !promoteTargetSection.trim())) {
+      setMsg({ type: "error", text: "Please specify target class and section." });
+      return;
+    }
+
+    try {
+      setPromotingStudents(true);
+      const res = await fetch(`${API_BASE}/api/students/promote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          studentIds: promoteSelectedStudentIds,
+          targetClassGradeName: promoteTargetClass.trim(),
+          targetSectionName: promoteTargetSection.trim(),
+          targetAcademicYearName: promoteTargetYear.trim(),
+          isGraduation: promoteIsGraduation,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ type: "success", text: data.message || `Students promoted successfully!` });
+        setPromoteModalOpen(false);
+        fetchStudents();
+        fetchClasses();
+      } else {
+        setMsg({ type: "error", text: data.error || "Failed to promote students." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to promote students." });
+    } finally {
+      setPromotingStudents(false);
+    }
+  };
+
+  const fetchFeeRevenueSummary = async () => {
+    try {
+      const headers: Record<string, string> = { "X-Tenant-Slug": slug };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/fees/revenue-summary`, { headers });
+      const text = await res.text();
+      try {
+        const d = JSON.parse(text);
+        if (d && d.summary) {
+          setFeeRevenueSummary(d);
+        }
+      } catch (parseErr) {
+        console.warn("Fee Revenue Summary returned non-JSON response:", text.slice(0, 100));
+      }
+    } catch (e) {}
+  };
+
+  const handleCreateCalendarEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCalTitle.trim() || !newCalStartDate) {
+      setMsg({ type: "error", text: "Please enter an event title and start date." });
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/calendar/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          title: newCalTitle.trim(),
+          category: newCalCategory,
+          startDate: newCalStartDate,
+          endDate: newCalEndDate || newCalStartDate,
+          description: newCalDesc,
+          targetAudience: newCalTargetAudience,
+        }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        data = { error: "Failed to schedule event. Server returned non-JSON response." };
+      }
+
+      if (res.ok) {
+        setMsg({ type: "success", text: "Calendar event scheduled successfully!" });
+        setAddCalendarModal(false);
+        setNewCalTitle("");
+        setNewCalDesc("");
+        setNewCalEndDate("");
+        fetchCalendarEvents();
+      } else {
+        setMsg({ type: "error", text: data.error || data.message || "Failed to schedule event." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to schedule event." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCalendarEvent = (id: string, title: string) => {
+    requestConfirm({
+      title: "Remove Calendar Event",
+      message: `Are you sure you want to remove "${title}" from the calendar?`,
+      confirmText: "Yes, Remove",
+      isDanger: true,
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`${API_BASE}/api/calendar/events/${id}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "X-Tenant-Slug": slug,
+            },
+          });
+          const text = await res.text();
+          let data: any = {};
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            data = { error: "Failed to delete event. Server returned non-JSON response." };
+          }
+
+          if (res.ok) {
+            setMsg({ type: "success", text: `Event "${title}" removed successfully.` });
+            fetchCalendarEvents();
+            if (selectedCalendarDay) {
+              setSelectedCalendarDay((prev) => prev ? { ...prev, events: prev.events.filter(ev => ev.id !== id) } : null);
+            }
+          } else {
+            setMsg({ type: "error", text: data.error || data.message || "Failed to delete event." });
+          }
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to delete event." });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleOpenEditCalendarEvent = (ev: any) => {
+    setEditCalendarModal(ev);
+    setEditCalTitle(ev.title || "");
+    setEditCalCategory(ev.category || "HOLIDAY");
+    setEditCalStartDate(ev.startDate || "");
+    setEditCalEndDate(ev.endDate || ev.startDate || "");
+    setEditCalDesc(ev.description || "");
+    setEditCalTargetAudience(ev.targetAudience || "ALL");
+  };
+
+  const handleUpdateCalendarEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCalendarModal || !editCalTitle.trim() || !editCalStartDate) {
+      setMsg({ type: "error", text: "Please enter an event title and start date." });
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/calendar/events/${editCalendarModal.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          title: editCalTitle.trim(),
+          category: editCalCategory,
+          startDate: editCalStartDate,
+          endDate: editCalEndDate || editCalStartDate,
+          description: editCalDesc,
+          targetAudience: editCalTargetAudience,
+        }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        data = { error: "Failed to update event. Server returned non-JSON response." };
+      }
+
+      if (res.ok) {
+        setMsg({ type: "success", text: "Calendar event updated successfully!" });
+        setEditCalendarModal(null);
+        fetchCalendarEvents();
+        if (selectedCalendarDay) {
+          setSelectedCalendarDay((prev) => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              events: prev.events.map((ev) => (ev.id === editCalendarModal.id ? { ...ev, ...data.event } : ev)),
+            };
+          });
+        }
+      } else {
+        setMsg({ type: "error", text: data.error || data.message || "Failed to update event." });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to update event." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchBusRoutes = async () => {
     try {
+      const headers: Record<string, string> = { "X-Tenant-Slug": slug };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
       const res = await fetch(`${API_BASE}/api/transport/routes`, {
-        headers: { "X-Tenant-Slug": slug },
+        headers,
       });
       if (res.ok) {
         const d = await res.json();
@@ -669,6 +1419,7 @@ export default function SchoolDashboardPage() {
         const d = await resInvoices.json();
         setInvoices(d.invoices || []);
       }
+      fetchFeeRevenueSummary();
     } catch (e) {}
   };
 
@@ -769,8 +1520,14 @@ export default function SchoolDashboardPage() {
 
   const handleOpenAssignModal = (staff: any) => {
     setAssignModalStaff(staff);
-    setAssignRole(staff.role || "TEACHER");
-    setAssignSectionId(staff.headedSections?.[0]?.id || "");
+    let r = staff.role || "CLASS_TEACHER";
+    if (r === "TEACHER" || r === "GENERAL_TEACHER") r = "SUBJECT_TEACHER";
+    if (r === "ADMIN") r = "SCHOOL_ADMIN";
+    setAssignRole(r);
+    const existingSecId = staff.headedSections?.[0]?.id || "";
+    setAssignSectionId(existingSecId);
+    const matchedClass = classesList.find((c: any) => (c.sections || []).some((s: any) => s.id === existingSecId));
+    setAssignClassFilter(matchedClass ? matchedClass.id : "");
     setAssignSubjectIds(staff.taughtSubjects?.map((s: any) => s.id) || []);
     setAssignBusRouteId(staff.drivenBusRoutes?.[0]?.id || "");
   };
@@ -834,72 +1591,158 @@ export default function SchoolDashboardPage() {
         }),
       });
       const data = await res.json();
-      if (res.ok && data.invoices) {
-        setInvoices((prev) => [...data.invoices, ...prev]);
+      if (res.ok) {
+        if (data.invoices && data.invoices.length > 0) {
+          setInvoices((prev) => [...data.invoices, ...prev]);
+        }
         setMsg({ type: "success", text: data.message || `Class invoices generated successfully for ${classInvoiceGenClass}!` });
+        setClassInvoiceGenModal(false);
+        setFeeSubTab("invoices");
+        fetchFeeData();
       } else {
-        const targetStudents = studentList.filter((s) => {
-          const cls = s.enrollments?.[0]?.section?.classGrade?.name || "Class 6";
-          return cls === classInvoiceGenClass;
-        });
-        const studentsToBill = targetStudents.length > 0 ? targetStudents : studentList.slice(0, 5);
-        const amount = selectedStructure?.totalAmount || selectedStructure?.amount || 4500;
-        const newBatchInvoices = studentsToBill.map((s, idx) => ({
-          id: `inv-${Date.now()}-${idx}`,
-          invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-          enrollment: {
-            student: s,
-            section: s.enrollments?.[0]?.section || { name: "A", classGrade: { name: classInvoiceGenClass } },
-          },
-          feeStructure: selectedStructure || { name: "Class Composite Fee", classGrade: classInvoiceGenClass },
-          feeStructureId: classInvoiceGenStructureId,
-          totalAmount: amount,
-          paidAmount: 0,
-          status: "PENDING",
-          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-          createdAt: new Date().toISOString(),
-        }));
-        setInvoices((prev) => [...newBatchInvoices, ...prev]);
-        setMsg({
-          type: "success",
-          text: `⚡ Batch generated ${newBatchInvoices.length} fee invoices for ${classInvoiceGenClass} (${selectedStructure?.name || "Fee Structure"})!`,
-        });
+        setMsg({ type: "error", text: data.error || data.message || "Failed to generate class invoices." });
       }
-      setClassInvoiceGenModal(false);
-      setFeeSubTab("invoices");
-      fetchFeeData();
     } catch (err: any) {
-      const targetStudents = studentList.filter((s) => {
-        const cls = s.enrollments?.[0]?.section?.classGrade?.name || "Class 6";
-        return cls === classInvoiceGenClass;
-      });
-      const studentsToBill = targetStudents.length > 0 ? targetStudents : studentList.slice(0, 5);
-      const amount = selectedStructure?.totalAmount || selectedStructure?.amount || 4500;
-      const newBatchInvoices = studentsToBill.map((s, idx) => ({
-        id: `inv-${Date.now()}-${idx}`,
-        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        enrollment: {
-          student: s,
-          section: s.enrollments?.[0]?.section || { name: "A", classGrade: { name: classInvoiceGenClass } },
-        },
-        feeStructure: selectedStructure || { name: "Class Composite Fee", classGrade: classInvoiceGenClass },
-        feeStructureId: classInvoiceGenStructureId,
-        totalAmount: amount,
-        paidAmount: 0,
-        status: "PENDING",
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        createdAt: new Date().toISOString(),
-      }));
-      setInvoices((prev) => [...newBatchInvoices, ...prev]);
-      setMsg({
-        type: "success",
-        text: `⚡ Batch generated ${newBatchInvoices.length} fee invoices for ${classInvoiceGenClass} (${selectedStructure?.name || "Fee Structure"})!`,
-      });
-      setClassInvoiceGenModal(false);
-      setFeeSubTab("invoices");
+      setMsg({ type: "error", text: err.message || "Failed to generate class invoices." });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAdjustInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adjustInvoiceModal) return;
+    const amountVal = parseFloat(adjustAmount);
+    if (isNaN(amountVal) || !isFinite(amountVal) || amountVal < 0) {
+      setMsg({ type: "error", text: "Please enter a valid positive numeric adjustment amount." });
+      return;
+    }
+
+    const currentTotal = Number(adjustInvoiceModal.totalAmount || adjustInvoiceModal.amount || 0);
+    const currentPaid = Number(adjustInvoiceModal.paidAmount || 0);
+
+    if (adjustType === "SUBTRACT") {
+      if (amountVal <= 0) {
+        setMsg({ type: "error", text: "Discount amount must be greater than zero." });
+        return;
+      }
+      if (currentTotal - amountVal < currentPaid) {
+        const maxDiscount = Math.max(0, currentTotal - currentPaid);
+        setMsg({
+          type: "error",
+          text: `Cannot deduct ₹${amountVal}. Total fee (₹${currentTotal}) cannot be less than already received payment (₹${currentPaid}). Maximum allowable discount is ₹${maxDiscount}.`,
+        });
+        return;
+      }
+    } else if (adjustType === "ADD") {
+      if (amountVal <= 0) {
+        setMsg({ type: "error", text: "Amount to add must be greater than zero." });
+        return;
+      }
+    } else if (adjustType === "SET_REMAINING") {
+      if (amountVal < 0) {
+        setMsg({ type: "error", text: "Remaining dues cannot be negative." });
+        return;
+      }
+    }
+
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/fees/invoices/adjust`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          invoiceId: adjustInvoiceModal.id,
+          adjustmentAmount: amountVal,
+          type: adjustType,
+          reason: adjustReason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMsg({ type: "success", text: data.message || "Invoice adjusted successfully!" });
+      setAdjustInvoiceModal(null);
+      setAdjustAmount("500");
+      setAdjustReason("");
+      fetchFeeData();
+      fetchFeeRevenueSummary();
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to adjust invoice." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteInvoice = (invoiceId: string, invoiceNumber: string) => {
+    requestConfirm({
+      title: "Delete Invoice",
+      message: `Are you sure you want to delete invoice ${invoiceNumber}? This action cannot be undone.`,
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        setLoading(true);
+        setMsg(null);
+        try {
+          const res = await fetch(`${API_BASE}/api/fees/invoices/${invoiceId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "X-Tenant-Slug": slug,
+            },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
+          setMsg({ type: "success", text: data.message || `Invoice ${invoiceNumber} deleted.` });
+          fetchFeeData();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to delete invoice." });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleResetInvoices = () => {
+    const filterDesc = feeFilterClass !== "ALL" ? `for ${feeFilterClass}` : "for ALL classes";
+    requestConfirm({
+      title: "Reset & Delete Invoices",
+      message: `Are you sure you want to reset and delete fee invoices ${filterDesc}? This will clear the invoice list so you can re-generate.`,
+      confirmText: "Reset & Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        setLoading(true);
+        setMsg(null);
+        try {
+          const res = await fetch(`${API_BASE}/api/fees/invoices/reset`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              "X-Tenant-Slug": slug,
+            },
+            body: JSON.stringify({
+              classGradeName: feeFilterClass,
+              status: feeFilterStatus !== "ALL" ? feeFilterStatus : undefined,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          setMsg({ type: "success", text: data.message || "Invoices reset successfully." });
+          fetchFeeData();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to reset invoices." });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleSaveLanding = async (e: React.FormEvent) => {
@@ -927,9 +1770,155 @@ export default function SchoolDashboardPage() {
     }
   };
 
+  const handleSaveLogo = async (newLogoUrl?: string) => {
+    const urlToSave = newLogoUrl !== undefined ? newLogoUrl : (landingConfig.logoUrl || "");
+    try {
+      setLoading(true);
+      const updatedConfig = { ...landingConfig, logoUrl: urlToSave };
+      setLandingConfig(updatedConfig);
+
+      if (currentUser) {
+        const updatedUser = { ...currentUser, logoUrl: urlToSave };
+        setCurrentUser(updatedUser);
+        localStorage.setItem("gkp_user", JSON.stringify(updatedUser));
+      }
+
+      const res = await fetch(`${API_BASE}/api/tenants/landing`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify(updatedConfig),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setMsg({ type: "success", text: "School emblem/logo saved and updated across system!" });
+      fetchLandingData();
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to save school logo." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Computed filtered students for export modal
+  const getFilteredExportStudents = () => {
+    return studentList.filter((s: any) => {
+      const enrollment = s.enrollments?.[0];
+      const gradeName = enrollment?.section?.classGrade?.name || enrollment?.classGradeName || "Class 6";
+      const secName = enrollment?.section?.name || enrollment?.sectionName || "A";
+      const status = enrollment?.status || "ENROLLED";
+
+      if (exportFilterClass !== "ALL" && gradeName !== exportFilterClass) return false;
+      if (exportFilterSection !== "ALL" && secName !== exportFilterSection) return false;
+      if (exportFilterGender !== "ALL" && (s.gender || "MALE").toUpperCase() !== exportFilterGender) return false;
+      if (exportFilterCategory !== "ALL" && (s.category || "GENERAL").toUpperCase() !== exportFilterCategory) return false;
+      if (exportFilterBloodGroup !== "ALL" && (s.bloodGroup || "").toUpperCase() !== exportFilterBloodGroup) return false;
+      if (exportFilterStatus !== "ALL" && status.toUpperCase() !== exportFilterStatus) return false;
+
+      return true;
+    });
+  };
+
+  const handleExportStudents = (customList?: any[]) => {
+    try {
+      const exportList = customList || getFilteredExportStudents();
+      if (exportList.length === 0) {
+        setMsg({ type: "error", text: "No student records match the selected export filters." });
+        return;
+      }
+
+      const formattedData = exportList.map((s: any, idx: number) => {
+        const enrollment = s.enrollments?.[0];
+        const gradeName = enrollment?.section?.classGrade?.name || enrollment?.classGradeName || "Class 6";
+        const secName = enrollment?.section?.name || enrollment?.sectionName || "A";
+        const roll = enrollment?.rollNumber !== undefined ? enrollment.rollNumber : idx + 1;
+
+        return {
+          "Admission Number": s.admissionNumber || `ADM-${s.id?.slice(0, 6)}`,
+          "Roll Number": roll,
+          "First Name": s.firstName || "",
+          "Last Name": s.lastName || "",
+          "Class Grade": gradeName,
+          "Section": secName,
+          "Gender": s.gender || "MALE",
+          "Date of Birth": s.dob ? new Date(s.dob).toISOString().split("T")[0] : "",
+          "Father Name": s.fatherName || "",
+          "Mother Name": s.motherName || "",
+          "Parent Mobile Phone": s.parentPhone || "",
+          "Aadhar Number": s.aadharNumber || "",
+          "Blood Group": s.bloodGroup || "",
+          "Category": s.category || "GENERAL",
+          "Village / City": s.villageCity || "",
+          "Pincode": s.pincode || "",
+          "Address": s.addressText || "",
+          "Status": enrollment?.status || "ENROLLED",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(formattedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Students_Roster");
+      
+      const filterParts = [
+        exportFilterClass !== "ALL" ? exportFilterClass.replace(/\s+/g, "_") : "",
+        exportFilterGender !== "ALL" ? exportFilterGender : "",
+      ].filter(Boolean).join("_");
+
+      const fileName = `${(currentUser?.schoolName || slug || "School").replace(/\s+/g, "_")}_Students_${filterParts ? filterParts + "_" : ""}Export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      setMsg({ type: "success", text: `Successfully exported ${formattedData.length} students to Excel!` });
+      setStudentExportModalOpen(false);
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to export student roster." });
+    }
+  };
+
+  const handleExportStaff = () => {
+    try {
+      const exportList = staffList.length > 0 ? staffList : [];
+      if (exportList.length === 0) {
+        setMsg({ type: "error", text: "No staff records available to export." });
+        return;
+      }
+
+      const formattedData = exportList.map((st: any) => {
+        const profile = st.staffProfile || {};
+        return {
+          "Employee Number": profile.employeeNumber || `EMP-${st.id?.slice(0, 6)}`,
+          "Full Name": profile.fullName || st.email?.split("@")[0] || "Faculty",
+          "Role": st.role || "SUBJECT_TEACHER",
+          "Department": profile.department || "General",
+          "Designation": profile.designation || "Staff",
+          "Email Address": st.email || "",
+          "Mobile Phone": st.phone || "",
+          "Aadhar Number": profile.aadharNumber || "",
+          "Qualification": profile.qualification || "",
+          "Experience (Years)": profile.experienceYears || "",
+          "Emergency Contact": profile.emergencyPhone || "",
+          "Blood Group": profile.bloodGroup || "",
+          "Address": profile.address || "",
+          "Status": st.status || "ACTIVE",
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(formattedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Staff_Roster");
+      const fileName = `${(currentUser?.schoolName || slug || "School").replace(/\s+/g, "_")}_Staff_Export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      setMsg({ type: "success", text: `Successfully exported ${formattedData.length} staff records to Excel!` });
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to export staff roster." });
+    }
+  };
+
   const handleAddPhoto = () => {
     if (!newPhotoUrl || !newPhotoCaption) {
-      alert("Please provide image URL and caption");
+      setMsg({ type: "error", text: "Please provide image URL and caption." });
       return;
     }
     const newImage = {
@@ -957,7 +1946,7 @@ export default function SchoolDashboardPage() {
 
   const handleAddVideo = () => {
     if (!newVideoTitle || !newVideoUrl) {
-      alert("Please provide video title and embed URL");
+      setMsg({ type: "error", text: "Please provide video title and embed URL." });
       return;
     }
     const newVid = {
@@ -988,7 +1977,7 @@ export default function SchoolDashboardPage() {
 
   const handleAddFacility = () => {
     if (!newFacilityName || !newFacilityDesc) {
-      alert("Please provide facility name and description");
+      setMsg({ type: "error", text: "Please provide facility name and description." });
       return;
     }
     const newFac = {
@@ -1050,18 +2039,25 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteNotice = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this notice?")) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/notices/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      if (res.ok) {
-        setMsg({ type: "success", text: "Notice circular removed." });
-        fetchNotices();
-      }
-    } catch (e) {}
+  const handleDeleteNotice = (id: string) => {
+    requestConfirm({
+      title: "Delete Notice Circular",
+      message: "Are you sure you want to delete this notice? It will be removed from the school notice board and student portals.",
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/notices/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          if (res.ok) {
+            setMsg({ type: "success", text: "Notice circular removed." });
+            fetchNotices();
+          }
+        } catch (e) {}
+      },
+    });
   };
 
   // Staff handlers
@@ -1154,6 +2150,7 @@ export default function SchoolDashboardPage() {
       setStaffResumeDoc("");
       setStaffExpDoc("");
       setNewStaffSectionId("");
+      setNewStaffClassFilter("");
       setNewStaffSubjectIds([]);
       setNewStaffBusRouteId("");
       setStaffSubTab("list");
@@ -1165,20 +2162,27 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteStaff = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove staff member "${name}"?`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/staff/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error);
-      setMsg({ type: "success", text: d.message });
-      fetchStaff();
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message || "Failed to remove staff." });
-    }
+  const handleDeleteStaff = (id: string, name: string) => {
+    requestConfirm({
+      title: "Remove Staff Member",
+      message: `Are you sure you want to remove staff member "${name}"?`,
+      confirmText: "Yes, Remove",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/staff/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error);
+          setMsg({ type: "success", text: d.message });
+          fetchStaff();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to remove staff." });
+        }
+      },
+    });
   };
 
   const handleUpdateRole = async (targetUserId: string, newRole: string) => {
@@ -1212,10 +2216,16 @@ export default function SchoolDashboardPage() {
 
     const primaryRole = nextRoles.includes("SCHOOL_ADMIN")
       ? "SCHOOL_ADMIN"
+      : nextRoles.includes("PRINCIPAL")
+      ? "PRINCIPAL"
       : nextRoles.includes("ACCOUNTANT")
       ? "ACCOUNTANT"
-      : nextRoles.includes("TEACHER")
-      ? "TEACHER"
+      : nextRoles.includes("CLASS_TEACHER")
+      ? "CLASS_TEACHER"
+      : nextRoles.includes("SUBJECT_TEACHER")
+      ? "SUBJECT_TEACHER"
+      : nextRoles.includes("DRIVER")
+      ? "DRIVER"
       : nextRoles[0];
 
     setProfileModalStaff((prev: any) =>
@@ -1435,20 +2445,27 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteStudent = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete student "${name}"? This removes their attendance, exam, and billing records.`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/students/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setMsg({ type: "success", text: data.message });
-      fetchStudents();
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message || "Failed to delete student." });
-    }
+  const handleDeleteStudent = (id: string, name: string) => {
+    requestConfirm({
+      title: "Delete Student",
+      message: `Are you sure you want to delete student "${name}"? This removes their attendance, exam, and billing records.`,
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/students/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          setMsg({ type: "success", text: data.message });
+          fetchStudents();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to delete student." });
+        }
+      },
+    });
   };
 
   // Attendance handlers
@@ -1497,6 +2514,52 @@ export default function SchoolDashboardPage() {
     });
     setAttendanceStatusMap(allPres);
     setMsg({ type: "success", text: `Marked all ${filtered.length} students as Present for ${attendanceDate}.` });
+  };
+
+  const handleResetAttendance = () => {
+    requestConfirm({
+      title: "Reset Daily Attendance",
+      message: `Are you sure you want to reset and clear attendance records for ${attendanceDate}? This will remove recorded marks so you can retake roll call.`,
+      confirmText: "Clear Records",
+      isDanger: true,
+      onConfirm: async () => {
+        setLoading(true);
+        setMsg(null);
+        try {
+          const res = await fetch(`${API_BASE}/api/attendance/reset`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              "X-Tenant-Slug": slug,
+            },
+            body: JSON.stringify({
+              date: attendanceDate,
+              classGradeName: studentAttendanceClassFilter,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          // Clear attendance status map for the filtered students
+          const updatedMap = { ...attendanceStatusMap };
+          const filtered = studentAttendanceClassFilter === "ALL"
+            ? studentList
+            : studentList.filter((s) => (s.enrollments?.[0]?.section?.classGrade?.name || "Class 6") === studentAttendanceClassFilter);
+          filtered.forEach((s) => {
+            const enrId = s.enrollments?.[0]?.id || s.id;
+            delete updatedMap[enrId];
+          });
+          setAttendanceStatusMap(updatedMap);
+          setMsg({ type: "success", text: "Attendance records cleared for this day. You can now re-record roll call." });
+          fetchMonthlyAttendance(monthlyAttendanceMonth);
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to reset attendance records." });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleMarkAllStaffPresent = () => {
@@ -1566,6 +2629,52 @@ export default function SchoolDashboardPage() {
       setMsg({ type: "error", text: err.message || "Failed to create subject." });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Map Subject to class handler (from /dashboard/subjects)
+  const handleMapSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mapSubjectName.trim()) {
+      setMsg({ type: "error", text: "Subject name is required." });
+      return;
+    }
+    const targetClass = mapSubjectClassGrade || (classesList.length > 0 ? classesList[0].name : "Class 6");
+    if (!targetClass || targetClass === "ALL") {
+      setMsg({ type: "error", text: "Please select a specific class to map this subject to." });
+      return;
+    }
+
+    setMapSubjectLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/subjects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          name: mapSubjectName.trim(),
+          classGradeName: targetClass,
+          board: mapSubjectBoard || "CBSE",
+          teacherId: mapSubjectTeacherId || undefined,
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed to map subject.");
+
+      setMsg({ type: "success", text: `Subject "${mapSubjectName.trim()}" mapped to ${targetClass} successfully!` });
+      setMapSubjectModalOpen(false);
+      setMapSubjectName("");
+      setMapSubjectTeacherId("");
+      fetchClasses();
+      fetchSubjects(targetClass);
+      setSubjectClassGrade(targetClass);
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.message || "Failed to map subject." });
+    } finally {
+      setMapSubjectLoading(false);
     }
   };
 
@@ -1718,18 +2827,25 @@ export default function SchoolDashboardPage() {
     setMsg({ type: "success", text: "Student removed from bus route." });
   };
 
-  const handleDeleteBusRoute = async (id: string) => {
-    if (!confirm("Delete this bus route?")) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/transport/routes/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      if (res.ok) {
-        setMsg({ type: "success", text: "Bus route deleted." });
-        fetchBusRoutes();
-      }
-    } catch (e) {}
+  const handleDeleteBusRoute = (id: string) => {
+    requestConfirm({
+      title: "Delete Bus Route",
+      message: "Are you sure you want to delete this bus route and its associated stops? This action cannot be undone.",
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/transport/routes/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          if (res.ok) {
+            setMsg({ type: "success", text: "Bus route deleted." });
+            fetchBusRoutes();
+          }
+        } catch (e) {}
+      },
+    });
   };
 
   // Fees handlers
@@ -1739,29 +2855,36 @@ export default function SchoolDashboardPage() {
     setMsg(null);
     try {
       const targetClasses = newFeeClasses.length > 0 ? newFeeClasses : [newFeeClassGrade || "All Classes"];
-      for (const cls of targetClasses) {
-        await fetch(`${API_BASE}/api/fees/structures`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            "X-Tenant-Slug": slug,
-          },
-          body: JSON.stringify({
-            name: targetClasses.length > 1 ? `${newFeeName} (${cls})` : newFeeName,
-            classGradeName: cls,
-            dueDate: newFeeDueDate,
-            frequency: newFeeFrequency,
-            lateFinePerDay: newFeeLateFine,
-            description: newFeeDesc,
-            components: feeComponents.map((c) => ({
-              name: c.name,
-              amount: parseFloat(c.amount) || 0,
-            })),
-          }),
-        });
+      const targetClassDisplay = targetClasses.length === 1
+        ? targetClasses[0]
+        : (targetClasses.length >= (classesList.length > 0 ? classesList.length : 12) ? "All Classes" : targetClasses.join(", "));
+
+      const res = await fetch(`${API_BASE}/api/fees/structures`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-Tenant-Slug": slug,
+        },
+        body: JSON.stringify({
+          name: newFeeName,
+          classGradeName: targetClassDisplay,
+          applicableClasses: targetClasses,
+          dueDate: newFeeDueDate,
+          frequency: newFeeFrequency,
+          lateFinePerDay: newFeeLateFine,
+          description: newFeeDesc,
+          components: feeComponents.map((c) => ({
+            name: c.name,
+            amount: parseFloat(c.amount) || 0,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create fee structure.");
       }
-      setMsg({ type: "success", text: `Fee Structure configured for ${targetClasses.length} classes successfully!` });
+      setMsg({ type: "success", text: `Fee Structure "${newFeeName}" configured successfully!` });
       fetchFeeData();
       setNewFeeClasses([]);
     } catch (err: any) {
@@ -1771,30 +2894,37 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteFeeStructure = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete fee component "${name}" from catalog?`)) return;
-    try {
-      setLoading(true);
-      await fetch(`${API_BASE}/api/fees/structures/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      setFeeStructures((prev) => prev.filter((f) => f.id !== id));
-      setMsg({ type: "success", text: `Fee component "${name}" deleted successfully.` });
-      fetchFeeData();
-    } catch (err: any) {
-      setFeeStructures((prev) => prev.filter((f) => f.id !== id));
-      setMsg({ type: "success", text: `Fee component "${name}" deleted successfully.` });
-    } finally {
-      setLoading(false);
-    }
+  const handleDeleteFeeStructure = (id: string, name: string) => {
+    requestConfirm({
+      title: "Delete Fee Component",
+      message: `Are you sure you want to delete fee component "${name}" from catalog? This cannot be undone.`,
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await fetch(`${API_BASE}/api/fees/structures/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          setFeeStructures((prev) => prev.filter((f) => f.id !== id));
+          setMsg({ type: "success", text: `Fee component "${name}" deleted successfully.` });
+          fetchFeeData();
+        } catch (err: any) {
+          setFeeStructures((prev) => prev.filter((f) => f.id !== id));
+          setMsg({ type: "success", text: `Fee component "${name}" deleted successfully.` });
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   const handleBatchIssueClassInvoices = async (structureId: string) => {
     setLoading(true);
     setMsg(null);
     const selectedStructure = feeStructures.find((f) => f.id === structureId);
-    const targetClass = selectedStructure?.classGrade?.name || selectedStructure?.classGrade || "Class 6";
+    const targetClass = selectedStructure?.classGrade?.name || selectedStructure?.classGrade || "ALL";
     try {
       const res = await fetch(`${API_BASE}/api/fees/generate-class-invoices`, {
         method: "POST",
@@ -1806,67 +2936,18 @@ export default function SchoolDashboardPage() {
         body: JSON.stringify({ feeStructureId: structureId, classGradeName: targetClass }),
       });
       const data = await res.json();
-      if (res.ok && data.invoices) {
-        setInvoices((prev) => [...data.invoices, ...prev]);
-        setMsg({ type: "success", text: data.message || `Class invoices issued for ${selectedStructure?.name || "fee structure"}!` });
+      if (res.ok) {
+        if (data.invoices && data.invoices.length > 0) {
+          setInvoices((prev) => [...data.invoices, ...prev]);
+        }
+        setMsg({ type: "success", text: data.message || `Class invoices issued for ${selectedStructure?.name || targetClass}!` });
+        setFeeSubTab("invoices");
+        fetchFeeData();
       } else {
-        const targetStudents = studentList.filter((s) => {
-          const cls = s.enrollments?.[0]?.section?.classGrade?.name || "Class 6";
-          return cls === targetClass;
-        });
-        const studentsToBill = targetStudents.length > 0 ? targetStudents : studentList.slice(0, 5);
-        const amount = selectedStructure?.totalAmount || selectedStructure?.amount || 4500;
-        const newBatchInvoices = studentsToBill.map((s, idx) => ({
-          id: `inv-${Date.now()}-${idx}`,
-          invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-          enrollment: {
-            student: s,
-            section: s.enrollments?.[0]?.section || { name: "A", classGrade: { name: targetClass } },
-          },
-          feeStructure: selectedStructure || { name: "Class Composite Fee", classGrade: targetClass },
-          feeStructureId: structureId,
-          totalAmount: amount,
-          paidAmount: 0,
-          status: "PENDING",
-          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-          createdAt: new Date().toISOString(),
-        }));
-        setInvoices((prev) => [...newBatchInvoices, ...prev]);
-        setMsg({
-          type: "success",
-          text: `⚡ Issued ${newBatchInvoices.length} class invoices for ${selectedStructure?.name || targetClass}!`,
-        });
+        setMsg({ type: "error", text: data.error || data.message || "Failed to generate class invoices." });
       }
-      setFeeSubTab("invoices");
-      fetchFeeData();
     } catch (err: any) {
-      const targetStudents = studentList.filter((s) => {
-        const cls = s.enrollments?.[0]?.section?.classGrade?.name || "Class 6";
-        return cls === targetClass;
-      });
-      const studentsToBill = targetStudents.length > 0 ? targetStudents : studentList.slice(0, 5);
-      const amount = selectedStructure?.totalAmount || selectedStructure?.amount || 4500;
-      const newBatchInvoices = studentsToBill.map((s, idx) => ({
-        id: `inv-${Date.now()}-${idx}`,
-        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        enrollment: {
-          student: s,
-          section: s.enrollments?.[0]?.section || { name: "A", classGrade: { name: targetClass } },
-        },
-        feeStructure: selectedStructure || { name: "Class Composite Fee", classGrade: targetClass },
-        feeStructureId: structureId,
-        totalAmount: amount,
-        paidAmount: 0,
-        status: "PENDING",
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        createdAt: new Date().toISOString(),
-      }));
-      setInvoices((prev) => [...newBatchInvoices, ...prev]);
-      setMsg({
-        type: "success",
-        text: `⚡ Issued ${newBatchInvoices.length} class invoices for ${selectedStructure?.name || targetClass}!`,
-      });
-      setFeeSubTab("invoices");
+      setMsg({ type: "error", text: err.message || "Failed to generate class invoices." });
     } finally {
       setLoading(false);
     }
@@ -2123,53 +3204,67 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteClass = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete class "${name}"?`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/classes/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error);
-      setMsg({ type: "success", text: d.message });
-      fetchClasses();
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message || "Failed to delete class." });
-    }
+  const handleDeleteClass = (id: string, name: string) => {
+    requestConfirm({
+      title: "Delete Class",
+      message: `Are you sure you want to delete class "${name}"?`,
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/classes/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error);
+          setMsg({ type: "success", text: d.message });
+          fetchClasses();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to delete class." });
+        }
+      },
+    });
   };
 
-  const handleRemoveSubjectFromClass = async (classObj: any, subjectId?: string, subjectName?: string) => {
+  const handleRemoveSubjectFromClass = (classObj: any, subjectId?: string, subjectName?: string) => {
     const subName = subjectName || (classObj.subjectList?.find((s: any) => s.id === subjectId)?.name) || "this subject";
-    if (!confirm(`Are you sure you want to remove/unmap subject "${subName}" from ${classObj.name}?`)) return;
-    try {
-      let url = `${API_BASE}/api/subjects`;
-      if (subjectId) {
-        url = `${API_BASE}/api/subjects/${subjectId}`;
-      } else {
-        url = `${API_BASE}/api/subjects?classGradeName=${encodeURIComponent(classObj.name)}&name=${encodeURIComponent(subName)}`;
-      }
-      const res = await fetch(url, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Failed to remove subject");
-      setMsg({ type: "success", text: `Subject "${subName}" removed from ${classObj.name}.` });
+    requestConfirm({
+      title: "Unmap Subject",
+      message: `Are you sure you want to remove/unmap subject "${subName}" from ${classObj.name}?`,
+      confirmText: "Yes, Unmap",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          let url = `${API_BASE}/api/subjects`;
+          if (subjectId) {
+            url = `${API_BASE}/api/subjects/${subjectId}`;
+          } else {
+            url = `${API_BASE}/api/subjects?classGradeName=${encodeURIComponent(classObj.name)}&name=${encodeURIComponent(subName)}`;
+          }
+          const res = await fetch(url, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error || "Failed to remove subject");
+          setMsg({ type: "success", text: `Subject "${subName}" removed from ${classObj.name}.` });
 
-      if (editClassModal && editClassModal.id === classObj.id) {
-        setEditClassModal({
-          ...editClassModal,
-          subjects: (editClassModal.subjects || []).filter((s: string) => s !== subName),
-          subjectList: (editClassModal.subjectList || []).filter((s: any) => (subjectId ? s.id !== subjectId : s.name !== subName)),
-          subjectsCount: Math.max(0, (editClassModal.subjectsCount || 1) - 1),
-        });
-      }
-      fetchClasses();
-      fetchSubjects(classObj.name);
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message || "Failed to remove subject." });
-    }
+          if (editClassModal && editClassModal.id === classObj.id) {
+            setEditClassModal({
+              ...editClassModal,
+              subjects: (editClassModal.subjects || []).filter((s: string) => s !== subName),
+              subjectList: (editClassModal.subjectList || []).filter((s: any) => (subjectId ? s.id !== subjectId : s.name !== subName)),
+              subjectsCount: Math.max(0, (editClassModal.subjectsCount || 1) - 1),
+            });
+          }
+          fetchClasses();
+          fetchSubjects(classObj.name);
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to remove subject." });
+        }
+      },
+    });
   };
 
   // Notice Update Handler
@@ -2253,21 +3348,28 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const handleDeleteSubject = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete subject "${name}"?`)) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/subjects/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
-      });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error);
-      setMsg({ type: "success", text: d.message });
-      fetchSubjects(subjectClassGrade);
-      fetchClasses();
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.message || "Failed to delete subject." });
-    }
+  const handleDeleteSubject = (id: string, name: string) => {
+    requestConfirm({
+      title: "Delete Subject",
+      message: `Are you sure you want to delete subject "${name}"?`,
+      confirmText: "Yes, Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/subjects/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}`, "X-Tenant-Slug": slug },
+          });
+          const d = await res.json();
+          if (!res.ok) throw new Error(d.error);
+          setMsg({ type: "success", text: d.message });
+          fetchSubjects(subjectClassGrade);
+          fetchClasses();
+        } catch (err: any) {
+          setMsg({ type: "error", text: err.message || "Failed to delete subject." });
+        }
+      },
+    });
   };
 
 
@@ -2439,7 +3541,7 @@ export default function SchoolDashboardPage() {
   const handleExecuteStudentImport = async () => {
     const validRows = studentImportRows.filter((r) => r.isValid);
     if (validRows.length === 0) {
-      alert("No valid rows found to import. Please review errors.");
+      setMsg({ type: "error", text: "No valid rows found to import. Please review errors." });
       return;
     }
 
@@ -2473,7 +3575,7 @@ export default function SchoolDashboardPage() {
         "Full Name*": "Vikram Singh Chouhan",
         "Email": "vikram.singh@school.internal",
         "Phone Number*": "9826012345",
-        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "TEACHER",
+        "Role* (CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / SCHOOL_ADMIN / DRIVER / ACCOUNTANT)": "SUBJECT_TEACHER",
         "Designation": "Senior PGT Mathematics",
         "Qualification": "M.Sc, B.Ed",
         "Department": "Science & Mathematics",
@@ -2485,7 +3587,7 @@ export default function SchoolDashboardPage() {
         "Full Name*": "Sunita Verma",
         "Email": "sunita.verma@school.internal",
         "Phone Number*": "9826054321",
-        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "CLASS_TEACHER",
+        "Role* (CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / SCHOOL_ADMIN / DRIVER / ACCOUNTANT)": "CLASS_TEACHER",
         "Designation": "TGT English Faculty",
         "Qualification": "M.A English, B.Ed",
         "Department": "Languages",
@@ -2497,7 +3599,7 @@ export default function SchoolDashboardPage() {
         "Full Name*": "Ramesh Bheel",
         "Email": "ramesh.driver@school.internal",
         "Phone Number*": "9826098765",
-        "Role* (TEACHER / CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / DRIVER / ACCOUNTANT)": "DRIVER",
+        "Role* (CLASS_TEACHER / SUBJECT_TEACHER / PRINCIPAL / SCHOOL_ADMIN / DRIVER / ACCOUNTANT)": "DRIVER",
         "Designation": "Heavy Bus Driver",
         "Qualification": "Commercial DL",
         "Department": "Transport Operations",
@@ -2549,7 +3651,10 @@ export default function SchoolDashboardPage() {
           const fullName = getVal("fullname", "name", "staffname", "teachername");
           const email = getVal("email", "emailaddress", "username");
           const phone = getVal("phonenumber", "phone", "mobile", "contact");
-          const role = getVal("role", "staffrole", "designationrole") || "TEACHER";
+          let role = getVal("role", "staffrole", "designationrole") || "SUBJECT_TEACHER";
+          if (role === "TEACHER" || role === "GENERAL_TEACHER") role = "SUBJECT_TEACHER";
+          if (role === "CASHIER") role = "ACCOUNTANT";
+          if (role === "ADMIN") role = "SCHOOL_ADMIN";
           const designation = getVal("designation", "post", "title");
           const qualification = getVal("qualification", "degree");
           const department = getVal("department", "dept") || "Academics";
@@ -2589,7 +3694,7 @@ export default function SchoolDashboardPage() {
   const handleExecuteStaffImport = async () => {
     const validRows = staffImportRows.filter((r) => r.isValid);
     if (validRows.length === 0) {
-      alert("No valid rows found to import. Please review errors.");
+      setMsg({ type: "error", text: "No valid rows found to import. Please review errors." });
       return;
     }
 
@@ -2620,7 +3725,7 @@ export default function SchoolDashboardPage() {
   const handleLogout = () => {
     localStorage.removeItem("gkp_token");
     localStorage.removeItem("gkp_user");
-    router.push(`/school/${slug}/login`);
+    router.push(`/school/${slug}/portal/login`);
   };
 
   // Filtered lists
@@ -2646,7 +3751,12 @@ export default function SchoolDashboardPage() {
       (prof.fullName && prof.fullName.toLowerCase().includes(staffSearch.toLowerCase())) ||
       (m.email && m.email.toLowerCase().includes(staffSearch.toLowerCase())) ||
       (m.phone && m.phone.includes(staffSearch));
-    const roleMatch = staffFilterRole === "ALL" || m.role === staffFilterRole;
+    const roleMatch =
+      staffFilterRole === "ALL" ||
+      m.role === staffFilterRole ||
+      (staffFilterRole === "SCHOOL_ADMIN" && (m.role === "ADMIN" || m.role === "SCHOOL_ADMIN")) ||
+      (staffFilterRole === "ACCOUNTANT" && (m.role === "ACCOUNTANT" || m.role === "CASHIER")) ||
+      (staffFilterRole === "SUBJECT_TEACHER" && (m.role === "SUBJECT_TEACHER" || m.role === "TEACHER"));
     const deptMatch =
       staffFilterDept === "ALL" ||
       (prof.department && prof.department.toLowerCase().includes(staffFilterDept.toLowerCase()));
@@ -2656,30 +3766,119 @@ export default function SchoolDashboardPage() {
   if (!currentUser) return null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex font-sans">
-      {/* ========================================================================= */}
-      {/* SIDEBAR NAVIGATION (Clean Light CBSE) */}
-      {/* ========================================================================= */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 min-h-screen sticky top-0 h-screen z-30 shadow-xs print:hidden">
-        {/* Brand Header */}
-        <div className="p-5 border-b border-slate-200 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-xl shadow-sm">
-            ग
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col lg:flex-row font-sans lg:h-screen lg:overflow-hidden">
+      {/* Mobile & Tablet Header Bar (Visible only on <lg screens) */}
+      <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-2xs print:hidden">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+            {(landingConfig?.logoUrl || currentUser?.logoUrl) ? (
+              <img
+                src={landingConfig?.logoUrl || currentUser?.logoUrl}
+                alt="Logo"
+                className="w-full h-full object-contain p-0.5"
+              />
+            ) : (
+              <div className="h-full w-full bg-blue-600 flex items-center justify-center font-black text-white text-sm">
+                {(currentUser.schoolName || slug || "G").charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
           <div className="overflow-hidden">
-            <h1 className="font-extrabold text-sm text-slate-950 truncate">
+            <h1 className="font-extrabold text-xs text-slate-950 truncate max-w-[170px] sm:max-w-[300px]">
               {currentUser.schoolName || slug}
             </h1>
-            <p className="text-[10px] text-blue-700 font-mono tracking-wider uppercase font-bold">
+            <p className="text-[9px] text-blue-700 font-mono tracking-wider uppercase font-bold">
               {currentUser.role}
             </p>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold transition flex items-center gap-1.5 text-xs border border-slate-200"
+          aria-label="Toggle navigation menu"
+        >
+          <span>{mobileSidebarOpen ? "✕" : "☰"}</span>
+          <span className="text-[11px] font-semibold">{mobileSidebarOpen ? "Close" : "Menu"}</span>
+        </button>
+      </div>
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden print:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SIDEBAR NAVIGATION (Clean Light CBSE) */}
+      {/* ========================================================================= */}
+      <aside
+        className={`bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all duration-300 ease-in-out print:hidden fixed inset-y-0 left-0 z-50 h-full lg:static lg:sticky lg:top-0 lg:h-screen lg:z-30 max-w-[85vw] ${
+          desktopSidebarCollapsed
+            ? "lg:w-0 lg:border-r-0 lg:overflow-hidden lg:opacity-0 pointer-events-none lg:pointer-events-none"
+            : "lg:w-64 lg:opacity-100 w-64"
+        } ${
+          mobileSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-3 min-w-[250px]">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0">
+            <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+              {(landingConfig?.logoUrl || currentUser?.logoUrl) ? (
+                <img
+                  src={landingConfig?.logoUrl || currentUser?.logoUrl}
+                  alt="School Logo"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              ) : (
+                <div className="h-full w-full bg-blue-600 flex items-center justify-center font-black text-white text-lg">
+                  {(currentUser.schoolName || slug || "G").charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="overflow-hidden min-w-0">
+              <h1 className="font-extrabold text-sm text-slate-950 truncate max-w-[130px]">
+                {currentUser.schoolName || slug}
+              </h1>
+              <p className="text-[10px] text-blue-700 font-mono tracking-wider uppercase font-bold">
+                {currentUser.role}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Desktop Collapse Icon */}
+            <button
+              type="button"
+              onClick={toggleDesktopSidebar}
+              className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+              title="Collapse menu (Ctrl+B)"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M9 3v18" />
+                <path d="m14 15-3-3 3-3" />
+              </svg>
+            </button>
+
+            {/* Mobile Close Button */}
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs">
-          {/* 1. Students */}
-          {currentUser.role !== "DRIVER" && (
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto text-xs min-w-[250px]">
+          {/* 1. Students (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
             <button
               onClick={() => navigateToSection("students")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
@@ -2689,7 +3888,7 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>🎓</span>
+                <span className="text-base">🎓</span>
                 <span>Students</span>
               </div>
               <span
@@ -2702,7 +3901,7 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          {/* 2. Staff and Faculty */}
+          {/* 2. Staff and Faculty (School Admin & Principal only) */}
           {isAdmin && (
             <button
               onClick={() => navigateToSection("staff")}
@@ -2713,7 +3912,7 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>👥</span>
+                <span className="text-base">👥</span>
                 <span>Staff & Faculty</span>
               </div>
               <span
@@ -2726,7 +3925,7 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          {/* 3. Academic Classes */}
+          {/* 3. Academic Classes (School Admin & Principal only) */}
           {isAdmin && (
             <button
               onClick={() => navigateToSection("classes")}
@@ -2738,7 +3937,7 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>🏛️</span>
+                <span className="text-base">🏛️</span>
                 <span>Academic Classes</span>
               </div>
               <span
@@ -2751,8 +3950,8 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          {/* 4. Subject and Teachers */}
-          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+          {/* 4. Subject and Teachers (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
             <button
               onClick={() => navigateToSection("subjects")}
               title="Manage which teacher has which subject"
@@ -2763,14 +3962,14 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>📚</span>
+                <span className="text-base">📚</span>
                 <span>Subject and Teachers</span>
               </div>
             </button>
           )}
 
-          {/* 5. Attendance : Staff and Students */}
-          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+          {/* 5. Attendance : Staff and Students (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
             <button
               onClick={() => navigateToSection("attendance")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
@@ -2780,14 +3979,14 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>📋</span>
+                <span className="text-base">📋</span>
                 <span>Daily Attendance</span>
               </div>
             </button>
           )}
 
-          {/* 6. Exams and Report Cards */}
-          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+          {/* 6. Exams and Report Cards (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
             <button
               onClick={() => navigateToSection("exams")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
@@ -2797,14 +3996,14 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>📊</span>
+                <span className="text-base">📊</span>
                 <span>Exams & Report Cards</span>
               </div>
             </button>
           )}
 
-          {/* 7. Fee and Invoices */}
-          {currentUser.role !== "DRIVER" && (
+          {/* 7. Fee and Invoices (Accountant and Admin primary, Teacher view-only; Hidden for Driver) */}
+          {!isDriverOnly && (
             <button
               onClick={() => navigateToSection("fees")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
@@ -2814,7 +4013,7 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>💳</span>
+                <span className="text-base">💳</span>
                 <span>School Fees & Receipt</span>
               </div>
               <span
@@ -2827,8 +4026,8 @@ export default function SchoolDashboardPage() {
             </button>
           )}
 
-          {/* 8. Weekly Timetable */}
-          {currentUser.role !== "DRIVER" && currentUser.role !== "ACCOUNTANT" && (
+          {/* 8. Weekly Timetable (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
             <button
               onClick={() => navigateToSection("timetable")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
@@ -2838,57 +4037,85 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>🗓️</span>
+                <span className="text-base">🗓️</span>
                 <span>Weekly Timetable</span>
               </div>
             </button>
           )}
 
-          {/* 9. Transport & Bus Routes */}
+          {/* 9. Transport & Bus Routes (Driver, Admin, Teacher; Hidden for Accountant) */}
+          {!isAccountantOnly && (
+            <button
+              onClick={() => navigateToSection("transport")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
+                activeSection === "transport"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">🚌</span>
+                <span>Transport & Bus Routes</span>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  activeSection === "transport" ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                {busRoutesList.length}
+              </span>
+            </button>
+          )}
+
+          {/* 10. Notice Board (Hidden for Driver & Accountant) */}
+          {!isDriverOnly && !isAccountantOnly && (
+            <button
+              onClick={() => navigateToSection("notices")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
+                activeSection === "notices"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">📢</span>
+                <span>Notice Board</span>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  activeSection === "notices" ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                {noticesList.length}
+              </span>
+            </button>
+          )}
+
+          {/* 11. Holiday Calendar & School Planner */}
           <button
-            onClick={() => navigateToSection("transport")}
+            onClick={() => navigateToSection("calendar")}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
-              activeSection === "transport"
+              activeSection === "calendar"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <span>🚌</span>
-              <span>Transport & Bus Routes</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="text-base shrink-0">📅</span>
+              <span className="truncate">Holiday Calendar</span>
             </div>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
-                activeSection === "transport" ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
-              }`}
-            >
-              {busRoutesList.length}
-            </span>
+            {calendarEvents.length > 0 && (
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  activeSection === "calendar" ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
+                {calendarEvents.length}
+              </span>
+            )}
           </button>
 
-          {/* 10. Notice Board */}
-          <button
-            onClick={() => navigateToSection("notices")}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
-              activeSection === "notices"
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span>📢</span>
-              <span>Notice Board</span>
-            </div>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
-                activeSection === "notices" ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
-              }`}
-            >
-              {noticesList.length}
-            </span>
-          </button>
-
-          {/* 11. School Website & CMS */}
+          {/* 12. School Website & CMS */}
           {isAdmin && (
             <button
               onClick={() => navigateToSection("website")}
@@ -2899,14 +4126,71 @@ export default function SchoolDashboardPage() {
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <span>🌐</span>
+                <span className="text-base">🌐</span>
                 <span>School Website & CMS</span>
               </div>
             </button>
-          )}</nav>
+          )}
+
+          {/* 13. Admissions & Inquiries */}
+          {isAdmin && (
+            <button
+              onClick={() => navigateToSection("inquiries")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
+                activeSection === "inquiries"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-base shrink-0">📨</span>
+                <span className="truncate">Admissions & Inquiries</span>
+              </div>
+              {schoolInquiries.length > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                    activeSection === "inquiries"
+                      ? "bg-blue-700 text-white"
+                      : "bg-amber-100 text-amber-800 border border-amber-300"
+                  }`}
+                >
+                  {schoolInquiries.length}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* 14. Staff Payroll & Salaries (Admin, Principal, Accountant) */}
+          {(isAdmin || isAccountantOnly || currentUser?.role === "PRINCIPAL") && (
+            <button
+              onClick={() => navigateToSection("payroll")}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold transition ${
+                activeSection === "payroll"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-base shrink-0">💰</span>
+                <span className="truncate">Staff Payroll & Salaries</span>
+              </div>
+              {payrollRuns.length > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                    activeSection === "payroll"
+                      ? "bg-blue-700 text-white"
+                      : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                  }`}
+                >
+                  {payrollRuns.length}
+                </span>
+              )}
+            </button>
+          )}
+        </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50/50">
+        <div className="p-4 border-t border-slate-200 space-y-2 bg-slate-50/50 min-w-[250px]">
           <Link
             href={`/school/${slug}`}
             target="_blank"
@@ -2921,6 +4205,7 @@ export default function SchoolDashboardPage() {
             <button
               onClick={handleLogout}
               className="text-xs text-red-600 hover:text-red-700 font-bold"
+              title="Logout"
             >
               Logout
             </button>
@@ -2931,11 +4216,57 @@ export default function SchoolDashboardPage() {
       {/* ========================================================================= */}
       {/* MAIN CONTENT AREA */}
       {/* ========================================================================= */}
-      <main className={`flex-1 min-w-0 p-8 space-y-6 overflow-y-auto bg-slate-100/70 ${
-        viewIdCardStudent || viewReportCard || viewInvoiceReceipt || bulkPrintIdCardsStudents || bulkPrintInvoicesModal
-          ? "print:hidden"
-          : ""
-      }`}>
+      <main
+        id="dashboard-main-content"
+        className={`w-full lg:flex-1 min-w-0 px-3.5 pt-3.5 pb-40 sm:px-5 sm:pt-5 sm:pb-36 lg:p-8 space-y-5 lg:space-y-6 lg:overflow-y-auto lg:h-screen bg-slate-100/70 ${
+          viewIdCardStudent || viewReportCard || viewInvoiceReceipt || bulkPrintIdCardsStudents || bulkPrintInvoicesModal
+            ? "print:hidden"
+            : ""
+        }`}
+      >
+        {/* Modern Desktop Header & Sidebar Navigation Bar */}
+        <div className="hidden lg:flex items-center justify-between pb-3 border-b border-slate-200/80 print:hidden">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleDesktopSidebar}
+              className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-2xs border border-transparent hover:border-slate-200 transition group flex items-center justify-center"
+              title={desktopSidebarCollapsed ? "Expand menu (Ctrl+B)" : "Collapse menu (Ctrl+B)"}
+            >
+              <svg
+                className="w-5 h-5 text-slate-600 group-hover:text-blue-600 transition-colors"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M9 3v18" />
+                {desktopSidebarCollapsed ? (
+                  <path d="m14 9 3 3-3 3" />
+                ) : (
+                  <path d="m15 15-3-3 3-3" />
+                )}
+              </svg>
+            </button>
+
+            <div className="h-4 w-px bg-slate-200" />
+
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+              <span className="text-slate-500 font-semibold">{currentUser?.schoolName || slug}</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-blue-700 uppercase font-mono text-[11px] tracking-wide">{activeSection}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-bold text-slate-500 font-mono bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+              Academic Session 2026-27
+            </span>
+          </div>
+        </div>
         {/* Global Feedback Banner */}
         {msg && (
           <div
@@ -2982,19 +4313,39 @@ export default function SchoolDashboardPage() {
               {/* Action buttons & tabs */}
               <div className="flex items-center flex-wrap gap-2">
                 {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStudentImportModalOpen(true);
-                      setStudentImportRows([]);
-                      setStudentImportResult(null);
-                      setStudentImportFileName("");
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950"
-                  >
-                    <span>📥</span>
-                    <span>Import via Excel</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStudentImportModalOpen(true);
+                        setStudentImportRows([]);
+                        setStudentImportResult(null);
+                        setStudentImportFileName("");
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-md shadow-emerald-950"
+                    >
+                      <span>📥</span>
+                      <span>Import via Excel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStudentExportModalOpen(true)}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      title="Export student roster to Excel spreadsheet with custom filters"
+                    >
+                      <span>📤</span>
+                      <span>Export to Excel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenPromotionModal()}
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white flex items-center gap-1.5 shadow-sm shadow-blue-500/20 cursor-pointer"
+                      title="Promote class students to the next grade upon completing academic session"
+                    >
+                      <span>⚡</span>
+                      <span>Promote to New Class</span>
+                    </button>
+                  </>
                 )}
 
                 <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200">
@@ -3178,8 +4529,8 @@ export default function SchoolDashboardPage() {
 
                                 {/* Table */}
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[650px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5 w-10 text-center">
@@ -3647,25 +4998,13 @@ export default function SchoolDashboardPage() {
         {/* SECTION 2: STAFF & FACULTY */}
         {/* ======================================================================= */}
         {activeSection === "staff" && isAdmin && (
-          <div
-            className={`space-y-6 transition-all ${"bg-[#fbf9f4] text-[#1c1917] p-6 rounded-3xl border border-[#e7e0d3] shadow-sm"
-            }`}
-          >
-            {/* Visual Palette Preview Banner for Staff */}
-            
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <h2
-                  className={`text-xl font-extrabold flex items-center gap-2 ${"text-[#154a32]"
-                  }`}
-                >
+                <h2 className="text-xl font-black text-slate-950 flex items-center gap-2">
                   <span>👥</span> School Staff & Faculty
                 </h2>
-                <p
-                  className={`text-xs mt-1 ${"text-stone-600"
-                  }`}
-                >
+                <p className="text-xs text-slate-600 font-medium mt-1">
                   Onboard and assign Principals, Class Teachers, Subject Teachers, Accountants, and Bus Drivers with workload controls.
                 </p>
               </div>
@@ -3684,6 +5023,15 @@ export default function SchoolDashboardPage() {
                 >
                   <span>📥</span>
                   <span>Import Faculty via Excel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportStaff}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center gap-1.5 shadow-2xs"
+                  title="Export staff roster to Excel spreadsheet"
+                >
+                  <span>📤</span>
+                  <span>Export Staff Excel</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200">
@@ -3750,15 +5098,9 @@ export default function SchoolDashboardPage() {
                     💼 Administrative & Support Staff ({staffList.filter((s) => !["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL"].includes(s.role)).length})
                   </button>
                 </div>
-                <div
-                  className={`p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 ${"bg-white border border-[#e6ded1] shadow-sm text-stone-800"
-                  }`}
-                >
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${"text-stone-600"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">
                       🔍 Search Name, Email, Mobile
                     </label>
                     <input
@@ -3766,45 +5108,35 @@ export default function SchoolDashboardPage() {
                       value={staffSearch}
                       onChange={(e) => setStaffSearch(e.target.value)}
                       placeholder="e.g. Suresh or @school.edu..."
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${"bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs bg-slate-50 border border-slate-300 text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
                     />
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${"text-stone-600"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">
                       Filter by Role
                     </label>
                     <select
                       value={staffFilterRole}
                       onChange={(e) => setStaffFilterRole(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${"bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs bg-slate-50 border border-slate-300 text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
                     >
                       <option value="ALL">All Roles ({staffList.length})</option>
-                      <option value="PRINCIPAL">Principal / Headmaster</option>
-                      <option value="ADMIN">Admin / School Admin</option>
-                      <option value="CLASS_TEACHER">Class Teacher</option>
-                      <option value="SUBJECT_TEACHER">Subject Teacher</option>
-                      <option value="TEACHER">General Teacher</option>
-                      <option value="ACCOUNTANT">Accountant</option>
-                      <option value="DRIVER">Bus Driver</option>
+                      <option value="PRINCIPAL">👑 Principal / Headmaster</option>
+                      <option value="SCHOOL_ADMIN">🛡️ School Admin</option>
+                      <option value="CLASS_TEACHER">🏛️ Class Teacher</option>
+                      <option value="SUBJECT_TEACHER">📚 Subject Teacher</option>
+                      <option value="ACCOUNTANT">💳 Accountant / Cashier</option>
+                      <option value="DRIVER">🚌 Bus Driver</option>
                     </select>
                   </div>
                   <div>
-                    <label
-                      className={`block text-[10px] uppercase font-bold mb-1 ${"text-stone-600"
-                      }`}
-                    >
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1">
                       Filter by Department
                     </label>
                     <select
                       value={staffFilterDept}
                       onChange={(e) => setStaffFilterDept(e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs outline-none ${"bg-[#faf7f2] border border-[#ded4c4] text-stone-900 focus:bg-white focus:border-amber-600"
-                      }`}
+                      className="w-full px-3 py-1.5 rounded-lg text-xs bg-slate-50 border border-slate-300 text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
                     >
                       <option value="ALL">All Departments</option>
                       <option value="Science">Science & Maths</option>
@@ -3817,8 +5149,8 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[650px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5">Staff Member</th>
@@ -4025,13 +5357,12 @@ export default function SchoolDashboardPage() {
                       onChange={(e) => setNewStaffRole(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
                     >
-                      <option value="PRINCIPAL">Principal / Headmaster</option>
-                      <option value="ADMIN">School Admin</option>
-                      <option value="CLASS_TEACHER">Class Teacher</option>
-                      <option value="SUBJECT_TEACHER">Subject Teacher</option>
-                      <option value="TEACHER">General Teacher</option>
-                      <option value="ACCOUNTANT">Accountant / Cashier</option>
-                      <option value="DRIVER">Bus Driver / Transport</option>
+                      <option value="PRINCIPAL">👑 Principal / Headmaster (Full Command)</option>
+                      <option value="SCHOOL_ADMIN">🛡️ School Admin (Full Command)</option>
+                      <option value="CLASS_TEACHER">🏛️ Class Teacher (Heads Class & Section)</option>
+                      <option value="SUBJECT_TEACHER">📚 Subject Teacher (Curriculum & Subject Marks)</option>
+                      <option value="ACCOUNTANT">💳 Accountant / Cashier (Fees & Invoicing)</option>
+                      <option value="DRIVER">🚌 Bus Driver / Transport</option>
                     </select>
                   </div>
                   <div>
@@ -4088,27 +5419,61 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 {/* Direct Onboarding Workload Assignments (Classes & Subjects) */}
-                {["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN"].includes(newStaffRole) && (
+                {["CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "SCHOOL_ADMIN", "ADMIN"].includes(newStaffRole) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                    <div>
-                      <label className="block text-[11px] text-amber-400 font-bold mb-1">
-                        🏛️ Assign as Class Teacher for Section (Optional)
-                      </label>
-                      <p className="text-[10px] text-slate-400 mb-2">Teacher will head this section and take daily attendance.</p>
-                      <select
-                        value={newStaffSectionId}
-                        onChange={(e) => setNewStaffSectionId(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
-                      >
-                        <option value="">— None (Not Heading a Class) —</option>
-                        {classesList.flatMap((cls: any) =>
-                          (cls.sections || []).map((sec: any) => (
-                            <option key={sec.id} value={sec.id}>
-                              {cls.name} - Section {sec.name}
-                            </option>
-                          ))
-                        )}
-                      </select>
+                    <div className="space-y-2.5">
+                      <div>
+                        <label className="block text-[11px] text-amber-500 font-bold mb-1">
+                          🏛️ Assign as Class Teacher for Section (Optional)
+                        </label>
+                        <p className="text-[10px] text-slate-400 mb-2">Teacher will head this section and take daily attendance.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                            Filter by Class / Grade:
+                          </label>
+                          <select
+                            value={newStaffClassFilter}
+                            onChange={(e) => {
+                              setNewStaffClassFilter(e.target.value);
+                              setNewStaffSectionId("");
+                            }}
+                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-amber-500"
+                          >
+                            <option value="">— All Classes & Grades —</option>
+                            {classesList.map((cls: any) => (
+                              <option key={cls.id} value={cls.id}>
+                                {cls.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                            Choose Section:
+                          </label>
+                          <select
+                            value={newStaffSectionId}
+                            onChange={(e) => setNewStaffSectionId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-amber-500"
+                          >
+                            <option value="">— None (Not Heading a Class) —</option>
+                            {(newStaffClassFilter
+                              ? classesList.filter((cls: any) => cls.id === newStaffClassFilter)
+                              : classesList
+                            ).flatMap((cls: any) =>
+                              (cls.sections || []).map((sec: any) => (
+                                <option key={sec.id} value={sec.id}>
+                                  {cls.name} - Section {sec.name}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        </div>
+                      </div>
                     </div>
 
                     <div>
@@ -4357,7 +5722,8 @@ export default function SchoolDashboardPage() {
             {classSubTab === "list" && (
               <div className="space-y-4">
                                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[560px] text-left text-xs border-collapse">
                     <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                       <tr>
                         <th className="p-3.5">Class / Grade Name</th>
@@ -4403,8 +5769,15 @@ export default function SchoolDashboardPage() {
                               <span className="text-slate-400 italic text-[11px]">No subjects mapped yet</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-right w-28 whitespace-nowrap">
+                          <td className="p-3.5 text-right w-36 whitespace-nowrap">
                             <div className="inline-flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenPromotionModal(c.name)}
+                                title={`Promote Students in ${c.name} to Next Session`}
+                                className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs transition shadow-2xs inline-flex items-center gap-1"
+                              >
+                                <span>⚡</span> Promote
+                              </button>
                               <button
                                 onClick={() => setEditClassModal(c)}
                                 title="Edit Class Configuration"
@@ -4425,6 +5798,7 @@ export default function SchoolDashboardPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -4701,8 +6075,8 @@ export default function SchoolDashboardPage() {
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[700px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5">Student Name</th>
@@ -4806,9 +6180,9 @@ export default function SchoolDashboardPage() {
                 return attendanceStatusMap[enrId] === "LATE";
               }).length;
 
-              const leaveCount = filteredStudents.filter((s) => {
+              const halfCount = filteredStudents.filter((s) => {
                 const enrId = s.enrollments?.[0]?.id || s.id;
-                return attendanceStatusMap[enrId] === "HALF_DAY" || attendanceStatusMap[enrId] === "ON_LEAVE";
+                return attendanceStatusMap[enrId] === "HALF_DAY";
               }).length;
 
               return (
@@ -4851,6 +6225,17 @@ export default function SchoolDashboardPage() {
                       >
                         ✓ Mark All Students Present
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResetAttendance}
+                        disabled={loading}
+                        className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
+                        title="Reset & clear attendance records for this date and class"
+                      >
+                        <span>🔄</span>
+                        <span>Reset Attendance</span>
+                      </button>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -4861,16 +6246,17 @@ export default function SchoolDashboardPage() {
                         Absent: {aCount}
                       </span>
                       <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-200">
-                        Late: {lCount}
+                        Late / Leave (L): {lCount}
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-900 font-bold border border-blue-200">
-                        Leave / Half: {leaveCount}
+                      <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-900 font-bold border border-purple-200">
+                        Half Day: {halfCount}
                       </span>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                      <table className="w-full min-w-[750px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5 w-10 text-center">
@@ -4954,7 +6340,6 @@ export default function SchoolDashboardPage() {
                                     { id: "ABSENT", label: "A", color: "bg-rose-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-rose-50" },
                                     { id: "LATE", label: "L", color: "bg-amber-500 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-amber-50" },
                                     { id: "HALF_DAY", label: "Half", color: "bg-purple-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-purple-50" },
-                                    { id: "ON_LEAVE", label: "Leave", color: "bg-blue-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-blue-50" },
                                   ].map((st) => (
                                     <button
                                       key={st.id}
@@ -4985,6 +6370,7 @@ export default function SchoolDashboardPage() {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
@@ -5031,7 +6417,8 @@ export default function SchoolDashboardPage() {
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                      <table className="w-full text-left text-xs">
+                      <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                        <table className="w-full min-w-[650px] text-left text-xs">
                         <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                           <tr>
                             <th className="p-3.5">Faculty / Staff Member</th>
@@ -5091,6 +6478,7 @@ export default function SchoolDashboardPage() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -5123,14 +6511,18 @@ export default function SchoolDashboardPage() {
                         <span className="px-3 py-1 rounded-full bg-rose-100 text-rose-900 font-bold border border-rose-200">
                           Absent: {Object.values(staffAttendanceStatus).filter(s => s === "ABSENT").length}
                         </span>
-                        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-900 font-bold border border-blue-200">
-                          On Leave: {Object.values(staffAttendanceStatus).filter(s => s === "ON_LEAVE").length}
+                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-200">
+                          Late / Leave (L): {Object.values(staffAttendanceStatus).filter(s => s === "LATE").length}
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-900 font-bold border border-purple-200">
+                          Half Day: {Object.values(staffAttendanceStatus).filter(s => s === "HALF_DAY").length}
                         </span>
                       </div>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                      <table className="w-full text-left text-xs">
+                      <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                        <table className="w-full min-w-[700px] text-left text-xs">
                         <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                           <tr>
                             <th className="p-3.5">Faculty / Staff Member</th>
@@ -5179,7 +6571,6 @@ export default function SchoolDashboardPage() {
                                       { id: "PRESENT", label: "P", color: "bg-emerald-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-emerald-50" },
                                       { id: "ABSENT", label: "A", color: "bg-rose-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-rose-50" },
                                       { id: "LATE", label: "L", color: "bg-amber-500 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-amber-50" },
-                                      { id: "ON_LEAVE", label: "Leave", color: "bg-blue-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-blue-50" },
                                       { id: "HALF_DAY", label: "Half", color: "bg-purple-600 text-white", inactive: "bg-slate-100 text-slate-700 hover:bg-purple-50" },
                                     ].map((st) => (
                                       <button
@@ -5209,6 +6600,7 @@ export default function SchoolDashboardPage() {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
 
                     <div className="flex justify-end pt-2">
@@ -5242,9 +6634,19 @@ export default function SchoolDashboardPage() {
                 </p>
               </div>
 
-              {/* Two-tab switcher */}
+              {/* Three-tab switcher */}
               {!isTeacherOnly && (
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200">
+                  <button
+                    onClick={() => setFeeSubTab("overview")}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      feeSubTab === "overview"
+                        ? "bg-blue-600 text-white font-bold shadow-xs"
+                        : "text-slate-600 hover:text-slate-900 font-semibold"
+                    }`}
+                  >
+                    📊 Overall Revenue Overview
+                  </button>
                   <button
                     onClick={() => setFeeSubTab("invoices")}
                     className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
@@ -5269,6 +6671,449 @@ export default function SchoolDashboardPage() {
               )}
             </div>
 
+            {/* Sub-tab 0: Overall Revenue Overview Dashboard */}
+            {feeSubTab === "overview" && (() => {
+              const summary = feeRevenueSummary?.summary || {
+                totalDemand: invoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0),
+                totalCollected: invoices.reduce((acc, inv) => acc + (Number(inv.paidAmount) || 0), 0),
+                totalOutstanding: invoices.reduce((acc, inv) => acc + Math.max(0, (Number(inv.totalAmount) || 0) - (Number(inv.paidAmount) || 0)), 0),
+                collectionRate: invoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0) > 0
+                  ? Math.round((invoices.reduce((acc, inv) => acc + (Number(inv.paidAmount) || 0), 0) / invoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0)) * 1000) / 10
+                  : 0,
+                totalInvoices: invoices.length,
+                paidCount: invoices.filter((i) => i.status === "PAID").length,
+                partialCount: invoices.filter((i) => i.status === "PARTIALLY_PAID" || i.status === "PARTIAL").length,
+                pendingCount: invoices.filter((i) => i.status === "PENDING").length,
+                overdueCount: invoices.filter((i) => i.status === "OVERDUE").length,
+              };
+
+              const classBreakdown: Array<{
+                className: string;
+                totalDemand: number;
+                totalCollected: number;
+                totalOutstanding: number;
+                studentCount?: number;
+                invoiceCount: number;
+              }> = feeRevenueSummary?.classBreakdown || (() => {
+                const map: Record<string, any> = {};
+                invoices.forEach((inv) => {
+                  const cName = inv.enrollment?.section?.classGrade?.name || inv.student?.classGrade || inv.feeStructure?.classGrade || "Unassigned";
+                  if (!map[cName]) {
+                    map[cName] = { className: cName, totalDemand: 0, totalCollected: 0, totalOutstanding: 0, invoiceCount: 0, studentCount: 0 };
+                  }
+                  const t = Number(inv.totalAmount) || 0;
+                  const p = Number(inv.paidAmount) || 0;
+                  map[cName].totalDemand += t;
+                  map[cName].totalCollected += p;
+                  map[cName].totalOutstanding += Math.max(0, t - p);
+                  map[cName].invoiceCount += 1;
+                });
+                return Object.values(map).sort((a: any, b: any) => b.totalDemand - a.totalDemand);
+              })();
+
+              const structureBreakdown: Array<{
+                structureName: string;
+                totalDemand: number;
+                totalCollected: number;
+                totalOutstanding: number;
+                invoiceCount: number;
+              }> = feeRevenueSummary?.structureBreakdown || (() => {
+                const map: Record<string, any> = {};
+                invoices.forEach((inv) => {
+                  const sName = inv.feeStructure?.name || inv.title || "General Fee";
+                  if (!map[sName]) {
+                    map[sName] = { structureName: sName, totalDemand: 0, totalCollected: 0, totalOutstanding: 0, invoiceCount: 0 };
+                  }
+                  const t = Number(inv.totalAmount) || 0;
+                  const p = Number(inv.paidAmount) || 0;
+                  map[sName].totalDemand += t;
+                  map[sName].totalCollected += p;
+                  map[sName].totalOutstanding += Math.max(0, t - p);
+                  map[sName].invoiceCount += 1;
+                });
+                return Object.values(map).sort((a: any, b: any) => b.totalDemand - a.totalDemand);
+              })();
+
+              const recoveryPct = Number(summary.totalDemand) > 0
+                ? Math.min(100, Math.round((Number(summary.totalCollected) / Number(summary.totalDemand)) * 100))
+                : 0;
+
+              return (
+                <div className="space-y-6">
+                  {/* Top Header Banner */}
+                  <div className="p-4 sm:p-5 rounded-3xl bg-linear-to-r from-blue-900 to-indigo-900 text-white shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">📊</span>
+                      <h3 className="text-base font-black tracking-tight">School Revenue & Dues Overview</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider backdrop-blur-xs">
+                        Live Financials
+                      </span>
+                    </div>
+                    <p className="text-xs text-blue-100 font-medium mt-1">
+                      High-level summary of total school fees assessed (demand), actual collections received, and remaining dues.
+                    </p>
+                  </div>
+
+                  {/* 3 Primary Big Metric Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* 1. Total School Fees / Demand */}
+                    <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 pointer-events-none" />
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        <span>Total School Fees (Demand)</span>
+                        <span className="text-lg">🏛️</span>
+                      </div>
+                      <div className="text-3xl font-black text-slate-950 font-mono tracking-tight">
+                        ₹{Number(summary.totalDemand).toLocaleString("en-IN")}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                        <span>{summary.totalInvoices} vouchers billed</span>
+                        <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 text-[10px]">
+                          100% Assessed
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 2. Total Collected / What We Got */}
+                    <div className="p-5 rounded-3xl bg-emerald-50/50 border border-emerald-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-8 -mt-8 pointer-events-none" />
+                      <div className="flex items-center justify-between text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+                        <span>Fees Collected (What We Got)</span>
+                        <span className="text-lg">💰</span>
+                      </div>
+                      <div className="text-3xl font-black text-emerald-700 font-mono tracking-tight">
+                        ₹{Number(summary.totalCollected).toLocaleString("en-IN")}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-emerald-700">
+                        <span>Deposited & verified</span>
+                        <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300 text-[10px]">
+                          ✓ {summary.collectionRate}% Recovered
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 3. Total Remaining / What Is Left */}
+                    <div className="p-5 rounded-3xl bg-amber-50/50 border border-amber-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-8 -mt-8 pointer-events-none" />
+                      <div className="flex items-center justify-between text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">
+                        <span>Remaining Dues (What Is Left)</span>
+                        <span className="text-lg">⏳</span>
+                      </div>
+                      <div className="text-3xl font-black text-amber-700 font-mono tracking-tight">
+                        ₹{Number(summary.totalOutstanding).toLocaleString("en-IN")}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-amber-700">
+                        <span>Outstanding to collect</span>
+                        <span className="font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 text-[10px]">
+                          {Number(summary.totalDemand) > 0 ? (100 - Number(summary.collectionRate)).toFixed(1) : 0}% Pending
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Overall Recovery Progress Bar */}
+                  <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                      <div>
+                        <span className="font-bold text-slate-900">Overall Collection Progress: </span>
+                        <span className="text-slate-600 font-medium">
+                          ₹{Number(summary.totalCollected).toLocaleString("en-IN")} collected out of ₹{Number(summary.totalDemand).toLocaleString("en-IN")} total billed
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-sm text-blue-700">
+                        {summary.collectionRate}% Complete
+                      </span>
+                    </div>
+
+                    {/* Stacked Progress Bar */}
+                    <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200 shadow-inner">
+                      <div
+                        className="bg-emerald-500 h-full transition-all duration-500 rounded-l-full"
+                        style={{ width: `${recoveryPct}%` }}
+                        title={`Collected: ₹${Number(summary.totalCollected).toLocaleString("en-IN")} (${recoveryPct}%)`}
+                      />
+                      <div
+                        className="bg-amber-400 h-full transition-all duration-500"
+                        style={{ width: `${100 - recoveryPct}%` }}
+                        title={`Outstanding: ₹${Number(summary.totalOutstanding).toLocaleString("en-IN")} (${100 - recoveryPct}%)`}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <span>Collected: ₹{Number(summary.totalCollected).toLocaleString("en-IN")} ({recoveryPct}%)</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" />
+                        <span>Balance Left: ₹{Number(summary.totalOutstanding).toLocaleString("en-IN")} ({100 - recoveryPct}%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Voucher Status Breakdown Interactive Grid */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                      <span>🏷️</span> Fee Voucher Status Breakdown (Click to filter list)
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeeFilterStatus("PAID");
+                          setFeeSubTab("invoices");
+                        }}
+                        className="p-3.5 rounded-2xl bg-white border border-emerald-200 text-left hover:border-emerald-500 hover:shadow-md transition group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Fully Paid</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-950 font-mono mt-1">
+                          {summary.paidCount}
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-medium group-hover:underline">
+                          View Paid Vouchers →
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeeFilterStatus("PARTIAL");
+                          setFeeSubTab("invoices");
+                        }}
+                        className="p-3.5 rounded-2xl bg-white border border-blue-200 text-left hover:border-blue-500 hover:shadow-md transition group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800">Partially Paid</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-950 font-mono mt-1">
+                          {summary.partialCount}
+                        </div>
+                        <span className="text-[10px] text-blue-700 font-medium group-hover:underline">
+                          View Partial Vouchers →
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeeFilterStatus("PENDING");
+                          setFeeSubTab("invoices");
+                        }}
+                        className="p-3.5 rounded-2xl bg-white border border-amber-200 text-left hover:border-amber-500 hover:shadow-md transition group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Pending / Unpaid</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-950 font-mono mt-1">
+                          {summary.pendingCount}
+                        </div>
+                        <span className="text-[10px] text-amber-700 font-medium group-hover:underline">
+                          View Unpaid Vouchers →
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFeeFilterStatus("OVERDUE");
+                          setFeeSubTab("invoices");
+                        }}
+                        className="p-3.5 rounded-2xl bg-white border border-rose-200 text-left hover:border-rose-500 hover:shadow-md transition group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800">Overdue</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-950 font-mono mt-1">
+                          {summary.overdueCount}
+                        </div>
+                        <span className="text-[10px] text-rose-700 font-medium group-hover:underline">
+                          View Overdue Vouchers →
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Class-Wise Financial Breakdown Table */}
+                  <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                          <span>🏫</span> Class-Wise Revenue & Recovery Ledger
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Breakdown of fees billed, received, and remaining dues for each individual grade.
+                        </p>
+                      </div>
+                      <span className="text-xs text-slate-500 font-semibold">
+                        {classBreakdown.length} Classes Tracked
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            <th className="py-3 px-4">Class Grade</th>
+                            <th className="py-3 px-4 text-center">Vouchers</th>
+                            <th className="py-3 px-4 text-right">Total Demand</th>
+                            <th className="py-3 px-4 text-right">Collected (Got)</th>
+                            <th className="py-3 px-4 text-right">Remaining (Left)</th>
+                            <th className="py-3 px-4 text-center">Recovery %</th>
+                            <th className="py-3 px-4 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                          {classBreakdown.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="py-8 text-center text-slate-400">
+                                No fee invoices generated yet. Generate invoices to view class breakdown.
+                              </td>
+                            </tr>
+                          ) : (
+                            classBreakdown.map((row) => {
+                              const pct = row.totalDemand > 0
+                                ? Math.min(100, Math.round((row.totalCollected / row.totalDemand) * 100))
+                                : 0;
+                              return (
+                                <tr key={row.className} className="hover:bg-slate-50/70 transition">
+                                  <td className="py-3 px-4 font-bold text-slate-900">
+                                    {row.className}
+                                  </td>
+                                  <td className="py-3 px-4 text-center font-mono">
+                                    {row.invoiceCount}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                                    ₹{row.totalDemand.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700">
+                                    ₹{row.totalCollected.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-amber-700">
+                                    ₹{row.totalOutstanding.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <div className="inline-flex items-center gap-2">
+                                      <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                        <div
+                                          className={`h-full ${pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-blue-500" : "bg-amber-500"}`}
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] font-mono font-bold text-slate-600">
+                                        {pct}%
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFeeFilterClass(row.className);
+                                        setFeeFilterStatus("ALL");
+                                        setFeeSubTab("invoices");
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 transition"
+                                    >
+                                      View Invoices →
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Fee Category / Catalog Structure Breakdown Table */}
+                  <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                          <span>📑</span> Fee Structure & Component Breakdown
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Revenue performance by fee category (Tuition, Transport, Exams, Admissions, etc.).
+                        </p>
+                      </div>
+                      <span className="text-xs text-slate-500 font-semibold">
+                        {structureBreakdown.length} Fee Components
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            <th className="py-3 px-4">Fee Component / Structure</th>
+                            <th className="py-3 px-4 text-center">Vouchers Issued</th>
+                            <th className="py-3 px-4 text-right">Total Demand</th>
+                            <th className="py-3 px-4 text-right">Collected (Got)</th>
+                            <th className="py-3 px-4 text-right">Remaining (Left)</th>
+                            <th className="py-3 px-4 text-center">Recovery %</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                          {structureBreakdown.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="py-8 text-center text-slate-400">
+                                No fee structures recorded.
+                              </td>
+                            </tr>
+                          ) : (
+                            structureBreakdown.map((row) => {
+                              const pct = row.totalDemand > 0
+                                ? Math.min(100, Math.round((row.totalCollected / row.totalDemand) * 100))
+                                : 0;
+                              return (
+                                <tr key={row.structureName} className="hover:bg-slate-50/70 transition">
+                                  <td className="py-3 px-4 font-bold text-slate-900">
+                                    {row.structureName}
+                                  </td>
+                                  <td className="py-3 px-4 text-center font-mono">
+                                    {row.invoiceCount}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                                    ₹{row.totalDemand.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-emerald-700">
+                                    ₹{row.totalCollected.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-right font-mono font-bold text-amber-700">
+                                    ₹{row.totalOutstanding.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <div className="inline-flex items-center gap-2">
+                                      <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                        <div
+                                          className={`h-full ${pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-blue-500" : "bg-amber-500"}`}
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] font-mono font-bold text-slate-600">
+                                        {pct}%
+                                      </span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Sub-tab 1: Invoices */}
             {feeSubTab === "invoices" && (() => {
               const filteredInvoices = invoices.filter((inv) => {
@@ -5280,14 +7125,50 @@ export default function SchoolDashboardPage() {
                 if (feeFilterStructure !== "ALL" && structName && !structName.toLowerCase().includes(feeFilterStructure.toLowerCase())) {
                   return false;
                 }
-                if (feeFilterStatus !== "ALL" && inv.status !== feeFilterStatus) {
-                  return false;
+                if (feeFilterStatus !== "ALL") {
+                  if (feeFilterStatus === "PARTIAL" || feeFilterStatus === "PARTIALLY_PAID") {
+                    if (inv.status !== "PARTIALLY_PAID" && inv.status !== "PARTIAL") return false;
+                  } else if (inv.status !== feeFilterStatus) {
+                    return false;
+                  }
                 }
                 return true;
               });
 
               return (
               <div className="space-y-4">
+                {/* At-a-glance KPI Ribbon for Invoices Tab */}
+                {(() => {
+                  const totalDemand = filteredInvoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0);
+                  const totalPaid = filteredInvoices.reduce((acc, inv) => acc + (Number(inv.paidAmount) || 0), 0);
+                  const totalLeft = Math.max(0, totalDemand - totalPaid);
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Total Invoiced (Filtered)</span>
+                          <span className="text-xl font-black text-slate-900 font-mono">₹{totalDemand.toLocaleString("en-IN")}</span>
+                        </div>
+                        <span className="text-xl p-2 rounded-xl bg-slate-50 border border-slate-100">🏛️</span>
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 shadow-2xs flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Total Received (What we got)</span>
+                          <span className="text-xl font-black text-emerald-700 font-mono">₹{totalPaid.toLocaleString("en-IN")}</span>
+                        </div>
+                        <span className="text-xl p-2 rounded-xl bg-emerald-100/70 border border-emerald-200">💰</span>
+                      </div>
+                      <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 shadow-2xs flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">Total Remaining (What is left)</span>
+                          <span className="text-xl font-black text-amber-700 font-mono">₹{totalLeft.toLocaleString("en-IN")}</span>
+                        </div>
+                        <span className="text-xl p-2 rounded-xl bg-amber-100/70 border border-amber-200">⏳</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-white border border-slate-200 shadow-sm">
                   <div className="text-xs text-slate-700 font-medium">
                     Showing {filteredInvoices.length} of {invoices.length} student fee vouchers.
@@ -5298,7 +7179,7 @@ export default function SchoolDashboardPage() {
                     )}
                   </div>
                   {(isAdmin || isAccountant) && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -5316,6 +7197,14 @@ export default function SchoolDashboardPage() {
                         className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5"
                       >
                         <span>⚡</span> Batch Generate Class Invoices
+                      </button>
+                      <button
+                        onClick={handleResetInvoices}
+                        disabled={loading}
+                        className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition shadow-2xs flex items-center gap-1.5"
+                        title="Delete and reset invoices for selected class or all"
+                      >
+                        <span>🔄</span> Reset Invoices
                       </button>
                     </div>
                   )}
@@ -5368,16 +7257,16 @@ export default function SchoolDashboardPage() {
                     >
                       <option value="ALL">All Statuses</option>
                       <option value="PAID">PAID</option>
+                      <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
                       <option value="PENDING">PENDING</option>
-                      <option value="PARTIAL">PARTIAL</option>
                       <option value="OVERDUE">OVERDUE</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[850px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5 w-10 text-center">
@@ -5451,29 +7340,70 @@ export default function SchoolDashboardPage() {
                               </td>
                               <td className="p-3.5">
                                 <span
-                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                                     inv.status === "PAID"
-                                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                                      : "bg-amber-100 text-amber-800 border border-amber-300"
+                                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                      : inv.status === "PARTIALLY_PAID" || inv.status === "PARTIAL"
+                                      ? "bg-amber-100 text-amber-900 border-amber-300"
+                                      : inv.status === "OVERDUE"
+                                      ? "bg-rose-100 text-rose-800 border-rose-300"
+                                      : "bg-blue-100 text-blue-900 border-blue-300"
                                   }`}
                                 >
-                                  {inv.status}
+                                  {inv.status === "PARTIALLY_PAID" ? "PARTIAL" : inv.status}
                                 </span>
                               </td>
                               <td className="p-3.5 text-right space-x-1.5 whitespace-nowrap">
                                 <button
+                                  type="button"
                                   onClick={() => setViewInvoiceReceipt(inv)}
-                                  className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs transition shadow-2xs"
+                                  className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs transition shadow-2xs inline-flex items-center gap-1"
+                                  title="View Printable Receipt"
                                 >
-                                  🖨️ Receipt
+                                  <span>🧾</span> Receipt
                                 </button>
-                                {inv.status !== "PAID" && (
-                                  <button
-                                    onClick={() => handleRecordPayment(inv.id, inv.totalAmount - inv.paidAmount)}
-                                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs"
-                                  >
-                                    Collect ₹{inv.totalAmount - inv.paidAmount}
-                                  </button>
+                                {(isAdmin || isAccountant) && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setAdjustInvoiceModal(inv);
+                                        setAdjustType("ADD");
+                                        setAdjustAmount("500");
+                                        setAdjustReason("");
+                                      }}
+                                      className="px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold text-xs transition shadow-2xs inline-flex items-center gap-1"
+                                      title="Add prior remaining quarter dues or deduct discounts"
+                                    >
+                                      <span>⚖️</span> Adjust (+ / -)
+                                    </button>
+                                    {inv.status !== "PAID" && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const rem = Math.max(0, inv.totalAmount - inv.paidAmount);
+                                          const entered = prompt(`Enter payment amount to collect for ${inv.invoiceNumber} (Remaining: ₹${rem}):`, String(rem));
+                                          if (entered !== null) {
+                                            const val = parseFloat(entered);
+                                            if (!isNaN(val) && val > 0) {
+                                              handleRecordPayment(inv.id, val);
+                                            }
+                                          }
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs inline-flex items-center gap-1"
+                                      >
+                                        <span>💳</span> Collect ₹{inv.totalAmount - inv.paidAmount}
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteInvoice(inv.id, inv.invoiceNumber)}
+                                      className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition shadow-2xs inline-flex items-center justify-center"
+                                      title="Delete Invoice"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </>
                                 )}
                               </td>
                             </tr>
@@ -5651,7 +7581,8 @@ export default function SchoolDashboardPage() {
                 )}
 
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <table className="w-full text-left text-xs">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                    <table className="w-full min-w-[600px] text-left text-xs">
                     <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                       <tr>
                         <th className="p-3.5">Structure Name</th>
@@ -5672,7 +7603,25 @@ export default function SchoolDashboardPage() {
                         feeStructures.map((f) => (
                           <tr key={f.id} className="hover:bg-slate-50 transition">
                             <td className="p-3.5 font-bold text-slate-950 text-sm">{f.name}</td>
-                            <td className="p-3.5">{f.classGrade?.name || "Class 6"}</td>
+                            <td className="p-3.5">
+                              {f.classGrade?.name === "All Classes" ? (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1">
+                                  <span>🌐</span> All Classes
+                                </span>
+                              ) : f.classGrade?.name?.includes(",") ? (
+                                <div className="flex flex-wrap gap-1 max-w-xs">
+                                  {f.classGrade.name.split(",").map((c: string) => (
+                                    <span key={c} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      {c.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-800">
+                                  {f.classGrade?.name || "Class 6"}
+                                </span>
+                              )}
+                            </td>
                             <td className="p-3.5 font-mono text-blue-700 font-bold text-xs">{f.frequency || "QUARTERLY"}</td>
                             <td className="p-3.5 font-mono font-bold text-slate-950 text-sm">₹{f.totalAmount}</td>
                             {(isAdmin || isAccountant) && (
@@ -5699,6 +7648,7 @@ export default function SchoolDashboardPage() {
                       )}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -5826,7 +7776,8 @@ export default function SchoolDashboardPage() {
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-xs">
+                    <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                      <table className="w-full min-w-[550px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3.5">Student Scholar</th>
@@ -5887,6 +7838,7 @@ export default function SchoolDashboardPage() {
                         )}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               );
@@ -5989,8 +7941,9 @@ export default function SchoolDashboardPage() {
                   </div>
 
                   {/* 6 Subjects Table */}
-                  <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-xs">
+                  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                      <table className="w-full min-w-[650px] text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                         <tr>
                           <th className="p-3">#</th>
@@ -6057,6 +8010,7 @@ export default function SchoolDashboardPage() {
                         })}
                       </tbody>
                     </table>
+                    </div>
                   </div>
 
                   {/* Live Dynamic Calculation Box */}
@@ -6136,6 +8090,21 @@ export default function SchoolDashboardPage() {
                 <span className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold font-mono">
                   📚 {subjectsList.length} Subjects Listed
                 </span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const defaultClass = (subjectClassGrade !== "ALL" && subjectClassGrade) ? subjectClassGrade : (classesList.length > 0 ? classesList[0].name : "Class 6");
+                      setMapSubjectClassGrade(defaultClass);
+                      setMapSubjectName("");
+                      setMapSubjectTeacherId("");
+                      setMapSubjectModalOpen(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>➕</span> Map Subject to Class
+                  </button>
+                )}
               </div>
             </div>
 
@@ -6159,20 +8128,38 @@ export default function SchoolDashboardPage() {
                     ))}
                   </select>
                 </div>
-                <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
-                  <span>💡 Subjects are added and mapped per class in</span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("classes")}
-                    className="text-blue-700 font-bold hover:underline"
-                  >
-                    Classes (SIS) →
-                  </button>
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultClass = (subjectClassGrade !== "ALL" && subjectClassGrade) ? subjectClassGrade : (classesList.length > 0 ? classesList[0].name : "Class 6");
+                        setMapSubjectClassGrade(defaultClass);
+                        setMapSubjectName("");
+                        setMapSubjectTeacherId("");
+                        setMapSubjectModalOpen(true);
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>➕</span> Map New Subject
+                    </button>
+                  )}
+                  <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
+                    <span>💡 Or manage in</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("classes")}
+                      className="text-blue-700 font-bold hover:underline"
+                    >
+                      Classes (SIS) →
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto overscroll-x-contain touch-auto">
+                  <table className="w-full min-w-[650px] text-left text-xs">
                   <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
                       <th className="p-3.5">Subject</th>
@@ -6189,16 +8176,23 @@ export default function SchoolDashboardPage() {
                   <tbody className="divide-y divide-slate-100">
                     {subjectsList.length === 0 ? (
                       <tr>
-                        <td colSpan={isAdmin ? 5 : 3} className="p-8 text-center text-slate-400">
-                          No curriculum subjects found for this selection. Map subjects to classes in{" "}
-                          <button
-                            type="button"
-                            onClick={() => setActiveSection("classes")}
-                            className="text-blue-600 font-bold hover:underline"
-                          >
-                            Classes (SIS)
-                          </button>
-                          .
+                        <td colSpan={isAdmin ? 5 : 3} className="p-8 text-center text-slate-500">
+                          <p className="font-semibold text-sm mb-2 text-slate-700">No curriculum subjects found for this selection.</p>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const defaultClass = (subjectClassGrade !== "ALL" && subjectClassGrade) ? subjectClassGrade : (classesList.length > 0 ? classesList[0].name : "Class 6");
+                                setMapSubjectClassGrade(defaultClass);
+                                setMapSubjectName("");
+                                setMapSubjectTeacherId("");
+                                setMapSubjectModalOpen(true);
+                              }}
+                              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                            >
+                              <span>➕</span> Map Subject to {subjectClassGrade !== "ALL" ? subjectClassGrade : "a Class"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ) : (
@@ -6280,6 +8274,7 @@ export default function SchoolDashboardPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>
@@ -6362,7 +8357,7 @@ export default function SchoolDashboardPage() {
                 </div>
 
                                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto overscroll-x-contain touch-auto">
                     <table className="w-full text-left text-xs min-w-[800px]">
                       <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 font-bold">
                         <tr>
@@ -6586,6 +8581,16 @@ export default function SchoolDashboardPage() {
               })
             : busRoutesList;
 
+          const driverAssignedRoute = busRoutesList.find(
+            (route) =>
+              route.isAssignedRoute ||
+              (currentUser?.id && route.driverUserId === currentUser.id) ||
+              (currentUser?.phone &&
+                route.driverPhone &&
+                route.driverPhone.replace(/\D/g, "").length > 5 &&
+                route.driverPhone.replace(/\D/g, "").includes(currentUser.phone.replace(/\D/g, "")))
+          );
+
           return (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
@@ -6610,7 +8615,7 @@ export default function SchoolDashboardPage() {
                   >
                     🚌 View Bus Routes ({teacherVisibleRoutes.length})
                   </button>
-                  {!isTeacherOnly && (
+                  {isAdmin && (
                     <button
                       onClick={() => setTransportSubTab("create")}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
@@ -6625,6 +8630,15 @@ export default function SchoolDashboardPage() {
                 </div>
               </div>
 
+              {isDriverOnly && (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 font-medium flex items-center gap-2.5 shadow-2xs">
+                  <span className="text-base shrink-0">🚌</span>
+                  <span>
+                    <strong>Driver Console:</strong> Showing all bus routes for your school. Your assigned route is pinned at the top with schedule, stops, and student passenger details.
+                  </span>
+                </div>
+              )}
+
               {isTeacherOnly && (
                 <div className="p-3.5 bg-blue-50/90 border border-blue-200 rounded-2xl text-xs text-blue-950 font-medium flex items-center gap-2.5 shadow-2xs">
                   <span className="text-base shrink-0">🚌</span>
@@ -6636,25 +8650,153 @@ export default function SchoolDashboardPage() {
 
               {/* Sub-tab 1: Routes list */}
               {transportSubTab === "list" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {teacherVisibleRoutes.length === 0 ? (
-                    <div className="col-span-full p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-2xl border border-slate-200">
-                      No bus routes are currently associated with students of your assigned class.
+                <div className="space-y-6">
+                  {/* Driver's Assigned Route Pinned Prominently Above */}
+                  {driverAssignedRoute && (
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50/50 border-2 border-emerald-500 shadow-md space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="px-3.5 py-1 rounded-full font-black font-mono text-xs bg-emerald-600 text-white shadow-xs">
+                            ⭐ YOUR ASSIGNED ROUTE: {driverAssignedRoute.routeNumber}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                            Active Duty
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-mono text-xs text-slate-700 font-medium">
+                            Vehicle: <strong className="text-slate-950 font-bold">{driverAssignedRoute.vehicleNumber}</strong>
+                          </span>
+                          <span className="font-mono text-xs text-emerald-700 font-bold">
+                            ₹{driverAssignedRoute.monthlyFee}/month
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-black text-xl text-slate-950">{driverAssignedRoute.routeName}</h3>
+                        <p className="text-xs text-slate-700 font-medium mt-1">
+                          Driver: <strong className="text-slate-950 font-bold">{driverAssignedRoute.driverName}</strong>{" "}
+                          <span className="font-mono text-blue-700 font-bold">({driverAssignedRoute.driverPhone})</span>
+                          {driverAssignedRoute.conductorName && (
+                            <> • Conductor: <strong className="text-slate-950 font-bold">{driverAssignedRoute.conductorName}</strong> {driverAssignedRoute.conductorPhone ? `(${driverAssignedRoute.conductorPhone})` : ""}</>
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-white border border-emerald-200 text-xs font-medium text-slate-700 shadow-2xs">
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">Pickup</span>
+                          <span className="font-mono font-bold text-slate-900 text-sm">{driverAssignedRoute.morningPickupTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">Drop</span>
+                          <span className="font-mono font-bold text-slate-900 text-sm">{driverAssignedRoute.eveningDropTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">Capacity</span>
+                          <span className="font-mono font-bold text-slate-900 text-sm">{driverAssignedRoute.capacity} Seats</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">Passengers</span>
+                          <span className="font-mono font-bold text-emerald-700 text-sm">{(routeAssignments[driverAssignedRoute.id] || []).length} Students</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <span className="text-[11px] text-slate-700 uppercase font-black tracking-wider block">
+                          Route Stops ({((driverAssignedRoute.stops as any[]) || []).length}):
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {((driverAssignedRoute.stops as any[]) || []).map((st: any, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-100/70 border border-emerald-200 text-xs text-emerald-950 font-semibold flex items-center gap-1.5"
+                            >
+                              <span>📍</span>
+                              <span>{st.name}</span>
+                              {st.time && <span className="font-mono text-emerald-800 text-[11px]">({st.time})</span>}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {(routeAssignments[driverAssignedRoute.id] || []).length > 0 && (
+                        <div className="pt-3 border-t border-emerald-200/80">
+                          <span className="text-[11px] text-slate-700 font-bold block mb-2">
+                            Assigned Student Passengers ({(routeAssignments[driverAssignedRoute.id] || []).length}):
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1">
+                            {(routeAssignments[driverAssignedRoute.id] || []).map((ast: any) => {
+                              const stObj = studentList.find((s) => s.id === ast.studentId);
+                              return (
+                                <div key={ast.studentId} className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
+                                  <div>
+                                    <div className="font-bold text-slate-900">{ast.studentName}</div>
+                                    <div className="text-[10px] text-slate-500">{ast.className} • Stop: {ast.stopName}</div>
+                                  </div>
+                                  {stObj?.emergencyPhone && (
+                                    <a href={`tel:${stObj.emergencyPhone}`} className="text-emerald-700 font-mono text-[10px] font-bold hover:underline">
+                                      📞 Call
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    teacherVisibleRoutes.map((route) => {
-                  const stops = Array.isArray(route.stops) ? route.stops : [];
-                  const assigned = routeAssignments[route.id] || [];
-                  return (
+                  )}
+
+                  <div className="flex items-center justify-between pt-1">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                      <span>🚍</span> All School Bus Routes ({teacherVisibleRoutes.length})
+                    </h3>
+                    {isDriverOnly && (
+                      <span className="text-[11px] text-slate-500 font-medium">
+                        Viewing all network routes with your assigned route pinned above
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {teacherVisibleRoutes.length === 0 ? (
+                      <div className="col-span-full p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-2xl border border-slate-200">
+                        No bus routes are currently associated with students of your assigned class.
+                      </div>
+                    ) : (
+                      teacherVisibleRoutes.map((route) => {
+                    const stops = Array.isArray(route.stops) ? route.stops : [];
+                    const assigned = routeAssignments[route.id] || [];
+                    const isAssignedToCurrentDriver =
+                      route.isAssignedRoute ||
+                      (currentUser?.id && route.driverUserId === currentUser.id) ||
+                      (currentUser?.phone &&
+                        route.driverPhone &&
+                        route.driverPhone.replace(/\D/g, "").length > 5 &&
+                        route.driverPhone.replace(/\D/g, "").includes(currentUser.phone.replace(/\D/g, "")));
+                    return (
                     <div
                       key={route.id}
-                      className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4"
+                      className={`p-6 rounded-3xl bg-white border ${
+                        isAssignedToCurrentDriver
+                          ? "border-emerald-500 ring-2 ring-emerald-400/40 shadow-md"
+                          : "border-slate-200 shadow-sm"
+                      } hover:shadow-md transition flex flex-col justify-between space-y-4`}
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="px-3 py-1 rounded-full font-black font-mono text-xs bg-blue-100 text-blue-900 border border-blue-200">
-                            {route.routeNumber}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 rounded-full font-black font-mono text-xs bg-blue-100 text-blue-900 border border-blue-200">
+                              {route.routeNumber}
+                            </span>
+                            {isAssignedToCurrentDriver && (
+                              <span className="px-2.5 py-0.5 rounded-full font-black text-[10px] bg-emerald-600 text-white shadow-xs">
+                                ⭐ Your Assigned Route
+                              </span>
+                            )}
+                          </div>
                           <span className="font-mono text-xs text-slate-600 font-medium">
                             Vehicle: <strong className="text-slate-950 font-bold">{route.vehicleNumber}</strong>
                           </span>
@@ -6708,7 +8850,7 @@ export default function SchoolDashboardPage() {
                             <span className="text-[11px] text-slate-600 font-bold flex items-center gap-1.5">
                               <span>👥</span> Assigned Students ({assigned.length})
                             </span>
-                            {!isTeacherOnly && (
+                            {isAdmin && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -6731,7 +8873,7 @@ export default function SchoolDashboardPage() {
                                     <span className="text-[10px] font-mono text-blue-700">({ast.admissionNo})</span>
                                     <span className="text-[10px] text-slate-500 block">Boarding: 📍 {ast.stopName}</span>
                                   </div>
-                                  {!isTeacherOnly && (
+                                  {isAdmin && (
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveStudentFromRoute(route.id, ast.studentId)}
@@ -6771,8 +8913,9 @@ export default function SchoolDashboardPage() {
                     </div>
                   );
                 }))}
-              </div>
-            )}
+                  </div>
+                </div>
+              )}
 
             {/* Sub-tab 2: Create Route Form */}
             {transportSubTab === "create" && !isTeacherOnly && isAdmin && (
@@ -6978,6 +9121,543 @@ export default function SchoolDashboardPage() {
           </div>
         );
       })()}
+
+        {/* ======================================================================= */}
+        {/* SECTION: SCHOOL CALENDAR & HOLIDAY PLANNER */}
+        {/* ======================================================================= */}
+        {activeSection === "calendar" && (() => {
+          const year = calendarCurrentDate.getFullYear();
+          const month = calendarCurrentDate.getMonth();
+          const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+          ];
+          const currentMonthName = monthNames[month];
+
+          // Compute days for 6-row calendar grid (42 cells)
+          const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+          const calendarDays = [];
+
+          // Previous month trailing days
+          for (let i = firstDayIndex - 1; i >= 0; i--) {
+            const d = daysInPrevMonth - i;
+            const prevDate = new Date(year, month - 1, d);
+            const dateStr = prevDate.toISOString().split("T")[0];
+            calendarDays.push({
+              day: d,
+              dateStr,
+              isCurrentMonth: false,
+              isToday: false,
+              events: calendarEvents.filter((ev) => {
+                const s = ev.startDate || "";
+                const e = ev.endDate || s;
+                return dateStr >= s && dateStr <= e;
+              }),
+            });
+          }
+
+          // Current month days
+          const todayStr = new Date().toISOString().split("T")[0];
+          for (let d = 1; d <= daysInMonth; d++) {
+            const mStr = String(month + 1).padStart(2, "0");
+            const dStr = String(d).padStart(2, "0");
+            const dateStr = `${year}-${mStr}-${dStr}`;
+            calendarDays.push({
+              day: d,
+              dateStr,
+              isCurrentMonth: true,
+              isToday: dateStr === todayStr,
+              events: calendarEvents.filter((ev) => {
+                const s = ev.startDate || "";
+                const e = ev.endDate || s;
+                return dateStr >= s && dateStr <= e;
+              }),
+            });
+          }
+
+          // Next month leading days
+          const remainingDays = 42 - calendarDays.length;
+          for (let d = 1; d <= remainingDays && calendarDays.length < 42; d++) {
+            const nextDate = new Date(year, month + 1, d);
+            const dateStr = nextDate.toISOString().split("T")[0];
+            calendarDays.push({
+              day: d,
+              dateStr,
+              isCurrentMonth: false,
+              isToday: false,
+              events: calendarEvents.filter((ev) => {
+                const s = ev.startDate || "";
+                const e = ev.endDate || s;
+                return dateStr >= s && dateStr <= e;
+              }),
+            });
+          }
+
+          // Categorized counts
+          const pubHolidaysCount = calendarEvents.filter((e) => e.category === "PUBLIC_HOLIDAY").length;
+          const examsCount = calendarEvents.filter((e) => e.category === "EXAM" || e.isExam).length;
+          const vacationsCount = calendarEvents.filter((e) => e.category === "VACATION" || e.category === "SCHOOL_HOLIDAY").length;
+          const eventsCount = calendarEvents.filter((e) => ["EVENT", "PTM", "SPORTS"].includes(e.category)).length;
+
+          // Filter events by selected category
+          const filteredEvents = calendarEvents.filter((ev) => {
+            if (calendarFilter === "PUBLIC_HOLIDAY") return ev.category === "PUBLIC_HOLIDAY";
+            if (calendarFilter === "EXAM") return ev.category === "EXAM" || ev.isExam;
+            if (calendarFilter === "VACATION") return ev.category === "VACATION" || ev.category === "SCHOOL_HOLIDAY";
+            if (calendarFilter === "EVENT") return ["EVENT", "PTM", "SPORTS"].includes(ev.category);
+            return true;
+          });
+
+          // Upcoming items
+          const upcomingItems = calendarEvents
+            .filter((e) => (e.endDate || e.startDate) >= todayStr)
+            .sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""))
+            .slice(0, 5);
+
+          return (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-950 flex items-center gap-2">
+                    <span>📅</span> School Calendar & Holiday Planner
+                  </h2>
+                  <p className="text-xs text-slate-600 font-medium mt-1">
+                    Academic calendar tracking public holidays, school examinations, vacation breaks, and campus event timetables.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* View Mode Switcher */}
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setCalendarViewMode("month")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        calendarViewMode === "month"
+                          ? "bg-white text-blue-700 shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      🗓️ Month Grid
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCalendarViewMode("list")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        calendarViewMode === "list"
+                          ? "bg-white text-blue-700 shadow-2xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      📋 Schedule List
+                    </button>
+                  </div>
+
+                  {/* Add Event Button for Admin / Teachers */}
+                  {!isDriverOnly && !isAccountantOnly && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCalStartDate(todayStr);
+                        setNewCalEndDate("");
+                        setAddCalendarModal(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5"
+                    >
+                      <span>➕</span>
+                      <span>Add Event / Holiday</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Stat Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCalendarFilter(calendarFilter === "PUBLIC_HOLIDAY" ? "ALL" : "PUBLIC_HOLIDAY")}
+                  className={`p-4 rounded-2xl border text-left transition ${
+                    calendarFilter === "PUBLIC_HOLIDAY"
+                      ? "bg-rose-50 border-rose-300 ring-2 ring-rose-400"
+                      : "bg-white border-slate-200 hover:border-rose-200 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-rose-600 mb-1">
+                    <span className="text-sm">🇮🇳 🎉</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full">
+                      Gazetted
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">{pubHolidaysCount}</div>
+                  <div className="text-xs font-semibold text-slate-600">Public Holidays</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCalendarFilter(calendarFilter === "EXAM" ? "ALL" : "EXAM")}
+                  className={`p-4 rounded-2xl border text-left transition ${
+                    calendarFilter === "EXAM"
+                      ? "bg-purple-50 border-purple-300 ring-2 ring-purple-400"
+                      : "bg-white border-slate-200 hover:border-purple-200 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-purple-600 mb-1">
+                    <span className="text-sm">📝 📊</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                      Exams
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">{examsCount}</div>
+                  <div className="text-xs font-semibold text-slate-600">Exam Schedules</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCalendarFilter(calendarFilter === "VACATION" ? "ALL" : "VACATION")}
+                  className={`p-4 rounded-2xl border text-left transition ${
+                    calendarFilter === "VACATION"
+                      ? "bg-amber-50 border-amber-300 ring-2 ring-amber-400"
+                      : "bg-white border-slate-200 hover:border-amber-200 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-amber-600 mb-1">
+                    <span className="text-sm">🏖️ ☀️</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                      Breaks
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">{vacationsCount}</div>
+                  <div className="text-xs font-semibold text-slate-600">Vacations & Recess</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCalendarFilter(calendarFilter === "EVENT" ? "ALL" : "EVENT")}
+                  className={`p-4 rounded-2xl border text-left transition ${
+                    calendarFilter === "EVENT"
+                      ? "bg-emerald-50 border-emerald-300 ring-2 ring-emerald-400"
+                      : "bg-white border-slate-200 hover:border-emerald-200 shadow-2xs"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-emerald-600 mb-1">
+                    <span className="text-sm">🏆 👥</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                      Campus
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">{eventsCount}</div>
+                  <div className="text-xs font-semibold text-slate-600">Events & PTMs</div>
+                </button>
+              </div>
+
+              {/* Month Navigation Toolbar */}
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCalendarCurrentDate(new Date(year, month - 1, 1));
+                    }}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-xs flex items-center gap-1"
+                    title="Previous Month"
+                  >
+                    <span>◀</span>
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarCurrentDate(new Date())}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCalendarCurrentDate(new Date(year, month + 1, 1));
+                    }}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-xs flex items-center gap-1"
+                    title="Next Month"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span>▶</span>
+                  </button>
+
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 ml-2">
+                    {currentMonthName} {year}
+                  </h3>
+                </div>
+
+                {/* Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 mr-1">Filter:</span>
+                  {[
+                    { id: "ALL", label: "All" },
+                    { id: "PUBLIC_HOLIDAY", label: "🔴 Holidays" },
+                    { id: "EXAM", label: "🟣 Exams" },
+                    { id: "VACATION", label: "🟡 Vacations" },
+                    { id: "EVENT", label: "🟢 Events" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setCalendarFilter(f.id)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                        calendarFilter === f.id
+                          ? "bg-blue-600 text-white shadow-2xs"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* View 1: Month Grid */}
+              {calendarViewMode === "month" && (
+                <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  {/* Days of Week Header */}
+                  <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 text-center font-bold text-xs py-3 text-slate-700">
+                    <span className="text-rose-600">Sun</span>
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span className="text-slate-600">Sat</span>
+                  </div>
+
+                  {/* 42-cell Grid */}
+                  <div className="grid grid-cols-7 divide-x divide-y divide-slate-100">
+                    {calendarDays.map((cell, idx) => {
+                      const isSunday = idx % 7 === 0;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            if (cell.events.length > 0) {
+                              setSelectedCalendarDay({ dateStr: cell.dateStr, events: cell.events });
+                            } else {
+                              setNewCalStartDate(cell.dateStr);
+                              setNewCalEndDate(cell.dateStr);
+                              setAddCalendarModal(true);
+                            }
+                          }}
+                          className={`min-h-[92px] sm:min-h-[110px] p-2 flex flex-col justify-between transition cursor-pointer group ${
+                            cell.isCurrentMonth
+                              ? cell.isToday
+                                ? "bg-blue-50/40 ring-2 ring-inset ring-blue-500"
+                                : "bg-white hover:bg-slate-50/80"
+                              : "bg-slate-50/40 text-slate-400"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`text-xs font-bold h-6 w-6 rounded-full flex items-center justify-center ${
+                                cell.isToday
+                                  ? "bg-blue-600 text-white shadow-2xs"
+                                  : isSunday && cell.isCurrentMonth
+                                  ? "text-rose-600 font-black"
+                                  : cell.isCurrentMonth
+                                  ? "text-slate-800"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              {cell.day}
+                            </span>
+
+                            {cell.events.length > 0 && (
+                              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                                {cell.events.length}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Event Indicators / Pills inside Day Cell */}
+                          <div className="space-y-1 mt-1 overflow-hidden">
+                            {cell.events.slice(0, 2).map((ev: any) => {
+                              const isHoliday = ev.category === "PUBLIC_HOLIDAY";
+                              const isExam = ev.category === "EXAM" || ev.isExam;
+                              const isVacation = ev.category === "VACATION" || ev.category === "SCHOOL_HOLIDAY";
+
+                              let colorClass = "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-500";
+                              if (isHoliday) colorClass = "bg-rose-50 text-rose-800 border-l-2 border-rose-500";
+                              else if (isExam) colorClass = "bg-purple-50 text-purple-800 border-l-2 border-purple-500";
+                              else if (isVacation) colorClass = "bg-amber-50 text-amber-800 border-l-2 border-amber-500";
+
+                              return (
+                                <div
+                                  key={ev.id}
+                                  title={`${ev.title} - ${ev.description || ""}`}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded truncate ${colorClass}`}
+                                >
+                                  {ev.title}
+                                </div>
+                              );
+                            })}
+                            {cell.events.length > 2 && (
+                              <div className="text-[9px] font-bold text-slate-500 pl-1">
+                                +{cell.events.length - 2} more...
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* View 2: List / Agenda View */}
+              {calendarViewMode === "list" && (
+                <div className="space-y-3">
+                  {filteredEvents.length === 0 ? (
+                    <div className="p-12 text-center bg-white rounded-3xl border border-slate-200">
+                      <div className="text-3xl mb-2">🗓️</div>
+                      <div className="text-sm font-bold text-slate-900">No events found for this filter.</div>
+                      <div className="text-xs text-slate-500 mt-1">Try switching filter tabs or schedule a new event.</div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {filteredEvents.map((ev) => {
+                        const isHoliday = ev.category === "PUBLIC_HOLIDAY";
+                        const isExam = ev.category === "EXAM" || ev.isExam;
+                        const isVacation = ev.category === "VACATION" || ev.category === "SCHOOL_HOLIDAY";
+
+                        let badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                        let typeLabel = "Campus Event";
+                        if (isHoliday) {
+                          badgeColor = "bg-rose-100 text-rose-800 border-rose-200";
+                          typeLabel = "Public Holiday";
+                        } else if (isExam) {
+                          badgeColor = "bg-purple-100 text-purple-800 border-purple-200";
+                          typeLabel = "Examination";
+                        } else if (isVacation) {
+                          badgeColor = "bg-amber-100 text-amber-800 border-amber-200";
+                          typeLabel = "Vacation Break";
+                        }
+
+                        return (
+                          <div
+                            key={ev.id}
+                            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm transition flex flex-col justify-between gap-3"
+                          >
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}>
+                                  {typeLabel}
+                                </span>
+                                <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                                  📅 {ev.startDate} {ev.endDate && ev.endDate !== ev.startDate ? `➔ ${ev.endDate}` : ""}
+                                </span>
+                              </div>
+
+                              <h4 className="font-black text-slate-950 text-sm">{ev.title}</h4>
+                              {ev.description && (
+                                <p className="text-xs text-slate-600 line-clamp-2">{ev.description}</p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
+                              <span>Target: {ev.targetAudience || ev.classGradeName || "All School"}</span>
+                              <div className="flex items-center gap-2">
+                                {!isExam && !isTeacherOnly && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenEditCalendarEvent(ev)}
+                                      className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition flex items-center gap-1 text-[11px] border border-blue-200"
+                                      title="Edit Event / Holiday"
+                                    >
+                                      <span>✏️</span> Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteCalendarEvent(ev.id, ev.title)}
+                                      className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold transition flex items-center gap-1 text-[11px] border border-rose-200"
+                                      title="Remove from Calendar"
+                                    >
+                                      <span>🗑️</span> Remove
+                                    </button>
+                                  </>
+                                )}
+                                {isExam && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSection("exams")}
+                                    className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-[11px] flex items-center gap-1 border border-purple-200"
+                                  >
+                                    <span>📝</span> View in Exams
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* School Examination Timetable Card */}
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/60 to-purple-50/40 border border-indigo-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-black text-indigo-950 flex items-center gap-2">
+                      <span>📝</span> School Examination Timetable & Schedules
+                    </h3>
+                    <p className="text-xs text-indigo-800/80 font-medium mt-0.5">
+                      Synchronized exam dates for upcoming term tests, quarterly examinations, and board assessments.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("exams")}
+                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-xs transition shadow-2xs flex items-center gap-1 self-start sm:self-auto"
+                  >
+                    <span>📊 Go to Exams & Results</span>
+                    <span>➔</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {examsList.length === 0 ? (
+                    <div className="col-span-full p-4 rounded-xl bg-white/80 border border-indigo-100 text-center text-xs text-indigo-700">
+                      No examinations scheduled yet. Create an exam in the Exams section to see its timetable here!
+                    </div>
+                  ) : (
+                    examsList.map((ex: any) => (
+                      <div
+                        key={ex.id}
+                        className="p-3.5 rounded-2xl bg-white border border-indigo-100 shadow-2xs space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 text-xs truncate max-w-[180px]">{ex.name}</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
+                            {ex.classGrade?.name || "All Classes"}
+                          </span>
+                        </div>
+                        <div className="font-mono text-[11px] text-indigo-700 font-bold">
+                          📅 {ex.startDate ? new Date(ex.startDate).toLocaleDateString() : "TBD"}{" "}
+                          {ex.endDate ? `➔ ${new Date(ex.endDate).toLocaleDateString()}` : ""}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-medium">
+                          Academic Year: {ex.academicYear?.name || "2026-2027"}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ======================================================================= */}
         {/* SECTION 9: NOTICES */}
@@ -7344,17 +10024,27 @@ export default function SchoolDashboardPage() {
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => uploadDesktopFile(e, (url) => setLandingConfig({ ...landingConfig, logoUrl: url }))}
+                            onChange={(e) => uploadDesktopFile(e, (url) => handleSaveLogo(url))}
                           />
                         </label>
                       </div>
-                      <input
-                        type="text"
-                        value={landingConfig.logoUrl || ""}
-                        onChange={(e) => setLandingConfig({ ...landingConfig, logoUrl: e.target.value })}
-                        placeholder="https://... or upload PNG/JPG emblem"
-                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={landingConfig.logoUrl || ""}
+                          onChange={(e) => setLandingConfig({ ...landingConfig, logoUrl: e.target.value })}
+                          placeholder="https://... or upload PNG/JPG emblem"
+                          className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveLogo()}
+                          disabled={loading}
+                          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-xs shrink-0 flex items-center gap-1.5"
+                        >
+                          <span>💾</span> Save Logo
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -7392,6 +10082,103 @@ export default function SchoolDashboardPage() {
                       onChange={(e) => setLandingConfig({ ...landingConfig, aboutText: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
                     />
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700 mb-3">
+                      📍 Campus Office, Helpdesk & Admission Form Details
+                    </h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Helpdesk Title</label>
+                        <input
+                          type="text"
+                          value={landingConfig.contactHelpdeskTitle || ""}
+                          placeholder="Campus Office & Helpdesk"
+                          onChange={(e) => setLandingConfig({ ...landingConfig, contactHelpdeskTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Campus Phone / WhatsApp</label>
+                        <input
+                          type="text"
+                          value={landingConfig.contactPhone || ""}
+                          placeholder="+91 91113 93176"
+                          onChange={(e) => setLandingConfig({ ...landingConfig, contactPhone: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <label className="block text-xs text-slate-600 font-medium mb-1">Welcome & Visiting Hours Message</label>
+                      <input
+                        type="text"
+                        value={landingConfig.contactWelcomeText || ""}
+                        placeholder="We welcome parents and guardians to visit our campus during official visiting hours."
+                        onChange={(e) => setLandingConfig({ ...landingConfig, contactWelcomeText: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Official Admissions Email</label>
+                        <input
+                          type="email"
+                          value={landingConfig.contactEmail || ""}
+                          placeholder={`info@${slug}.goankipathsala.in`}
+                          onChange={(e) => setLandingConfig({ ...landingConfig, contactEmail: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Campus Physical Address</label>
+                        <input
+                          type="text"
+                          value={landingConfig.contactAddress || ""}
+                          placeholder="School Campus, Main Village Road"
+                          onChange={(e) => setLandingConfig({ ...landingConfig, contactAddress: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Admission Desk Hours</label>
+                        <input
+                          type="text"
+                          value={landingConfig.admissionHours || ""}
+                          placeholder="Mon – Sat, 8:00 AM – 3:30 PM"
+                          onChange={(e) => setLandingConfig({ ...landingConfig, admissionHours: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-600 font-medium mb-1">Fee Counter Hours</label>
+                        <input
+                          type="text"
+                          value={landingConfig.feeCounterHours || ""}
+                          placeholder="Mon – Sat, 8:30 AM – 2:00 PM"
+                          onChange={(e) => setLandingConfig({ ...landingConfig, feeCounterHours: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      <label className="block text-xs text-slate-600 font-medium mb-1">Admission Documents Checklist Note</label>
+                      <input
+                        type="text"
+                        value={landingConfig.admissionDocumentsText || ""}
+                        placeholder="1. Child's Birth Certificate • 2. Two Passport Photos • 3. Previous School TC & Report Card • 4. Aadhaar Card copy"
+                        onChange={(e) => setLandingConfig({ ...landingConfig, admissionDocumentsText: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none"
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -7535,7 +10322,1142 @@ export default function SchoolDashboardPage() {
             )}
           </div>
         )}
+
+        {/* ======================================================================= */}
+        {/* SECTION 11: ADMISSIONS & INQUIRIES */}
+        {/* ======================================================================= */}
+        {activeSection === "inquiries" && isAdmin && (() => {
+          const totalInq = schoolInquiries.length;
+          const newCount = schoolInquiries.filter((i: any) => i.status === "NEW").length;
+          const contactedCount = schoolInquiries.filter((i: any) => i.status === "CONTACTED").length;
+          const admittedCount = schoolInquiries.filter((i: any) => i.status === "ADMITTED").length;
+
+          const filteredInquiries = schoolInquiries.filter((inq: any) => {
+            const matchStatus = inquiryStatusFilter === "ALL" || inq.status === inquiryStatusFilter;
+            const matchType = inquiryTypeFilter === "ALL" || inq.inquiryType === inquiryTypeFilter;
+            const q = inquirySearch.toLowerCase().trim();
+            const matchSearch =
+              !q ||
+              (inq.parentName && inq.parentName.toLowerCase().includes(q)) ||
+              (inq.studentName && inq.studentName.toLowerCase().includes(q)) ||
+              (inq.phone && inq.phone.includes(q)) ||
+              (inq.message && inq.message.toLowerCase().includes(q));
+            return matchStatus && matchType && matchSearch;
+          });
+
+          const handleExportInquiries = () => {
+            if (filteredInquiries.length === 0) return;
+            const rows = filteredInquiries.map((inq: any) => ({
+              "ID": inq.id,
+              "Parent Name": inq.parentName,
+              "Student Name": inq.studentName || "—",
+              "Phone Number": inq.phone,
+              "Email": inq.email || "—",
+              "Grade Seeking": inq.gradeSeeking || "—",
+              "Inquiry Category": inq.inquiryType,
+              "Message": inq.message,
+              "Status": inq.status,
+              "Received Date": inq.createdAt ? new Date(inq.createdAt).toLocaleString("en-IN") : "—",
+            }));
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Admissions_Inquiries");
+            XLSX.writeFile(wb, `${slug}_admissions_inquiries_${new Date().toISOString().split("T")[0]}.xlsx`);
+          };
+
+          return (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-950 flex items-center gap-2">
+                    <span>📨</span> Admissions & Public Inquiries Desk
+                  </h2>
+                  <p className="text-xs text-slate-600 font-medium mt-1">
+                    Manage prospective student inquiries, parent admission requests, and fee queries submitted via your public portal.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={fetchSchoolInquiries}
+                    disabled={inquiriesLoading}
+                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span>🔄</span> Refresh
+                  </button>
+                  <button
+                    onClick={handleExportInquiries}
+                    disabled={filteredInquiries.length === 0}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                  >
+                    <span>📥</span> Export Excel
+                  </button>
+                </div>
+              </div>
+
+              {/* Stat Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Inquiries</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-slate-900">{totalInq}</span>
+                    <span className="text-xs text-slate-500 font-medium">submissions</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 shadow-xs">
+                  <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">New Leads</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-amber-900">{newCount}</span>
+                    <span className="text-xs text-amber-700 font-medium">needs call</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200 shadow-xs">
+                  <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Followed Up</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-blue-900">{contactedCount}</span>
+                    <span className="text-xs text-blue-700 font-medium">contacted</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs">
+                  <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Enrolled</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-emerald-900">{admittedCount}</span>
+                    <span className="text-xs text-emerald-700 font-medium">admitted</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters Toolbar */}
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-6">
+                    <input
+                      type="text"
+                      value={inquirySearch}
+                      onChange={(e) => setInquirySearch(e.target.value)}
+                      placeholder="Search by parent name, student name, phone number, or query..."
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <select
+                      value={inquiryStatusFilter}
+                      onChange={(e) => setInquiryStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-blue-500 cursor-pointer"
+                    >
+                      <option value="ALL">All Statuses ({schoolInquiries.length})</option>
+                      <option value="NEW">● NEW Leads ({newCount})</option>
+                      <option value="CONTACTED">● CONTACTED ({contactedCount})</option>
+                      <option value="ADMITTED">● ADMITTED ({admittedCount})</option>
+                      <option value="CLOSED">● CLOSED</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <select
+                      value={inquiryTypeFilter}
+                      onChange={(e) => setInquiryTypeFilter(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-blue-500 cursor-pointer"
+                    >
+                      <option value="ALL">All Categories</option>
+                      <option value="New Student Admission & Enrolment">🌾 New Admissions</option>
+                      <option value="School Fee Structure & Quarterly Installments">💳 Fee Structures</option>
+                      <option value="Village Bus Route & Pickup Point Inquiry">🚌 Bus Routes</option>
+                      <option value="Curriculum, CBSE Books & Smart Classrooms">📚 Curriculum & Books</option>
+                      <option value="General Campus Question / Other">❓ General Inquiries</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Inquiries List */}
+              {inquiriesLoading ? (
+                <div className="p-12 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200">
+                  <div className="h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  Loading inquiries...
+                </div>
+              ) : filteredInquiries.length === 0 ? (
+                <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-300 space-y-2">
+                  <div className="text-3xl">📭</div>
+                  <h4 className="font-bold text-slate-900 text-sm">No Inquiries Found</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {schoolInquiries.length === 0
+                      ? "When parents or students submit the contact and admission form on your school website, their records will appear here in real time."
+                      : "No inquiries matched your search or status filter."}
+                  </p>
+                  <Link
+                    href={`/school/${slug}#contact`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition mt-2"
+                  >
+                    <span>🌐</span> View School Contact Form →
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredInquiries.map((inq: any) => {
+                    const cleanPhone = inq.phone ? inq.phone.replace(/[^0-9+]/g, "") : "";
+                    const dateStr = inq.createdAt
+                      ? new Date(inq.createdAt).toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
+                      : "—";
+
+                    return (
+                      <div
+                        key={inq.id}
+                        className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-400 shadow-xs transition space-y-4"
+                      >
+                        {/* Header: Parent, Student, Status, Date */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                          <div className="flex items-start gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-sm shadow-xs shrink-0">
+                              {(inq.parentName || "P").charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="font-extrabold text-sm sm:text-base text-slate-900">
+                                  {inq.parentName}
+                                </h3>
+                                {inq.studentName && (
+                                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                                    Student: <strong className="text-slate-900">{inq.studentName}</strong>
+                                  </span>
+                                )}
+                                {inq.gradeSeeking && (
+                                  <span className="text-[11px] font-bold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                                    Grade: {inq.gradeSeeking}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1.5">
+                                <span>{inq.inquiryType || "Admission Inquiry"}</span>
+                                <span>•</span>
+                                <span className="font-mono">{dateStr}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <span
+                              className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                                inq.status === "NEW"
+                                  ? "bg-amber-50 text-amber-800 border-amber-300"
+                                  : inq.status === "CONTACTED"
+                                  ? "bg-blue-50 text-blue-800 border-blue-300"
+                                  : inq.status === "ADMITTED"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                  : "bg-slate-100 text-slate-600 border-slate-300"
+                              }`}
+                            >
+                              ● {inq.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Message Box */}
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                            Inquiry Message:
+                          </span>
+                          {inq.message}
+                        </div>
+
+                        {/* Action Buttons Bar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {cleanPhone && (
+                              <>
+                                <a
+                                  href={`tel:${cleanPhone}`}
+                                  className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold transition flex items-center gap-1.5"
+                                >
+                                  <span>📞</span> Call {inq.phone}
+                                </a>
+                                <a
+                                  href={`https://wa.me/${cleanPhone.replace("+", "")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition flex items-center gap-1.5"
+                                >
+                                  <span>💬</span> WhatsApp
+                                </a>
+                              </>
+                            )}
+                            {inq.email && (
+                              <a
+                                href={`mailto:${inq.email}`}
+                                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold transition flex items-center gap-1.5"
+                              >
+                                <span>✉️</span> {inq.email}
+                              </a>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase">
+                              Status:
+                            </label>
+                            <select
+                              value={inq.status}
+                              onChange={(e) => handleUpdateSchoolInquiryStatus(inq.id, e.target.value)}
+                              className="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 cursor-pointer focus:bg-white focus:border-blue-500 outline-none"
+                            >
+                              <option value="NEW">NEW</option>
+                              <option value="CONTACTED">CONTACTED</option>
+                              <option value="ADMITTED">ADMITTED</option>
+                              <option value="CLOSED">CLOSED</option>
+                            </select>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSchoolInquiry(inq.id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition text-xs font-bold"
+                              title="Delete inquiry"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ========================================================================= */}
+        {/* 14. STAFF PAYROLL & SALARY MANAGEMENT SECTION */}
+        {/* ========================================================================= */}
+        {activeSection === "payroll" && (() => {
+          // Find selected run
+          const currentRun = payrollRuns.find((r) => r.month === selectedPayrollMonth) || payrollRuns[0] || null;
+          const displayRun = currentRun;
+
+          // Compute active metrics
+          let metricGross = 0;
+          let metricNet = 0;
+          let metricDisbursed = 0;
+          let metricPending = 0;
+          let metricPaidCount = 0;
+
+          if (displayRun && Array.isArray(displayRun.payslips)) {
+            metricGross = displayRun.totalGross || 0;
+            metricNet = displayRun.totalNet || 0;
+            displayRun.payslips.forEach((ps: any) => {
+              if (ps.paymentStatus === "PAID") {
+                metricDisbursed += Number(ps.netSalary || 0);
+                metricPaidCount++;
+              } else {
+                metricPending += Number(ps.netSalary || 0);
+              }
+            });
+          } else if (payrollStaffList.length > 0) {
+            payrollStaffList.forEach((s: any) => {
+              const net = Number(s.salaryStructure?.netSalary || 0);
+              const gross = Number(s.salaryStructure?.grossSalary || 0);
+              metricGross += gross;
+              metricNet += net;
+              metricPending += net;
+            });
+          }
+
+          const filteredPayslips = (displayRun?.payslips || []).filter((ps: any) => {
+            const matchesSearch = payrollSearch
+              ? ps.staffName?.toLowerCase().includes(payrollSearch.toLowerCase()) ||
+                ps.role?.toLowerCase().includes(payrollSearch.toLowerCase()) ||
+                ps.designation?.toLowerCase().includes(payrollSearch.toLowerCase())
+              : true;
+            const matchesStatus =
+              payrollStatusFilter === "ALL" ? true : ps.paymentStatus === payrollStatusFilter;
+            return matchesSearch && matchesStatus;
+          });
+
+          return (
+            <div className="space-y-6">
+              {/* Header with Month Selector & Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">💰</span>
+                    <h2 className="font-black text-xl text-slate-950">Staff Payroll & Salaries</h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      EPF & Allowances
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Calculate monthly staff compensation, generate itemized payslips, and record bank disbursement transfers.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5">
+                    <span className="text-xs text-slate-500 font-medium">Month:</span>
+                    <input
+                      type="month"
+                      value={selectedPayrollMonth}
+                      onChange={(e) => setSelectedPayrollMonth(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleGeneratePayroll(selectedPayrollMonth)}
+                    disabled={generatingPayroll}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <span>⚡</span>
+                    {generatingPayroll ? "Calculating..." : "Calculate / Recalculate Payroll"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={fetchPayrollData}
+                    disabled={payrollLoading}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                    title="Refresh payroll data"
+                  >
+                    🔄
+                  </button>
+                </div>
+              </div>
+
+              {/* Stat Metric Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Total Net Payroll
+                  </span>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    ₹{metricNet.toLocaleString("en-IN")}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    Gross: ₹{metricGross.toLocaleString("en-IN")}
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Disbursed Amount
+                  </span>
+                  <div className="text-2xl font-black text-emerald-600 mt-1">
+                    ₹{metricDisbursed.toLocaleString("en-IN")}
+                  </div>
+                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">
+                    {displayRun ? `${metricPaidCount} of ${displayRun.staffCount || 0} Staff Paid` : "Settled Salaries"}
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Pending Liabilities
+                  </span>
+                  <div className="text-2xl font-black text-rose-600 mt-1">
+                    ₹{metricPending.toLocaleString("en-IN")}
+                  </div>
+                  <div className="text-[10px] text-rose-500 font-medium mt-0.5">
+                    Awaiting Bank Clearance
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Salaried Staff
+                  </span>
+                  <div className="text-2xl font-black text-blue-600 mt-1">
+                    {payrollStaffList.length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    Active Faculty & Staff
+                  </div>
+                </div>
+              </div>
+
+              {/* Subtab Navigation */}
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                <button
+                  type="button"
+                  onClick={() => setPayrollSubTab("runs")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    payrollSubTab === "runs"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <span>📋</span> Monthly Payroll Runs & Payslips
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayrollSubTab("structures")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    payrollSubTab === "structures"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <span>⚙️</span> Staff Salary Structures ({payrollStaffList.length})
+                </button>
+              </div>
+
+              {/* SUBTAB 1: MONTHLY RUNS & PAYSLIPS */}
+              {payrollSubTab === "runs" && (
+                <div className="space-y-4">
+                  {/* Payroll Month Run Banner */}
+                  {displayRun ? (
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 bg-blue-50/70 border border-blue-200 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">📅</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-extrabold text-sm text-slate-900">
+                              Payroll Run: {displayRun.monthLabel}
+                            </h3>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                displayRun.status === "PAID"
+                                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                  : displayRun.status === "PARTIALLY_PAID"
+                                  ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                  : "bg-blue-100 text-blue-800 border border-blue-300"
+                              }`}
+                            >
+                              ● {displayRun.status}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            Calculated for {displayRun.staffCount} staff members • Generated:{" "}
+                            {new Date(displayRun.generatedAt).toLocaleString("en-IN", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Filter & Search Bar */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          value={payrollSearch}
+                          onChange={(e) => setPayrollSearch(e.target.value)}
+                          placeholder="Search staff..."
+                          className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500"
+                        />
+                        <select
+                          value={payrollStatusFilter}
+                          onChange={(e) => setPayrollStatusFilter(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 outline-none focus:border-blue-500 cursor-pointer"
+                        >
+                          <option value="ALL">All Statuses</option>
+                          <option value="PAID">Paid Only</option>
+                          <option value="UNPAID">Unpaid Only</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-white border border-dashed border-slate-300 rounded-3xl space-y-3">
+                      <span className="text-3xl">🧮</span>
+                      <h4 className="font-extrabold text-base text-slate-900">
+                        No payroll run calculated for {selectedPayrollMonth}
+                      </h4>
+                      <p className="text-xs text-slate-500 max-w-md mx-auto">
+                        Click below to automatically compute EPF, allowances, deductions, and net payslips for all {payrollStaffList.length} school staff members.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleGeneratePayroll(selectedPayrollMonth)}
+                        disabled={generatingPayroll}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+                      >
+                        ⚡ Generate {selectedPayrollMonth} Payroll Run
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Payslips Table */}
+                  {displayRun && (
+                    <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
+                            <tr>
+                              <th className="p-3.5">Staff Member</th>
+                              <th className="p-3.5">Base Salary</th>
+                              <th className="p-3.5">Allowances</th>
+                              <th className="p-3.5">Gross Pay</th>
+                              <th className="p-3.5">Deductions</th>
+                              <th className="p-3.5">Net Pay</th>
+                              <th className="p-3.5">Payment Status</th>
+                              <th className="p-3.5">Disbursement Info</th>
+                              <th className="p-3.5 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredPayslips.length === 0 ? (
+                              <tr>
+                                <td colSpan={9} className="p-8 text-center text-slate-400">
+                                  No payslips match your search or filter criteria.
+                                </td>
+                              </tr>
+                            ) : (
+                              filteredPayslips.map((slip: any) => {
+                                const totalAllowances =
+                                  Number(slip.allowances?.hra || 0) +
+                                  Number(slip.allowances?.da || 0) +
+                                  Number(slip.allowances?.travel || 0) +
+                                  Number(slip.allowances?.special || 0);
+
+                                return (
+                                  <tr key={slip.id} className="hover:bg-slate-50/80 transition">
+                                    <td className="p-3.5">
+                                      <div className="font-extrabold text-slate-900">{slip.staffName}</div>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                          {slip.role}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">
+                                          {slip.designation || "Staff"}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="p-3.5 font-mono font-medium text-slate-700">
+                                      ₹{Number(slip.baseSalary || 0).toLocaleString("en-IN")}
+                                    </td>
+                                    <td className="p-3.5 font-mono text-slate-600">
+                                      <div>+₹{totalAllowances.toLocaleString("en-IN")}</div>
+                                      <div className="text-[10px] text-slate-400 font-mono">
+                                        HRA: ₹{slip.allowances?.hra} | DA: ₹{slip.allowances?.da}
+                                      </div>
+                                    </td>
+                                    <td className="p-3.5 font-mono font-bold text-slate-900">
+                                      ₹{Number(slip.grossSalary || 0).toLocaleString("en-IN")}
+                                    </td>
+                                    <td className="p-3.5 font-mono text-rose-600">
+                                      <div>-₹{Number(slip.totalDeductions || 0).toLocaleString("en-IN")}</div>
+                                      <div className="text-[10px] text-slate-400 font-mono">
+                                        PF: ₹{slip.deductions?.pf} | Tax: ₹{slip.deductions?.tax}
+                                      </div>
+                                    </td>
+                                    <td className="p-3.5 font-mono font-black text-slate-950 text-sm">
+                                      ₹{Number(slip.netSalary || 0).toLocaleString("en-IN")}
+                                    </td>
+                                    <td className="p-3.5">
+                                      <span
+                                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                          slip.paymentStatus === "PAID"
+                                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                            : "bg-amber-100 text-amber-800 border border-amber-300"
+                                        }`}
+                                      >
+                                        ● {slip.paymentStatus}
+                                      </span>
+                                    </td>
+                                    <td className="p-3.5 text-[11px] text-slate-600">
+                                      <div className="font-semibold">{slip.paymentMode?.replace("_", " ")}</div>
+                                      {slip.transactionRef ? (
+                                        <div className="text-[10px] font-mono text-slate-400">
+                                          Ref: {slip.transactionRef}
+                                        </div>
+                                      ) : slip.bankAccountNo ? (
+                                        <div className="text-[10px] font-mono text-slate-400">
+                                          A/C: ••••{slip.bankAccountNo.slice(-4)}
+                                        </div>
+                                      ) : (
+                                        <div className="text-[10px] text-amber-600 italic">No Bank Info</div>
+                                      )}
+                                    </td>
+                                    <td className="p-3.5 text-right">
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenMarkPaidModal(slip)}
+                                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                                            slip.paymentStatus === "PAID"
+                                              ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                              : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
+                                          }`}
+                                          title="Record payment mode and transaction reference"
+                                        >
+                                          <span>💳</span> {slip.paymentStatus === "PAID" ? "Edit Pay" : "Pay"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setViewPayslipModal(slip)}
+                                          className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition flex items-center gap-1 cursor-pointer"
+                                          title="View and print official salary payslip"
+                                        >
+                                          <span>📄</span> Payslip
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB 2: SALARY STRUCTURES */}
+              {payrollSubTab === "structures" && (
+                <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs">
+                  <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h3 className="font-extrabold text-sm text-slate-900">
+                        Staff Salary Structures & Bank Accounts
+                      </h3>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        Configure base salary, HRA, Dearness Allowance, and EPF percentages per faculty member.
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-slate-500">
+                      Total Staff: {payrollStaffList.length}
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
+                        <tr>
+                          <th className="p-3.5">Staff Details</th>
+                          <th className="p-3.5">Basic Salary</th>
+                          <th className="p-3.5">HRA & DA</th>
+                          <th className="p-3.5">Gross Salary</th>
+                          <th className="p-3.5">PF & Tax</th>
+                          <th className="p-3.5">Net Salary</th>
+                          <th className="p-3.5">Bank Account & IFSC</th>
+                          <th className="p-3.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {payrollStaffList.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="p-8 text-center text-slate-400">
+                              No staff members registered in this school yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          payrollStaffList.map((st: any) => {
+                            const struct = st.salaryStructure || {};
+                            return (
+                              <tr key={st.id} className="hover:bg-slate-50/80 transition">
+                                <td className="p-3.5">
+                                  <div className="font-extrabold text-slate-900">{st.fullName}</div>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                      {st.role}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">
+                                      {st.designation || "Staff"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="p-3.5 font-mono font-semibold text-slate-800">
+                                  ₹{Number(struct.baseSalary || 0).toLocaleString("en-IN")}
+                                </td>
+                                <td className="p-3.5 font-mono text-slate-600">
+                                  <div>HRA: ₹{Number(struct.hra || 0).toLocaleString("en-IN")}</div>
+                                  <div className="text-[10px] text-slate-400">
+                                    DA: ₹{Number(struct.da || 0).toLocaleString("en-IN")}
+                                  </div>
+                                </td>
+                                <td className="p-3.5 font-mono font-bold text-slate-900">
+                                  ₹{Number(struct.grossSalary || 0).toLocaleString("en-IN")}
+                                </td>
+                                <td className="p-3.5 font-mono text-rose-600">
+                                  <div>PF: ₹{Number(struct.pfDeduction || 0).toLocaleString("en-IN")}</div>
+                                  <div className="text-[10px] text-slate-400">
+                                    Tax: ₹{Number(struct.taxDeduction || 0).toLocaleString("en-IN")}
+                                  </div>
+                                </td>
+                                <td className="p-3.5 font-mono font-black text-emerald-700 text-sm">
+                                  ₹{Number(struct.netSalary || 0).toLocaleString("en-IN")}
+                                </td>
+                                <td className="p-3.5 text-[11px] text-slate-600">
+                                  {struct.bankAccountNo ? (
+                                    <div>
+                                      <div className="font-mono font-semibold text-slate-800">
+                                        {struct.bankAccountNo}
+                                      </div>
+                                      <div className="font-mono text-[10px] text-slate-400">
+                                        IFSC: {struct.bankIfsc || "N/A"}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-amber-600 italic">Not Configured</span>
+                                  )}
+                                </td>
+                                <td className="p-3.5 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenSalaryStructureModal(st)}
+                                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 ml-auto cursor-pointer"
+                                  >
+                                    <span>✏️</span> Configure
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Mobile bottom buffer to ensure full scrolling past mobile browser bottom address/navigation bars */}
+        <div className="h-28 lg:hidden shrink-0" aria-hidden="true" />
       </main>
+
+      {/* ========================================================================= */}
+      {/* MODAL: Map Subject to Class */}
+      {/* ========================================================================= */}
+      {mapSubjectModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setMapSubjectModalOpen(false)}
+        >
+          <div
+            className="max-w-lg w-full bg-white border border-slate-200 rounded-3xl shadow-2xl text-slate-900 p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                  <span>📚</span> Map Subject to Class Grade
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Assign curriculum subject and optional teacher to class syllabus
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMapSubjectModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleMapSubject} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Target Class / Grade *
+                </label>
+                <select
+                  required
+                  value={mapSubjectClassGrade}
+                  onChange={(e) => setMapSubjectClassGrade(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-bold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="">— Select Target Class —</option>
+                  {classesList.map((c) => (
+                    <option key={c.id || c.name} value={c.name}>
+                      🏛️ {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Subject Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={mapSubjectName}
+                  onChange={(e) => setMapSubjectName(e.target.value)}
+                  placeholder="e.g. Mathematics, Science, English Literature"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
+                />
+                {/* Quick Subject Suggestion Chips */}
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {["English", "Hindi", "Mathematics", "Science", "Social Science", "Sanskrit", "Computer", "EVS", "Art"].map((quickSub) => (
+                    <button
+                      key={quickSub}
+                      type="button"
+                      onClick={() => setMapSubjectName(quickSub)}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition cursor-pointer ${
+                        mapSubjectName === quickSub
+                          ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                          : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700"
+                      }`}
+                    >
+                      + {quickSub}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Curriculum / Board
+                  </label>
+                  <select
+                    value={mapSubjectBoard}
+                    onChange={(e) => setMapSubjectBoard(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
+                  >
+                    <option value="CBSE">CBSE (Central Board)</option>
+                    <option value="ICSE">ICSE / CISCE</option>
+                    <option value="STATE_BOARD">State Secondary Board</option>
+                    <option value="VOCATIONAL">Vocational & Computer Studies</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Assigned Faculty (Optional)
+                  </label>
+                  <select
+                    value={mapSubjectTeacherId}
+                    onChange={(e) => setMapSubjectTeacherId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:bg-white focus:border-blue-600"
+                  >
+                    <option value="">— Assign Later —</option>
+                    {staffList
+                      .filter((s: any) => ["TEACHER", "CLASS_TEACHER", "SUBJECT_TEACHER", "PRINCIPAL", "ADMIN", "SCHOOL_ADMIN"].includes(s.role))
+                      .map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          👨‍🏫 {t.staffProfile?.fullName || t.fullName || t.email}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setMapSubjectModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={mapSubjectLoading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {mapSubjectLoading ? "Mapping..." : "✓ Map Subject to Class"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Export Students to Excel with Advanced Filters */}
+      {/* ========================================================================= */}
+      {studentExportModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setStudentExportModalOpen(false)}
+        >
+          <div
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl shadow-2xl text-slate-900 p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                  <span>📤</span> Export Student Roster to Excel
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Filter by class, gender, category, status, and download spreadsheet
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStudentExportModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Live Filter Matching Counter Badge */}
+            {(() => {
+              const matchedCount = getFilteredExportStudents().length;
+              return (
+                <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 font-bold text-blue-950">
+                    <span>📊</span>
+                    <span>Matched Students:</span>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white font-mono text-xs font-black">
+                      {matchedCount} of {studentList.length}
+                    </span>
+                  </div>
+                  {(exportFilterClass !== "ALL" || exportFilterGender !== "ALL" || exportFilterSection !== "ALL" || exportFilterCategory !== "ALL" || exportFilterBloodGroup !== "ALL" || exportFilterStatus !== "ALL") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExportFilterClass("ALL");
+                        setExportFilterSection("ALL");
+                        setExportFilterGender("ALL");
+                        setExportFilterCategory("ALL");
+                        setExportFilterBloodGroup("ALL");
+                        setExportFilterStatus("ALL");
+                      }}
+                      className="text-[11px] font-bold text-blue-700 hover:underline cursor-pointer"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Filter 1: Class Grade */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  🏛️ Class / Grade
+                </label>
+                <select
+                  value={exportFilterClass}
+                  onChange={(e) => setExportFilterClass(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Classes & Grades</option>
+                  {Array.from(new Set(studentList.map((s: any) => s.enrollments?.[0]?.section?.classGrade?.name || s.enrollments?.[0]?.classGradeName).filter(Boolean))).map((cls: any) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter 2: Section */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  🔤 Section
+                </label>
+                <select
+                  value={exportFilterSection}
+                  onChange={(e) => setExportFilterSection(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Sections</option>
+                  <option value="A">Section A</option>
+                  <option value="B">Section B</option>
+                  <option value="C">Section C</option>
+                  <option value="D">Section D</option>
+                </select>
+              </div>
+
+              {/* Filter 3: Gender Wise */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  ⚧️ Gender Wise Filter
+                </label>
+                <select
+                  value={exportFilterGender}
+                  onChange={(e) => setExportFilterGender(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Genders (Boys & Girls)</option>
+                  <option value="MALE">👦 Male / Boys Only</option>
+                  <option value="FEMALE">👧 Female / Girls Only</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              {/* Filter 4: Category / Quota */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  🏷️ Category / Quota
+                </label>
+                <select
+                  value={exportFilterCategory}
+                  onChange={(e) => setExportFilterCategory(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Categories</option>
+                  <option value="GENERAL">General</option>
+                  <option value="OBC">OBC</option>
+                  <option value="SC">SC</option>
+                  <option value="ST">ST</option>
+                  <option value="EWS">EWS (Economically Weaker)</option>
+                </select>
+              </div>
+
+              {/* Filter 5: Blood Group */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  🩸 Blood Group
+                </label>
+                <select
+                  value={exportFilterBloodGroup}
+                  onChange={(e) => setExportFilterBloodGroup(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Blood Groups</option>
+                  {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => (
+                    <option key={bg} value={bg}>{bg}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter 6: Academic Status */}
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  📌 Academic Enrollment Status
+                </label>
+                <select
+                  value={exportFilterStatus}
+                  onChange={(e) => setExportFilterStatus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-semibold outline-none focus:bg-white focus:border-blue-600"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="ENROLLED">Enrolled / Active</option>
+                  <option value="PROMOTED">Promoted</option>
+                  <option value="GRADUATED">Graduated / Passed</option>
+                  <option value="INACTIVE">Inactive / Left</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setStudentExportModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={getFilteredExportStudents().length === 0}
+                onClick={() => handleExportStudents()}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <span>📥</span> Download Filtered Excel ({getFilteredExportStudents().length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* MODAL: Edit Student Particulars & Verification Documents */}
@@ -8352,9 +12274,12 @@ export default function SchoolDashboardPage() {
                           Toggle Multiple Roles for {profileModalStaff.staffProfile?.fullName || profileModalStaff.email}
                         </div>
                         {[
-                          { id: "TEACHER", label: "TEACHER", desc: "Instruction, Attendance & Academic Marks", color: "emerald" },
-                          { id: "ACCOUNTANT", label: "ACCOUNTANT", desc: "Fees, Invoicing, Collection & Receipts", color: "blue" },
+                          { id: "PRINCIPAL", label: "PRINCIPAL", desc: "School Leadership & Full Command", color: "purple" },
                           { id: "SCHOOL_ADMIN", label: "SCHOOL_ADMIN", desc: "Full School Administration & Configurations", color: "fuchsia" },
+                          { id: "CLASS_TEACHER", label: "CLASS_TEACHER", desc: "Heads Class, Section Attendance & Academic Reports", color: "emerald" },
+                          { id: "SUBJECT_TEACHER", label: "SUBJECT_TEACHER", desc: "Curriculum Subject Teaching & Marks Entry", color: "teal" },
+                          { id: "ACCOUNTANT", label: "ACCOUNTANT", desc: "Fees, Invoicing, Collection & Receipts", color: "blue" },
+                          { id: "DRIVER", label: "DRIVER", desc: "Transport Routes, Vehicle & Student Commute", color: "orange" },
                         ].map((roleOpt) => {
                           const isChecked = currentRoles.includes(roleOpt.id);
                           return (
@@ -9762,43 +13687,72 @@ export default function SchoolDashboardPage() {
                   className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-emerald-500 font-semibold"
                 >
                   <option value="PRINCIPAL">👑 Principal / Headmaster (Full Administrative Command)</option>
-                  <option value="ADMIN">🛡️ School Admin / Co-Admin</option>
+                  <option value="SCHOOL_ADMIN">🛡️ School Admin (Full Administrative Command)</option>
                   <option value="CLASS_TEACHER">🏛️ Class Teacher (Heads Class & Section)</option>
                   <option value="SUBJECT_TEACHER">📚 Subject Teacher (Curriculum & Subject Marks)</option>
-                  <option value="TEACHER">👨‍🏫 General Teacher</option>
-                  <option value="ACCOUNTANT">💳 Accountant / Bursar (Fees & Billing)</option>
+                  <option value="ACCOUNTANT">💳 Accountant / Cashier (Fees & Invoicing)</option>
                   <option value="DRIVER">🚌 Bus Driver / Transport</option>
                 </select>
               </div>
 
               {/* 2. Class Teacher Assignment */}
-              {(assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              {(assignRole === "CLASS_TEACHER" || assignRole === "SCHOOL_ADMIN" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
+                    <label className="text-[11px] font-bold text-amber-500 flex items-center gap-1.5">
                       <span>🏛️</span> Assign as Class Teacher for Section:
                     </label>
                     <span className="text-[10px] text-slate-500">Marks daily attendance & class reports</span>
                   </div>
-                  <select
-                    value={assignSectionId}
-                    onChange={(e) => setAssignSectionId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-amber-500"
-                  >
-                    <option value="">— None / Not Heading a Class —</option>
-                    {classesList.flatMap((cls: any) =>
-                      (cls.sections || []).map((sec: any) => (
-                        <option key={sec.id} value={sec.id}>
-                          {cls.name} - Section {sec.name} {sec.classTeacherId === assignModalStaff.id ? "(Currently Assigned)" : ""}
-                        </option>
-                      ))
-                    )}
-                  </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                        1. Filter by Class / Grade:
+                      </label>
+                      <select
+                        value={assignClassFilter}
+                        onChange={(e) => {
+                          setAssignClassFilter(e.target.value);
+                          setAssignSectionId("");
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-amber-500"
+                      >
+                        <option value="">— All Classes & Grades —</option>
+                        {classesList.map((cls: any) => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                        2. Choose Section:
+                      </label>
+                      <select
+                        value={assignSectionId}
+                        onChange={(e) => setAssignSectionId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-amber-500"
+                      >
+                        <option value="">— None / Not Heading a Class —</option>
+                        {(assignClassFilter
+                          ? classesList.filter((cls: any) => cls.id === assignClassFilter)
+                          : classesList
+                        ).flatMap((cls: any) =>
+                          (cls.sections || []).map((sec: any) => (
+                            <option key={sec.id} value={sec.id}>
+                              {cls.name} - Section {sec.name} {sec.classTeacherId === assignModalStaff.id ? "(Currently Assigned)" : ""}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* 3. Subject Teacher Assignment */}
-              {(assignRole === "SUBJECT_TEACHER" || assignRole === "CLASS_TEACHER" || assignRole === "TEACHER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+              {(assignRole === "SUBJECT_TEACHER" || assignRole === "CLASS_TEACHER" || assignRole === "SCHOOL_ADMIN" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-900 flex items-center gap-1.5">
@@ -9850,7 +13804,7 @@ export default function SchoolDashboardPage() {
               )}
 
               {/* 4. Bus Driver Route Assignment */}
-              {(assignRole === "DRIVER" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
+              {(assignRole === "DRIVER" || assignRole === "SCHOOL_ADMIN" || assignRole === "ADMIN" || assignRole === "PRINCIPAL") && (
                 <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold text-orange-300 flex items-center gap-1.5">
@@ -9983,6 +13937,632 @@ export default function SchoolDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Adjust Invoice (Add Prior Dues / Deduct Discount / Set Remaining) */}
+      {/* ========================================================================= */}
+      {adjustInvoiceModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setAdjustInvoiceModal(null)}
+        >
+          <div
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl shadow-2xl text-slate-900 p-6 space-y-4 my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
+                  <span>⚖️</span> Adjust Invoice Amount
+                </h3>
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  Add prior quarter remaining dues or deduct discounts / concessions.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdjustInvoiceModal(null)}
+                className="text-slate-600 hover:text-slate-900 font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 transition border border-slate-200 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Current Invoice Summary Card */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">
+                  {adjustInvoiceModal.enrollment?.student ? `${adjustInvoiceModal.enrollment.student.firstName} ${adjustInvoiceModal.enrollment.student.lastName}` : "Student"}
+                </span>
+                <span className="font-mono font-bold text-blue-700">{adjustInvoiceModal.invoiceNumber}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200 text-center font-mono">
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Total Bill</span>
+                  <span className="font-bold text-slate-950">₹{adjustInvoiceModal.totalAmount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Paid</span>
+                  <span className="font-bold text-emerald-700">₹{adjustInvoiceModal.paidAmount}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Balance Due</span>
+                  <span className="font-bold text-amber-700">
+                    ₹{Math.max(0, adjustInvoiceModal.totalAmount - adjustInvoiceModal.paidAmount)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdjustInvoice} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                  Adjustment Type *
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAdjustType("ADD")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition ${
+                      adjustType === "ADD"
+                        ? "bg-amber-50 border-amber-500 text-amber-900 shadow-xs"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className="block text-sm">➕</span>
+                    <span>Add Dues (+)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustType("SUBTRACT")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition ${
+                      adjustType === "SUBTRACT"
+                        ? "bg-emerald-50 border-emerald-500 text-emerald-900 shadow-xs"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className="block text-sm">➖</span>
+                    <span>Discount (-)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdjustType("SET_REMAINING")}
+                    className={`p-2.5 rounded-xl border text-center font-bold transition ${
+                      adjustType === "SET_REMAINING"
+                        ? "bg-blue-50 border-blue-500 text-blue-900 shadow-xs"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span className="block text-sm">🎯</span>
+                    <span>Set Due</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1.5">
+                  {adjustType === "ADD" && "Adds amount to total bill (e.g. prior quarter remaining balance or late fines)."}
+                  {adjustType === "SUBTRACT" && "Deducts amount from total bill (e.g. concession, scholarship, waiver)."}
+                  {adjustType === "SET_REMAINING" && "Directly sets the final remaining balance due for this invoice."}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Adjustment Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="any"
+                  value={adjustAmount}
+                  onChange={(e) => setAdjustAmount(e.target.value)}
+                  placeholder="500"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-bold font-mono outline-none focus:border-blue-600"
+                />
+
+                {/* Live Preview Projection */}
+                {(() => {
+                  const curTotal = Number(adjustInvoiceModal.totalAmount) || 0;
+                  const curPaid = Number(adjustInvoiceModal.paidAmount) || 0;
+                  const parsedAmt = parseFloat(adjustAmount) || 0;
+                  let projectedTotal = curTotal;
+                  let projectedDue = Math.max(0, curTotal - curPaid);
+                  let projectionError = "";
+
+                  if (isNaN(parsedAmt) || parsedAmt < 0) {
+                    projectionError = "Amount must be a positive numeric value.";
+                  } else if (adjustType === "ADD") {
+                    projectedTotal = curTotal + parsedAmt;
+                    projectedDue = Math.max(0, projectedTotal - curPaid);
+                  } else if (adjustType === "SUBTRACT") {
+                    const maxAllowed = Math.max(0, curTotal - curPaid);
+                    if (parsedAmt > maxAllowed) {
+                      projectionError = `Discount cannot exceed remaining due (₹${maxAllowed}). Total bill cannot be less than received amount (₹${curPaid}).`;
+                      projectedTotal = Math.max(curPaid, curTotal - parsedAmt);
+                    } else {
+                      projectedTotal = curTotal - parsedAmt;
+                    }
+                    projectedDue = Math.max(0, projectedTotal - curPaid);
+                  } else if (adjustType === "SET_REMAINING") {
+                    projectedTotal = curPaid + parsedAmt;
+                    projectedDue = parsedAmt;
+                  }
+
+                  return (
+                    <div className="mt-2 p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-[11px] space-y-1">
+                      <div className="font-bold text-slate-700 flex items-center justify-between">
+                        <span>📊 Live Calculation Preview:</span>
+                        {projectionError ? (
+                          <span className="text-rose-600 font-bold text-[10px]">⚠️ Invalid Input</span>
+                        ) : (
+                          <span className="text-emerald-700 font-bold text-[10px]">✓ Valid Projection</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-1 font-mono">
+                        <div className="bg-white p-1.5 rounded-lg border border-slate-200">
+                          <span className="text-[10px] text-slate-500 block font-sans">New Total Bill</span>
+                          <span className="font-bold text-slate-900">₹{projectedTotal}</span>
+                          <span className="text-[9px] text-slate-400 block font-sans">
+                            {adjustType === "ADD" && `(+₹${parsedAmt})`}
+                            {adjustType === "SUBTRACT" && `(-₹${parsedAmt})`}
+                            {adjustType === "SET_REMAINING" && `(Paid ₹${curPaid} + Due ₹${parsedAmt})`}
+                          </span>
+                        </div>
+                        <div className="bg-white p-1.5 rounded-lg border border-slate-200">
+                          <span className="text-[10px] text-slate-500 block font-sans">New Remaining Due</span>
+                          <span className="font-bold text-blue-700">₹{projectedDue}</span>
+                          <span className="text-[9px] text-emerald-600 block font-sans">
+                            {projectedDue === 0 ? "Fully Settled" : "Balance to collect"}
+                          </span>
+                        </div>
+                      </div>
+                      {projectionError && (
+                        <p className="text-[10px] text-rose-600 font-bold mt-1 bg-rose-50 p-1.5 rounded border border-rose-200">
+                          {projectionError}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Reason / Remarks (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder="e.g. Remaining balance from Q1, Sibling discount, etc."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 font-medium outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdjustInvoiceModal(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+                >
+                  {loading ? "Applying..." : "Apply Adjustment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Add Calendar Event / Holiday / Exam Schedule */}
+      {/* ========================================================================= */}
+      {addCalendarModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setAddCalendarModal(false)}
+        >
+          <div
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-2xl text-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                <span>➕</span> Schedule Event / Holiday
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAddCalendarModal(false)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1 rounded-lg hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCalendarEvent} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Event / Holiday Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Diwali Break, Annual Sports Meet, Term 1 Exam"
+                  value={newCalTitle}
+                  onChange={(e) => setNewCalTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Event Category *
+                  </label>
+                  <select
+                    value={newCalCategory}
+                    onChange={(e) => setNewCalCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 outline-none"
+                  >
+                    <option value="PUBLIC_HOLIDAY">🔴 Public Holiday</option>
+                    <option value="EXAM">🟣 School Examination</option>
+                    <option value="VACATION">🟡 Vacation / Break</option>
+                    <option value="EVENT">🟢 Campus Event / Activity</option>
+                    <option value="PTM">👥 Parent-Teacher Meet (PTM)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Target Audience
+                  </label>
+                  <select
+                    value={newCalTargetAudience}
+                    onChange={(e) => setNewCalTargetAudience(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 outline-none"
+                  >
+                    <option value="ALL">All School</option>
+                    <option value="STUDENTS">Students & Parents</option>
+                    <option value="STAFF">Faculty & Staff Only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newCalStartDate}
+                    onChange={(e) => setNewCalStartDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    End Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={newCalEndDate}
+                    min={newCalStartDate}
+                    onChange={(e) => setNewCalEndDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Description / Timetable Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Additional details, exam session times, dress code, or holiday circular notes..."
+                  value={newCalDesc}
+                  onChange={(e) => setNewCalDesc(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAddCalendarModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+                >
+                  {loading ? "Scheduling..." : "Schedule Event"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Edit Calendar Event / Holiday */}
+      {/* ========================================================================= */}
+      {editCalendarModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setEditCalendarModal(null)}
+        >
+          <div
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-2xl text-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                <span>✏️</span> Edit Event / Holiday
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditCalendarModal(null)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1 rounded-lg hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCalendarEvent} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Event / Holiday Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Diwali Break, Annual Sports Meet"
+                  value={editCalTitle}
+                  onChange={(e) => setEditCalTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Event Category *
+                  </label>
+                  <select
+                    value={editCalCategory}
+                    onChange={(e) => setEditCalCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 outline-none"
+                  >
+                    <option value="PUBLIC_HOLIDAY">🔴 Public Holiday</option>
+                    <option value="VACATION">🟡 Vacation / Break</option>
+                    <option value="EVENT">🟢 Campus Event / Activity</option>
+                    <option value="PTM">👥 Parent-Teacher Meet (PTM)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Target Audience
+                  </label>
+                  <select
+                    value={editCalTargetAudience}
+                    onChange={(e) => setEditCalTargetAudience(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-semibold text-slate-900 outline-none"
+                  >
+                    <option value="ALL">All School</option>
+                    <option value="STUDENTS">Students & Parents</option>
+                    <option value="STAFF">Faculty & Staff Only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editCalStartDate}
+                    onChange={(e) => setEditCalStartDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    End Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={editCalEndDate}
+                    min={editCalStartDate}
+                    onChange={(e) => setEditCalEndDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Description / Timetable Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Additional details, circular notes, or dress code..."
+                  value={editCalDesc}
+                  onChange={(e) => setEditCalDesc(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-medium text-slate-900 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditCalendarModal(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition"
+                >
+                  {loading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Calendar Day Event Details */}
+      {/* ========================================================================= */}
+      {selectedCalendarDay && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setSelectedCalendarDay(null)}
+        >
+          <div
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                  <span>🗓️</span> Day Schedule
+                </h3>
+                <span className="font-mono text-xs font-bold text-blue-700">
+                  {selectedCalendarDay.dateStr}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCalendarDay(null)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1 rounded-lg hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {selectedCalendarDay.events.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl">
+                  No scheduled holidays or exams for this date.
+                </div>
+              ) : (
+                selectedCalendarDay.events.map((ev) => {
+                  const isHoliday = ev.category === "PUBLIC_HOLIDAY";
+                  const isExam = ev.category === "EXAM" || ev.isExam;
+                  const isVacation = ev.category === "VACATION" || ev.category === "SCHOOL_HOLIDAY";
+
+                  let badge = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                  let label = "Event";
+                  if (isHoliday) {
+                    badge = "bg-rose-100 text-rose-800 border-rose-200";
+                    label = "Public Holiday";
+                  } else if (isExam) {
+                    badge = "bg-purple-100 text-purple-800 border-purple-200";
+                    label = "Exam Schedule";
+                  } else if (isVacation) {
+                    badge = "bg-amber-100 text-amber-800 border-amber-200";
+                    label = "Vacation Break";
+                  }
+
+                  return (
+                    <div
+                      key={ev.id}
+                      className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge}`}>
+                          {label}
+                        </span>
+                        {!isExam && !isTeacherOnly && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedCalendarDay(null);
+                                handleOpenEditCalendarEvent(ev);
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-[11px] font-bold border border-blue-200 transition"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCalendarEvent(ev.id, ev.title)}
+                              className="px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold border border-rose-200 transition"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
+                        {isExam && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCalendarDay(null);
+                              setActiveSection("exams");
+                            }}
+                            className="text-purple-700 hover:text-purple-900 font-bold text-[11px] flex items-center gap-1"
+                          >
+                            <span>📝</span> View in Exams
+                          </button>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-sm">{ev.title}</h4>
+                      {ev.description && (
+                        <p className="text-xs text-slate-600">{ev.description}</p>
+                      )}
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        Duration: {ev.startDate} {ev.endDate && ev.endDate !== ev.startDate ? `to ${ev.endDate}` : ""}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => {
+                  setNewCalStartDate(selectedCalendarDay.dateStr);
+                  setNewCalEndDate(selectedCalendarDay.dateStr);
+                  setSelectedCalendarDay(null);
+                  setAddCalendarModal(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition border border-blue-200"
+              >
+                + Add Event for this Date
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCalendarDay(null)}
+                className="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* MODAL: Bulk Import Students via Excel */}
       {/* ========================================================================= */}
@@ -10400,7 +14980,7 @@ export default function SchoolDashboardPage() {
           onClick={() => setTemplateCustomizerModal(null)}
         >
           <div
-            className="max-w-2xl w-full bg-white text-slate-900 border border-slate-300 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-8"
+            className="max-w-5xl w-full bg-white text-slate-900 border border-slate-300 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-8 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -10413,7 +14993,7 @@ export default function SchoolDashboardPage() {
                     : "CBSE Report Card Look & Feel Designer"}
                 </h3>
                 <p className="text-xs text-slate-600 font-medium mt-0.5">
-                  Configure header colors, badges, signatures, and printable layout options.
+                  Configure colors, badges, signatures, and see live printable previews update in real time.
                 </p>
               </div>
               <button
@@ -10425,135 +15005,428 @@ export default function SchoolDashboardPage() {
             </div>
 
             {templateCustomizerModal === "id_card" ? (
-              <div className="space-y-5">
-                {/* Theme Color Selector */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Color Palette / Theme
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "blue", name: "Royal Blue", bg: "bg-blue-600", border: "border-blue-600" },
-                      { id: "emerald", name: "Emerald Green", bg: "bg-emerald-600", border: "border-emerald-600" },
-                      { id: "burgundy", name: "Imperial Burgundy", bg: "bg-rose-900", border: "border-rose-900" },
-                    ].map((th) => (
-                      <button
-                        key={th.id}
-                        type="button"
-                        onClick={() => setIdCardConfig((prev) => ({ ...prev, themeColor: th.id }))}
-                        className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition ${
-                          idCardConfig.themeColor === th.id
-                            ? `${th.border} bg-slate-50 font-black shadow-xs`
-                            : "border-slate-200 hover:border-slate-300 font-bold"
-                        }`}
-                      >
-                        <span className={`h-5 w-5 rounded-full ${th.bg} shadow-xs shrink-0`}></span>
-                        <span className="text-xs text-slate-900">{th.name}</span>
-                      </button>
-                    ))}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Controls Column (7 cols) */}
+                <div className="lg:col-span-7 space-y-5">
+                  {/* Theme Color Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Color Palette / Theme
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { id: "blue", name: "Royal Blue", bg: "bg-blue-600", border: "border-blue-600" },
+                        { id: "emerald", name: "Emerald Green", bg: "bg-emerald-600", border: "border-emerald-600" },
+                        { id: "burgundy", name: "Imperial Burgundy", bg: "bg-rose-900", border: "border-rose-900" },
+                      ].map((th) => (
+                        <button
+                          key={th.id}
+                          type="button"
+                          onClick={() => setIdCardConfig((prev) => ({ ...prev, themeColor: th.id }))}
+                          className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition ${
+                            idCardConfig.themeColor === th.id
+                              ? `${th.border} bg-slate-50 font-black shadow-xs`
+                              : "border-slate-200 hover:border-slate-300 font-bold"
+                          }`}
+                        >
+                          <span className={`h-4 w-4 rounded-full ${th.bg} shadow-xs shrink-0`}></span>
+                          <span className="text-xs text-slate-900 truncate">{th.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Toggle Switches */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Badges & Student Details to Display
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {[
+                        { key: "showSchoolLogo", label: "School Emblem / Logo", icon: "🏛️" },
+                        { key: "showFatherName", label: "Father's Name", icon: "👨‍👦" },
+                        { key: "showBloodGroup", label: "Blood Group Badge", icon: "🩸" },
+                        { key: "showParentPhone", label: "Emergency / Parent Phone", icon: "📞" },
+                        { key: "showAddress", label: "Village / Residential Address", icon: "📍" },
+                        { key: "showBarcode", label: "ID Barcode / QR Code", icon: "🏷️" },
+                        { key: "showPrincipalSignature", label: "Principal Stamp & Signature", icon: "✍️" },
+                      ].map((opt) => (
+                        <label
+                          key={opt.key}
+                          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition"
+                        >
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                            <span>{opt.icon}</span>
+                            <span className="text-[11px]">{opt.label}</span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={Boolean((idCardConfig as any)[opt.key])}
+                            onChange={(e) =>
+                              setIdCardConfig((prev) => ({ ...prev, [opt.key]: e.target.checked }))
+                            }
+                            className="h-4 w-4 rounded accent-blue-600 cursor-pointer"
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Toggle Switches */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Badges & Student Details to Display
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[
-                      { key: "showSchoolLogo", label: "School Emblem / Logo", icon: "🏛️" },
-                      { key: "showFatherName", label: "Father's Name", icon: "👨‍👦" },
-                      { key: "showBloodGroup", label: "Blood Group Badge", icon: "🩸" },
-                      { key: "showParentPhone", label: "Emergency / Parent Phone", icon: "📞" },
-                      { key: "showAddress", label: "Village / Residential Address", icon: "📍" },
-                      { key: "showBarcode", label: "ID Barcode / QR Code", icon: "🏷️" },
-                      { key: "showPrincipalSignature", label: "Principal Stamp & Signature", icon: "✍️" },
-                    ].map((opt) => (
-                      <label
-                        key={opt.key}
-                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition"
+                {/* Live Preview Column (5 cols) */}
+                <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center sticky top-0 shadow-2xs">
+                  <div className="w-full flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>👁️</span> Live Card Preview
+                    </span>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                      Standard PVC
+                    </span>
+                  </div>
+
+                  {/* Rendered Live Card */}
+                  <div
+                    className={`w-full max-w-[280px] border-2 rounded-2xl overflow-hidden bg-white text-slate-900 shadow-md ${
+                      idCardConfig.themeColor === "emerald"
+                        ? "border-emerald-600"
+                        : idCardConfig.themeColor === "burgundy"
+                        ? "border-rose-900"
+                        : "border-blue-700"
+                    }`}
+                  >
+                    {/* Header */}
+                    <div
+                      className={`text-white p-3 text-center ${
+                        idCardConfig.themeColor === "emerald"
+                          ? "bg-emerald-600"
+                          : idCardConfig.themeColor === "burgundy"
+                          ? "bg-rose-900"
+                          : "bg-blue-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-2 mb-0.5">
+                        {idCardConfig.showSchoolLogo && (
+                          <div className="h-6 w-6 rounded bg-white overflow-hidden flex items-center justify-center shrink-0 shadow p-0.5">
+                            {(landingConfig?.logoUrl || currentUser?.logoUrl) ? (
+                              <img
+                                src={landingConfig?.logoUrl || currentUser?.logoUrl}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <span className="font-black text-xs text-blue-700">ग</span>
+                            )}
+                          </div>
+                        )}
+                        <h4 className="font-extrabold text-xs uppercase tracking-wide truncate max-w-[190px]">
+                          {currentUser?.schoolName || slug}
+                        </h4>
+                      </div>
+                      <p className="text-[8px] text-white/90 uppercase tracking-wider font-semibold">
+                        Session 2026-27 • Identity Card
+                      </p>
+                      <div
+                        className={`text-[9px] font-bold text-white py-0.5 mt-1 rounded uppercase tracking-wider ${
+                          idCardConfig.themeColor === "emerald"
+                            ? "bg-emerald-700"
+                            : idCardConfig.themeColor === "burgundy"
+                            ? "bg-rose-950"
+                            : "bg-blue-800"
+                        }`}
                       >
-                        <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                          <span>{opt.icon}</span>
-                          <span>{opt.label}</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={Boolean((idCardConfig as any)[opt.key])}
-                          onChange={(e) =>
-                            setIdCardConfig((prev) => ({ ...prev, [opt.key]: e.target.checked }))
-                          }
-                          className="h-4 w-4 rounded accent-blue-600"
-                        />
-                      </label>
-                    ))}
+                        Student ID / छात्र पहचान पत्र
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-3 space-y-2 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-14 w-14 rounded-xl bg-slate-100 border-2 border-slate-300 overflow-hidden flex items-center justify-center shrink-0 font-black text-lg text-slate-400">
+                          A
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h5 className="font-black text-xs text-slate-950 truncate leading-tight">
+                            Aarav Sharma
+                          </h5>
+                          <p className="text-[10px] font-bold text-blue-700 font-mono mt-0.5">
+                            Adm: ADM-2026-1001
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[9px] border border-slate-200">
+                              Class 6 - A
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold text-[9px] border border-slate-200">
+                              Roll: 1
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 text-[10px] border-t border-slate-100 pt-1.5">
+                        {idCardConfig.showFatherName && (
+                          <div className="flex justify-between text-slate-600">
+                            <span className="font-semibold">Father:</span>
+                            <span className="font-bold text-slate-900">Ramesh Sharma</span>
+                          </div>
+                        )}
+                        {idCardConfig.showBloodGroup && (
+                          <div className="flex justify-between items-center text-slate-600">
+                            <span className="font-semibold">Blood Group:</span>
+                            <span className="font-bold px-1.5 py-0.2 rounded bg-red-50 text-red-700 border border-red-200 text-[9px]">
+                              B+
+                            </span>
+                          </div>
+                        )}
+                        {idCardConfig.showParentPhone && (
+                          <div className="flex justify-between text-slate-600">
+                            <span className="font-semibold">Emergency:</span>
+                            <span className="font-mono font-bold text-slate-900">+91 98261 11001</span>
+                          </div>
+                        )}
+                        {idCardConfig.showAddress && (
+                          <div className="text-slate-600 pt-0.5">
+                            <span className="font-semibold block text-[9px]">Address:</span>
+                            <span className="font-medium text-slate-800 line-clamp-1 text-[9px]">
+                              Village Hatod, Dist Indore, MP
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {idCardConfig.showBarcode && (
+                        <div className="pt-1 flex flex-col items-center justify-center border-t border-slate-100">
+                          <div className="font-mono text-[7px] tracking-widest text-slate-400 uppercase">
+                            ||||| | |||| || |||||| | |||||
+                          </div>
+                          <span className="text-[7px] font-mono text-slate-500">ADM-2026-1001</span>
+                        </div>
+                      )}
+
+                      {idCardConfig.showPrincipalSignature && (
+                        <div className="pt-2 flex justify-between items-end border-t border-slate-100">
+                          <div className="text-[8px] text-slate-400">Issued: 2026-04</div>
+                          <div className="text-center">
+                            <div className="h-3 border-b border-slate-400 w-14 mb-0.5"></div>
+                            <span className="text-[8px] font-bold text-slate-700">Principal</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-5">
-                {/* Theme Color Selector for Report Card */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Color Palette / Academic Theme
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { id: "blue", name: "CBSE Blue", bg: "bg-blue-700", border: "border-blue-700" },
-                      { id: "emerald", name: "Forest Green", bg: "bg-emerald-700", border: "border-emerald-700" },
-                      { id: "burgundy", name: "Heritage Burgundy", bg: "bg-rose-900", border: "border-rose-900" },
-                    ].map((th) => (
-                      <button
-                        key={th.id}
-                        type="button"
-                        onClick={() => setReportCardConfig((prev) => ({ ...prev, themeColor: th.id }))}
-                        className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition ${
-                          reportCardConfig.themeColor === th.id
-                            ? `${th.border} bg-slate-50 font-black shadow-xs`
-                            : "border-slate-200 hover:border-slate-300 font-bold"
-                        }`}
-                      >
-                        <span className={`h-5 w-5 rounded-full ${th.bg} shadow-xs shrink-0`}></span>
-                        <span className="text-xs text-slate-900">{th.name}</span>
-                      </button>
-                    ))}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Controls Column (7 cols) */}
+                <div className="lg:col-span-7 space-y-5">
+                  {/* Theme Color Selector for Report Card */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Color Palette / Academic Theme
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { id: "blue", name: "CBSE Blue", bg: "bg-blue-700", border: "border-blue-700" },
+                        { id: "emerald", name: "Forest Green", bg: "bg-emerald-700", border: "border-emerald-700" },
+                        { id: "burgundy", name: "Heritage Burgundy", bg: "bg-rose-900", border: "border-rose-900" },
+                      ].map((th) => (
+                        <button
+                          key={th.id}
+                          type="button"
+                          onClick={() => setReportCardConfig((prev) => ({ ...prev, themeColor: th.id }))}
+                          className={`p-3 rounded-2xl border-2 flex items-center gap-2.5 transition ${
+                            reportCardConfig.themeColor === th.id
+                              ? `${th.border} bg-slate-50 font-black shadow-xs`
+                              : "border-slate-200 hover:border-slate-300 font-bold"
+                          }`}
+                        >
+                          <span className={`h-4 w-4 rounded-full ${th.bg} shadow-xs shrink-0`}></span>
+                          <span className="text-xs text-slate-900 truncate">{th.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Toggle Switches for Report Card */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      Report Card Sections & Signatures
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {[
+                        { key: "showSchoolHeader", label: "Official School Header & Emblem", icon: "🏛️" },
+                        { key: "showAffiliationNo", label: "CBSE Affiliation & School Code", icon: "📜" },
+                        { key: "showStudentPhoto", label: "Student Avatar / Photo", icon: "👤" },
+                        { key: "showAttendanceStats", label: "Session Attendance Stats", icon: "📊" },
+                        { key: "showTeacherRemarks", label: "Class Teacher Remarks", icon: "💬" },
+                        { key: "showGradingScale", label: "CBSE 8-Point Grading Key", icon: "📐" },
+                        { key: "showClassTeacherSignature", label: "Class Teacher Signature Line", icon: "✍️" },
+                        { key: "showPrincipalSignature", label: "Principal & Controller Stamp", icon: "🖋️" },
+                      ].map((opt) => (
+                        <label
+                          key={opt.key}
+                          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition"
+                        >
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                            <span>{opt.icon}</span>
+                            <span className="text-[11px]">{opt.label}</span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={Boolean((reportCardConfig as any)[opt.key])}
+                            onChange={(e) =>
+                              setReportCardConfig((prev) => ({ ...prev, [opt.key]: e.target.checked }))
+                            }
+                            className="h-4 w-4 rounded accent-blue-600 cursor-pointer"
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Toggle Switches for Report Card */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                    Report Card Sections & Signatures
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {[
-                      { key: "showSchoolHeader", label: "Official School Header & Emblem", icon: "🏛️" },
-                      { key: "showAffiliationNo", label: "CBSE Affiliation & School Code", icon: "📜" },
-                      { key: "showStudentPhoto", label: "Student Avatar / Photo", icon: "👤" },
-                      { key: "showAttendanceStats", label: "Session Attendance Stats", icon: "📊" },
-                      { key: "showTeacherRemarks", label: "Class Teacher Remarks", icon: "💬" },
-                      { key: "showGradingScale", label: "CBSE 8-Point Grading Key", icon: "📐" },
-                      { key: "showClassTeacherSignature", label: "Class Teacher Signature Line", icon: "✍️" },
-                      { key: "showPrincipalSignature", label: "Principal & Controller Stamp", icon: "🖋️" },
-                    ].map((opt) => (
-                      <label
-                        key={opt.key}
-                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition"
+                {/* Live Preview Column (5 cols) */}
+                <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center sticky top-0 shadow-2xs">
+                  <div className="w-full flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>👁️</span> Live Report Card Preview
+                    </span>
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+                      CBSE A4 Format
+                    </span>
+                  </div>
+
+                  {/* Rendered Live Report Card Miniature */}
+                  <div
+                    className={`w-full max-w-[320px] border-2 rounded-2xl overflow-hidden bg-white text-slate-900 shadow-md ${
+                      reportCardConfig.themeColor === "emerald"
+                        ? "border-emerald-600"
+                        : reportCardConfig.themeColor === "burgundy"
+                        ? "border-rose-900"
+                        : "border-blue-700"
+                    }`}
+                  >
+                    {/* Header */}
+                    {reportCardConfig.showSchoolHeader && (
+                      <div
+                        className={`text-white p-3 text-center ${
+                          reportCardConfig.themeColor === "emerald"
+                            ? "bg-emerald-700"
+                            : reportCardConfig.themeColor === "burgundy"
+                            ? "bg-rose-900"
+                            : "bg-blue-700"
+                        }`}
                       >
-                        <span className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                          <span>{opt.icon}</span>
-                          <span>{opt.label}</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={Boolean((reportCardConfig as any)[opt.key])}
-                          onChange={(e) =>
-                            setReportCardConfig((prev) => ({ ...prev, [opt.key]: e.target.checked }))
-                          }
-                          className="h-4 w-4 rounded accent-blue-600"
-                        />
-                      </label>
-                    ))}
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="h-6 w-6 rounded bg-white overflow-hidden flex items-center justify-center shrink-0 p-0.5">
+                            {(landingConfig?.logoUrl || currentUser?.logoUrl) ? (
+                              <img
+                                src={landingConfig?.logoUrl || currentUser?.logoUrl}
+                                alt="Logo"
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <span className="font-black text-xs text-blue-700">ग</span>
+                            )}
+                          </div>
+                          <h4 className="font-extrabold text-xs uppercase tracking-wide truncate max-w-[210px]">
+                            {currentUser?.schoolName || slug}
+                          </h4>
+                        </div>
+                        {reportCardConfig.showAffiliationNo && (
+                          <p className="text-[8px] text-white/90 font-mono mt-0.5">
+                            CBSE Affiliation No: 1030492 • School Code: 50412
+                          </p>
+                        )}
+                        <div className="text-[9px] font-bold text-white bg-black/20 py-0.5 mt-1 rounded uppercase tracking-wider">
+                          Academic Progress Report • Session 2026-27
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Student Mini Meta */}
+                    <div className="p-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[10px]">
+                      <div>
+                        <span className="font-black text-slate-950 block">Aarav Sharma</span>
+                        <span className="text-slate-600">Class 6-A • Roll: 01</span>
+                      </div>
+                      {reportCardConfig.showStudentPhoto && (
+                        <div className="h-8 w-8 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-slate-400 text-xs">
+                          👤
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mini Marks Table */}
+                    <div className="p-2.5 space-y-2">
+                      <table className="w-full text-left text-[9px]">
+                        <thead>
+                          <tr className="border-b border-slate-200 text-slate-500 font-bold">
+                            <th className="pb-1">Subject</th>
+                            <th className="pb-1 text-center">Marks</th>
+                            <th className="pb-1 text-right">Grade</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          <tr>
+                            <td className="py-1 font-semibold text-slate-900">English</td>
+                            <td className="py-1 text-center">88 / 100</td>
+                            <td className="py-1 text-right font-bold text-emerald-700">A1</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1 font-semibold text-slate-900">Hindi</td>
+                            <td className="py-1 text-center">91 / 100</td>
+                            <td className="py-1 text-right font-bold text-emerald-700">A1</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1 font-semibold text-slate-900">Mathematics</td>
+                            <td className="py-1 text-center">85 / 100</td>
+                            <td className="py-1 text-right font-bold text-emerald-700">A2</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1 font-semibold text-slate-900">Science</td>
+                            <td className="py-1 text-center">89 / 100</td>
+                            <td className="py-1 text-right font-bold text-emerald-700">A1</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      {reportCardConfig.showAttendanceStats && (
+                        <div className="p-1.5 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between text-[9px] text-blue-900 font-medium">
+                          <span>Attendance:</span>
+                          <span className="font-bold">198 / 210 Days (94.2%)</span>
+                        </div>
+                      )}
+
+                      {reportCardConfig.showTeacherRemarks && (
+                        <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[8px] text-slate-600">
+                          <span className="font-bold text-slate-800 block">Class Teacher Remarks:</span>
+                          "Consistent academic performance and active leadership."
+                        </div>
+                      )}
+
+                      {reportCardConfig.showGradingScale && (
+                        <div className="text-[7px] text-slate-500 font-mono text-center pt-0.5">
+                          A1 (91-100) • A2 (81-90) • B1 (71-80) • B2 (61-70)
+                        </div>
+                      )}
+
+                      {/* Signatures */}
+                      <div className="flex justify-between items-end pt-2 border-t border-slate-200 text-[8px]">
+                        {reportCardConfig.showClassTeacherSignature && (
+                          <div className="text-center">
+                            <div className="h-3 border-b border-slate-400 w-16 mb-0.5"></div>
+                            <span className="font-bold text-slate-700">Class Teacher</span>
+                          </div>
+                        )}
+                        {reportCardConfig.showPrincipalSignature && (
+                          <div className="text-center">
+                            <div className="h-3 border-b border-slate-400 w-16 mb-0.5"></div>
+                            <span className="font-bold text-slate-700">Principal</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -10575,7 +15448,7 @@ export default function SchoolDashboardPage() {
                   });
                   setTemplateCustomizerModal(null);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow flex items-center gap-2"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow flex items-center gap-2 cursor-pointer"
               >
                 <span>✓</span> Save & Apply Look & Feel
               </button>
@@ -10994,6 +15867,866 @@ export default function SchoolDashboardPage() {
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow flex items-center gap-1.5"
                 >
                   <span>➕</span> Assign to Route
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Beautiful Modern Confirmation / Alert Popup */}
+      {/* ========================================================================= */}
+      {confirmModal && confirmModal.isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            className="max-w-sm w-full bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xl text-slate-900 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 ${
+                  confirmModal.isDanger
+                    ? "bg-rose-50 text-rose-600 border border-rose-100"
+                    : "bg-blue-50 text-blue-600 border border-blue-100"
+                }`}
+              >
+                {confirmModal.isDanger ? "🗑️" : "ℹ️"}
+              </div>
+              <div className="space-y-1 pt-0.5">
+                <h3 className="font-black text-slate-950 text-base leading-tight">
+                  {confirmModal.title}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {confirmModal.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+              >
+                {confirmModal.cancelText || "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const onConfirm = confirmModal.onConfirm;
+                  setConfirmModal(null);
+                  if (onConfirm) {
+                    await onConfirm();
+                  }
+                }}
+                className={`px-4 py-2 rounded-xl text-white font-bold text-xs shadow-sm transition ${
+                  confirmModal.isDanger
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                    : "bg-blue-600 hover:bg-blue-700 shadow-blue-600/20"
+                }`}
+              >
+                {confirmModal.confirmText || "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Configure Staff Salary Structure */}
+      {/* ========================================================================= */}
+      {editSalaryStructureStaff && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setEditSalaryStructureStaff(null)}
+        >
+          <div
+            className="max-w-xl w-full bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 text-slate-900 space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                  <span>⚙️</span> Configure Salary Structure
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  {editSalaryStructureStaff.fullName} • {editSalaryStructureStaff.role}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditSalaryStructureStaff(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSalaryStructure} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Basic Salary (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={editStructureForm.baseSalary}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, baseSalary: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    HRA (House Rent) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.hra}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, hra: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    DA (Dearness) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.da}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, da: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Travel / Conveyance (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.travelAllowance}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, travelAllowance: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Special Allowance (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.specialAllowance}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, specialAllowance: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              {/* Deductions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+                <div>
+                  <label className="text-[11px] font-bold text-rose-700 block mb-1">
+                    Provident Fund (PF) (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.pfDeduction}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, pfDeduction: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-rose-50/50 border border-rose-200 text-xs font-bold text-rose-900 outline-none focus:border-rose-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-rose-700 block mb-1">
+                    Income / Professional Tax (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editStructureForm.taxDeduction}
+                    onChange={(e) =>
+                      setEditStructureForm({ ...editStructureForm, taxDeduction: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-rose-50/50 border border-rose-200 text-xs font-bold text-rose-900 outline-none focus:border-rose-500"
+                  />
+                </div>
+              </div>
+
+              {/* Live Computation Bar */}
+              {(() => {
+                const gross =
+                  Number(editStructureForm.baseSalary || 0) +
+                  Number(editStructureForm.hra || 0) +
+                  Number(editStructureForm.da || 0) +
+                  Number(editStructureForm.travelAllowance || 0) +
+                  Number(editStructureForm.specialAllowance || 0);
+                const deductions =
+                  Number(editStructureForm.pfDeduction || 0) +
+                  Number(editStructureForm.taxDeduction || 0);
+                const net = Math.max(0, gross - deductions);
+
+                return (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Gross Salary</span>
+                      <span className="font-bold text-slate-800 font-mono">₹{gross.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-rose-500 block">Deductions</span>
+                      <span className="font-bold text-rose-700 font-mono">-₹{deductions.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase font-black text-emerald-700 block">Net Monthly Take-Home</span>
+                      <span className="font-black text-base text-emerald-700 font-mono">₹{net.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Bank Details */}
+              <div className="space-y-3 pt-1 border-t border-slate-100">
+                <h4 className="font-bold text-xs text-slate-800">Bank Account & Payment Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Payment Mode
+                    </label>
+                    <select
+                      value={editStructureForm.paymentMode}
+                      onChange={(e) =>
+                        setEditStructureForm({ ...editStructureForm, paymentMode: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600 cursor-pointer"
+                    >
+                      <option value="BANK_TRANSFER">Bank Transfer (NEFT/IMPS)</option>
+                      <option value="CHEQUE">Cheque</option>
+                      <option value="CASH">Cash</option>
+                      <option value="UPI">UPI Transfer</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Bank Account Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editStructureForm.bankAccountNo}
+                      onChange={(e) =>
+                        setEditStructureForm({ ...editStructureForm, bankAccountNo: e.target.value })
+                      }
+                      placeholder="e.g. 501004928172"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 outline-none focus:border-blue-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Bank IFSC Code
+                    </label>
+                    <input
+                      type="text"
+                      value={editStructureForm.bankIfsc}
+                      onChange={(e) =>
+                        setEditStructureForm({ ...editStructureForm, bankIfsc: e.target.value.toUpperCase() })
+                      }
+                      placeholder="e.g. HDFC0001234"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 outline-none focus:border-blue-600 uppercase"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      PAN Card Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editStructureForm.panNumber}
+                      onChange={(e) =>
+                        setEditStructureForm({ ...editStructureForm, panNumber: e.target.value.toUpperCase() })
+                      }
+                      placeholder="e.g. ABCDE1234F"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 outline-none focus:border-blue-600 uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditSalaryStructureStaff(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? "Saving..." : "Save Salary Structure"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Record Staff Payslip Payment */}
+      {/* ========================================================================= */}
+      {markPaidModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setMarkPaidModal(null)}
+        >
+          <div
+            className="max-w-md w-full bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 text-slate-900 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h3 className="font-black text-base text-slate-950 flex items-center gap-2">
+                  <span>💳</span> Record Salary Payment
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  {markPaidModal.staffName} • {markPaidModal.monthLabel}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMarkPaidModal(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700">Net Amount to Disburse:</span>
+              <span className="font-mono font-black text-lg text-blue-700">
+                ₹{Number(markPaidModal.netSalary || 0).toLocaleString("en-IN")}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveMarkPaid} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Disbursement Mode *
+                </label>
+                <select
+                  value={markPaymentMode}
+                  onChange={(e) => setMarkPaymentMode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 outline-none focus:border-blue-600 cursor-pointer"
+                >
+                  <option value="BANK_TRANSFER">Bank Transfer (NEFT / IMPS / RTGS)</option>
+                  <option value="UPI">UPI / QR Payment</option>
+                  <option value="CHEQUE">Bank Cheque</option>
+                  <option value="CASH">Cash</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  UTR / Transaction Ref / Cheque No.
+                </label>
+                <input
+                  type="text"
+                  value={markTxnRef}
+                  onChange={(e) => setMarkTxnRef(e.target.value)}
+                  placeholder="e.g. UTR19482948201 or CHQ-004918"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-medium text-slate-900 outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Remarks / Notes
+                </label>
+                <input
+                  type="text"
+                  value={markPayRemarks}
+                  onChange={(e) => setMarkPayRemarks(e.target.value)}
+                  placeholder="e.g. Disbursed via SBI corporate banking"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-900 outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setMarkPaidModal(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition disabled:opacity-50 cursor-pointer"
+                >
+                  {loading ? "Recording..." : "Confirm & Mark as PAID"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: Official Printable Indian Salary Payslip */}
+      {/* ========================================================================= */}
+      {viewPayslipModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setViewPayslipModal(null)}
+        >
+          <div
+            className="max-w-2xl w-full bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 sm:p-8 text-slate-900 space-y-6 max-h-[95vh] overflow-y-auto print:max-w-none print:w-full print:p-0 print:border-none print:shadow-none"
+            onClick={(e) => e.stopPropagation()}
+            id="printable-payslip"
+          >
+            {/* Action Bar (Hidden when printing) */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 print:hidden">
+              <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">
+                Official Monthly Payslip
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>🖨️</span> Print Payslip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewPayslipModal(null)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* School Header */}
+            <div className="text-center border-b-2 border-slate-900 pb-4">
+              <h2 className="text-2xl font-black text-slate-950 uppercase tracking-wide">
+                {landingConfig?.heroTitle ? landingConfig.heroTitle.slice(0, 40) : "CAMPUS ACADEMY"}
+              </h2>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                {landingConfig?.contactAddress || "School Campus • Recognized by CBSE / State Education Board"}
+              </p>
+              <div className="mt-2 inline-block px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-xs font-bold text-slate-800 uppercase font-mono">
+                Salary Payslip for {viewPayslipModal.monthLabel}
+              </div>
+            </div>
+
+            {/* Employee Details Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Employee Name</span>
+                <span className="font-extrabold text-slate-900">{viewPayslipModal.staffName}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Designation / Role</span>
+                <span className="font-bold text-slate-800">{viewPayslipModal.role}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Payslip Ref ID</span>
+                <span className="font-mono text-[11px] text-slate-700">{viewPayslipModal.id}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Payment Status</span>
+                <span className={`font-black text-xs ${viewPayslipModal.paymentStatus === "PAID" ? "text-emerald-700" : "text-amber-700"}`}>
+                  ● {viewPayslipModal.paymentStatus}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Bank Account</span>
+                <span className="font-mono text-slate-800">{viewPayslipModal.bankAccountNo || "N/A"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">IFSC Code</span>
+                <span className="font-mono text-slate-800">{viewPayslipModal.bankIfsc || "N/A"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">PAN Number</span>
+                <span className="font-mono text-slate-800">{viewPayslipModal.panNumber || "N/A"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 uppercase font-bold block">Mode / Ref</span>
+                <span className="font-mono text-[11px] text-slate-700">
+                  {viewPayslipModal.transactionRef || viewPayslipModal.paymentMode || "N/A"}
+                </span>
+              </div>
+            </div>
+
+            {/* Earnings & Deductions Breakdown Tables */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Earnings */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100 font-bold text-xs text-emerald-900 uppercase">
+                  Earnings (Allowances)
+                </div>
+                <table className="w-full text-xs">
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    <tr>
+                      <td className="p-2 text-slate-700">Basic Salary</td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        ₹{Number(viewPayslipModal.baseSalary || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">House Rent Allowance (HRA)</td>
+                      <td className="p-2 text-right font-mono">
+                        ₹{Number(viewPayslipModal.allowances?.hra || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">Dearness Allowance (DA)</td>
+                      <td className="p-2 text-right font-mono">
+                        ₹{Number(viewPayslipModal.allowances?.da || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">Travel / Conveyance Allowance</td>
+                      <td className="p-2 text-right font-mono">
+                        ₹{Number(viewPayslipModal.allowances?.travel || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">Special Allowance</td>
+                      <td className="p-2 text-right font-mono">
+                        ₹{Number(viewPayslipModal.allowances?.special || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-slate-50 border-t border-slate-200 font-bold">
+                      <td className="p-2 text-slate-900">Total Gross Earnings</td>
+                      <td className="p-2 text-right font-mono text-slate-950">
+                        ₹{Number(viewPayslipModal.grossSalary || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Deductions */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                <div className="bg-rose-50 px-3 py-2 border-b border-rose-100 font-bold text-xs text-rose-900 uppercase">
+                  Deductions (EPF & Taxes)
+                </div>
+                <table className="w-full text-xs">
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    <tr>
+                      <td className="p-2 text-slate-700">Employee Provident Fund (EPF)</td>
+                      <td className="p-2 text-right font-mono text-rose-700">
+                        ₹{Number(viewPayslipModal.deductions?.pf || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">Income / Professional Tax</td>
+                      <td className="p-2 text-right font-mono text-rose-700">
+                        ₹{Number(viewPayslipModal.deductions?.tax || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 text-slate-700">Unpaid Leave Deductions</td>
+                      <td className="p-2 text-right font-mono text-slate-400">₹0</td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-slate-50 border-t border-slate-200 font-bold">
+                      <td className="p-2 text-rose-900">Total Deductions</td>
+                      <td className="p-2 text-right font-mono text-rose-700">
+                        ₹{Number(viewPayslipModal.totalDeductions || 0).toLocaleString("en-IN")}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Net Take-Home Salary Banner */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-md">
+              <div>
+                <span className="text-xs uppercase font-bold text-emerald-200">
+                  Net Salary Payable (Take-Home)
+                </span>
+                <p className="text-[11px] text-emerald-100 italic">
+                  Credited to Employee Registered Bank Account
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-black font-mono">
+                  ₹{Number(viewPayslipModal.netSalary || 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+
+            {/* Signatures */}
+            <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
+              <div>
+                <div className="border-t border-slate-400 w-36 mx-auto mb-1" />
+                <span className="font-bold text-slate-800">Employee Signature</span>
+              </div>
+              <div>
+                <div className="border-t border-slate-400 w-36 mx-auto mb-1" />
+                <span className="font-bold text-slate-800">Principal / Bursar Seal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: End-of-Session Student Promotion & Academic Year Rollover */}
+      {/* ========================================================================= */}
+      {promoteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-5 bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 text-white flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">⚡</span>
+                  <h3 className="text-lg font-black tracking-tight">Academic Session Student Promotion</h3>
+                </div>
+                <p className="text-xs text-purple-100 mt-0.5">
+                  Roll over enrolled students to the next class grade, section, and academic year
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPromoteModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-white/20 text-white transition text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleExecutePromotion} className="p-6 space-y-5">
+              {/* Step 1: Source Class & Academic Session */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Source Class (Current Grade)
+                  </label>
+                  <select
+                    value={promoteSourceClass}
+                    onChange={(e) => handleSourceClassChange(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-purple-500 outline-none"
+                  >
+                    <option value="">— Select Source Class —</option>
+                    {classesList.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name} ({c.studentCount} Students)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Target Academic Session
+                  </label>
+                  <input
+                    type="text"
+                    value={promoteTargetYear}
+                    onChange={(e) => setPromoteTargetYear(e.target.value)}
+                    placeholder="e.g. 2027-2028"
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Graduation / Alumni Toggle */}
+              <div className="p-3.5 rounded-2xl bg-purple-50/60 border border-purple-200/80 flex items-center justify-between">
+                <div className="pr-4">
+                  <span className="text-xs font-bold text-purple-950 block">Graduation / Alumni Status</span>
+                  <span className="text-[11px] text-purple-700 block">
+                    Mark outgoing senior students (e.g. Class 10/12) as graduated alumni instead of moving to a higher grade
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={promoteIsGraduation}
+                  onChange={(e) => setPromoteIsGraduation(e.target.checked)}
+                  className="h-5 w-5 accent-purple-600 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Target Class & Target Section (if not graduating) */}
+              {!promoteIsGraduation && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Promote To Class / Grade *
+                    </label>
+                    <input
+                      type="text"
+                      value={promoteTargetClass}
+                      onChange={(e) => setPromoteTargetClass(e.target.value)}
+                      placeholder="e.g. Class 7"
+                      required={!promoteIsGraduation}
+                      list="classes-autocomplete"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-purple-500 outline-none"
+                    />
+                    <datalist id="classes-autocomplete">
+                      {classesList.map((c) => (
+                        <option key={c.id} value={c.name} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Target Section *
+                    </label>
+                    <input
+                      type="text"
+                      value={promoteTargetSection}
+                      onChange={(e) => setPromoteTargetSection(e.target.value)}
+                      placeholder="e.g. A"
+                      required={!promoteIsGraduation}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-purple-500 outline-none uppercase"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Students Selection Roster */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-800">
+                    Select Students to Promote ({promoteSelectedStudentIds.length} of{" "}
+                    {
+                      studentList.filter((s) => {
+                        const clsName = s.enrollments?.[0]?.section?.classGrade?.name;
+                        return clsName && promoteSourceClass
+                          ? clsName.trim().toLowerCase() === promoteSourceClass.trim().toLowerCase()
+                          : false;
+                      }).length
+                    }{" "}
+                    selected)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAllPromote}
+                    className="text-xs font-bold text-purple-700 hover:text-purple-900 underline"
+                  >
+                    Toggle Select All
+                  </button>
+                </div>
+
+                <div className="max-h-52 overflow-y-auto rounded-2xl border border-slate-200 divide-y divide-slate-100 bg-white">
+                  {(() => {
+                    const filtered = studentList.filter((s) => {
+                      const clsName = s.enrollments?.[0]?.section?.classGrade?.name;
+                      return clsName && promoteSourceClass
+                        ? clsName.trim().toLowerCase() === promoteSourceClass.trim().toLowerCase()
+                        : false;
+                    });
+
+                    if (!promoteSourceClass) {
+                      return (
+                        <div className="p-6 text-center text-xs text-slate-500 font-medium">
+                          Please select a source class above to load student roster.
+                        </div>
+                      );
+                    }
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="p-6 text-center text-xs text-slate-500 font-medium">
+                          No students currently enrolled in {promoteSourceClass}.
+                        </div>
+                      );
+                    }
+
+                    return filtered.map((s) => {
+                      const isSelected = promoteSelectedStudentIds.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className={`flex items-center justify-between p-3 cursor-pointer transition ${
+                            isSelected ? "bg-purple-50/50" : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleStudentPromote(s.id)}
+                              className="h-4 w-4 accent-purple-600 rounded cursor-pointer"
+                            />
+                            <div>
+                              <span className="font-bold text-xs text-slate-900">
+                                {s.firstName} {s.lastName}
+                              </span>
+                              <span className="text-[11px] text-slate-500 ml-2 font-mono">
+                                (Adm #{s.admissionNumber || "N/A"} • Roll {s.enrollments?.[0]?.rollNumber || "—"})
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-600 px-2 py-0.5 rounded-md bg-slate-100">
+                            Sec {s.enrollments?.[0]?.section?.name || "A"}
+                          </span>
+                        </label>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setPromoteModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={promotingStudents || promoteSelectedStudentIds.length === 0}
+                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {promotingStudents ? (
+                    <>
+                      <span className="animate-spin inline-block">⏳</span> Promoting...
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡</span> Confirm & Promote ({promoteSelectedStudentIds.length} Students)
+                    </>
+                  )}
                 </button>
               </div>
             </form>

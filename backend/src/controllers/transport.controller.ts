@@ -136,6 +136,31 @@ export async function listBusRoutes(req: Request, res: Response) {
     }
 
     if (req.user && req.user.userId) {
+      // 1. Bus Driver: Can see all bus routes of the school with their assigned route identified and prioritized
+      if (req.user.role === 'DRIVER') {
+        const driverUserId = req.user.userId;
+        const driverUser = await prisma.user.findUnique({
+          where: { id: driverUserId },
+          include: { staffProfile: true },
+        });
+        const driverPhoneClean = driverUser?.phone?.replace(/\D/g, '') || '';
+        const driverNameClean = driverUser?.staffProfile?.fullName?.toLowerCase().trim() || '';
+
+        const mappedRoutes = routes.map((route) => {
+          const isAssigned =
+            route.driverUserId === driverUserId ||
+            (driverPhoneClean && route.driverPhone?.replace(/\D/g, '').includes(driverPhoneClean)) ||
+            (driverNameClean && route.driverName?.toLowerCase().trim() === driverNameClean);
+          return {
+            ...route,
+            isAssignedRoute: !!isAssigned,
+          };
+        });
+        // Sort assigned route to the top
+        mappedRoutes.sort((a, b) => (b.isAssignedRoute ? 1 : 0) - (a.isAssignedRoute ? 1 : 0));
+        return res.json({ routes: mappedRoutes });
+      }
+
       const scope = await getTeacherClassScope(tenantId, req.user.userId, req.user.role);
       if (!scope.hasAccessToAll) {
         // Teacher role: filter routes to only those used by students of their assigned class/section

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { API_BASE } from "@/lib/config";
+import SchoolContactSection from "./components/SchoolContactSection";
 
 interface GalleryItem {
   id: string;
@@ -123,8 +124,18 @@ export default function SchoolPortalPage() {
       {/* 1. Header / Navbar */}
       <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-6 sm:px-10 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3.5">
-          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-extrabold text-2xl text-slate-950 shadow-lg shadow-emerald-900/40">
-            {school.name.charAt(0)}
+          <div className="h-11 w-11 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-lg shadow-emerald-950/30">
+            {landing.logoUrl ? (
+              <img
+                src={landing.logoUrl}
+                alt={school.name}
+                className="w-full h-full object-contain p-0.5"
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center font-extrabold text-2xl text-slate-950">
+                {school.name.charAt(0)}
+              </div>
+            )}
           </div>
           <div>
             <h1 className="font-extrabold text-base sm:text-lg text-white tracking-tight leading-tight">
@@ -582,21 +593,19 @@ export default function SchoolPortalPage() {
         </div>
       </section>
 
-      {/* 11. Contact & Campus Location Footer */}
-      <section id="contact" className="scroll-mt-20 py-12 px-6 sm:px-12 max-w-6xl mx-auto w-full">
-        <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950/40 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h4 className="text-lg font-bold text-white">{school.name} Campus</h4>
-            <p className="text-xs text-slate-300 mt-1 flex items-center gap-2">
-              <span>📍 {landing.contactAddress || "Campus Road, Main Market, District Hub"}</span>
-            </p>
-            <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-400 font-mono">
-              <span>📞 {landing.contactPhone || "+91 91113 93176"}</span>
-              <span>✉️ {landing.contactEmail || `contact@${school.slug}.goankipathsala.in`}</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 11. Admissions, Fees & Contact Section with Interactive Form */}
+      <SchoolContactSection
+        slug={school.slug}
+        schoolName={school.name}
+        contactAddress={landing.contactAddress}
+        contactPhone={landing.contactPhone}
+        contactEmail={landing.contactEmail}
+        contactHelpdeskTitle={landing.contactHelpdeskTitle}
+        contactWelcomeText={landing.contactWelcomeText}
+        admissionHours={landing.admissionHours}
+        feeCounterHours={landing.feeCounterHours}
+        admissionDocumentsText={landing.admissionDocumentsText}
+      />
 
       {/* Lightbox Image Modal */}
       {selectedImage && (
@@ -642,7 +651,7 @@ export default function SchoolPortalPage() {
         </div>
         <div className="flex items-center gap-6">
           <Link
-            href={`/school/${school.slug}/portal`}
+            href={`/school/${school.slug}/portal/login`}
             className="text-slate-400 hover:text-emerald-400 transition flex items-center gap-1.5 font-medium"
           >
             <span>🔒</span> Faculty & Admin Portal

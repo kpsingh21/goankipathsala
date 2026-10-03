@@ -112,18 +112,25 @@ export async function createStaff(req: Request, res: Response) {
       return res.status(400).json({ error: 'Email, password, and role are required.' });
     }
 
-    // Role check: Support all school staff roles
-    const validRoles = [
+    // Role mapping: General teacher removed -> maps to SUBJECT_TEACHER; CASHIER maps to ACCOUNTANT
+    let targetRole: UserRole = role as UserRole;
+    if ((role as string) === 'TEACHER' || (role as string) === 'GENERAL_TEACHER') {
+      targetRole = UserRole.SUBJECT_TEACHER;
+    } else if ((role as string) === 'CASHIER') {
+      targetRole = UserRole.ACCOUNTANT;
+    }
+
+    // Supported active staff roles
+    const validRoles: UserRole[] = [
       UserRole.SCHOOL_ADMIN,
       UserRole.ADMIN,
       UserRole.PRINCIPAL,
-      UserRole.TEACHER,
       UserRole.CLASS_TEACHER,
       UserRole.SUBJECT_TEACHER,
       UserRole.ACCOUNTANT,
       UserRole.DRIVER,
     ];
-    if (!validRoles.includes(role)) {
+    if (!validRoles.includes(targetRole)) {
       return res.status(400).json({ error: `Invalid staff role. Allowed: ${validRoles.join(', ')}` });
     }
 
@@ -151,7 +158,7 @@ export async function createStaff(req: Request, res: Response) {
           email: cleanEmail,
           phone: cleanPhone,
           passwordHash,
-          role,
+          role: targetRole,
           status: 'ACTIVE',
         },
       });
@@ -162,7 +169,14 @@ export async function createStaff(req: Request, res: Response) {
           userId: user.id,
           fullName: fullName ? fullName.trim() : (cleanEmail.split('@')[0] || 'Staff Member'),
           avatarUrl: avatarUrl || null,
-          designation: designation || (role === 'TEACHER' ? 'Teacher' : role === 'ACCOUNTANT' ? 'Accountant' : 'Administrator'),
+          designation: designation || (
+            targetRole === UserRole.CLASS_TEACHER ? 'Class Teacher' :
+            targetRole === UserRole.SUBJECT_TEACHER ? 'Subject Teacher' :
+            targetRole === UserRole.ACCOUNTANT ? ((role as string) === 'CASHIER' ? 'Cashier' : 'Accountant') :
+            targetRole === UserRole.DRIVER ? 'Bus Driver' :
+            targetRole === UserRole.PRINCIPAL ? 'Principal / Headmaster' :
+            targetRole === UserRole.SCHOOL_ADMIN ? 'School Administrator' : 'Staff Member'
+          ),
           qualification: qualification || null,
           department: department || null,
           aadharNumber: aadharNumber || null,
@@ -207,17 +221,24 @@ export async function updateStaffRole(req: Request, res: Response) {
       return res.status(400).json({ error: 'User ID and new role are required.' });
     }
 
-    const validRoles = [
+    // Role mapping: General teacher removed -> maps to SUBJECT_TEACHER; CASHIER maps to ACCOUNTANT
+    let targetNewRole: UserRole = newRole as UserRole;
+    if ((newRole as string) === 'TEACHER' || (newRole as string) === 'GENERAL_TEACHER') {
+      targetNewRole = UserRole.SUBJECT_TEACHER;
+    } else if ((newRole as string) === 'CASHIER') {
+      targetNewRole = UserRole.ACCOUNTANT;
+    }
+
+    const validRoles: UserRole[] = [
       UserRole.SCHOOL_ADMIN,
       UserRole.ADMIN,
       UserRole.PRINCIPAL,
-      UserRole.TEACHER,
       UserRole.CLASS_TEACHER,
       UserRole.SUBJECT_TEACHER,
       UserRole.ACCOUNTANT,
       UserRole.DRIVER,
     ];
-    if (!validRoles.includes(newRole)) {
+    if (!validRoles.includes(targetNewRole)) {
       return res.status(400).json({ error: `Invalid role. Allowed: ${validRoles.join(', ')}` });
     }
 
@@ -232,7 +253,7 @@ export async function updateStaffRole(req: Request, res: Response) {
 
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: { role: newRole },
+      data: { role: targetNewRole },
       select: {
         id: true,
         email: true,
@@ -409,9 +430,15 @@ export async function assignStaffRolesAndWorkload(req: Request, res: Response) {
     await prisma.$transaction(async (tx) => {
       // 1. Update role if provided
       if (role) {
+        let assignedRole: UserRole = role as UserRole;
+        if ((role as string) === 'TEACHER' || (role as string) === 'GENERAL_TEACHER') {
+          assignedRole = UserRole.SUBJECT_TEACHER;
+        } else if ((role as string) === 'CASHIER') {
+          assignedRole = UserRole.ACCOUNTANT;
+        }
         await tx.user.update({
           where: { id: userId },
-          data: { role },
+          data: { role: assignedRole },
         });
       }
 

@@ -361,3 +361,68 @@ export async function seedMonthlyAttendance(req: Request, res: Response) {
   }
 }
 
+/**
+ * Reset / Delete daily attendance records for a specific date and section or class
+ */
+export async function resetAttendance(req: Request, res: Response) {
+  try {
+    const tenantId = req.user?.tenantId;
+    const { date, sectionId, classGradeName } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'School tenant context missing.' });
+    }
+
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required to reset attendance.' });
+    }
+
+    const scope = await getTeacherClassScope(tenantId, req.user?.userId || '', req.user?.role || '');
+    const targetDate = new Date(date);
+    const dateStr = targetDate.toISOString().split('T')[0];
+    const isoDate = new Date(dateStr);
+
+    const whereClause: any = {
+      tenantId,
+      date: isoDate,
+    };
+
+    if (sectionId) {
+      if (!scope.hasAccessToAll) {
+        if (!scope.sectionIds.includes(sectionId)) {
+          return res.status(403).json({ error: 'Access denied: You can only reset attendance for your assigned class.' });
+        }
+      }
+      whereClause.enrollment = { sectionId };
+    } else if (classGradeName && classGradeName !== 'ALL') {
+      if (!scope.hasAccessToAll) {
+        if (!scope.classGradeNames.includes(classGradeName)) {
+          return res.status(403).json({ error: 'Access denied: You can only reset attendance for your assigned class.' });
+        }
+      }
+      whereClause.enrollment = {
+        section: { classGrade: { name: classGradeName } },
+      };
+    } else if (!scope.hasAccessToAll) {
+      whereClause.enrollment = {
+        OR: [
+          ...(scope.sectionIds.length > 0 ? [{ sectionId: { in: scope.sectionIds } }] : []),
+          ...(scope.classGradeIds.length > 0 ? [{ section: { classGradeId: { in: scope.classGradeIds } } }] : []),
+        ],
+      };
+    }
+
+    const deleted = await prisma.attendanceRecord.deleteMany({
+      where: whereClause,
+    });
+
+    return res.json({
+      message: `Successfully cleared attendance records for ${dateStr}. (${deleted.count} records removed)`,
+      deletedCount: deleted.count,
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+}
+
+

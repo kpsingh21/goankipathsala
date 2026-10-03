@@ -56,7 +56,7 @@ export function authorize(...allowedRoles: UserRole[]) {
     // SuperAdmin and School Admin/Admin/Principal have top-level access to administrative endpoints
     const effectiveRoles = new Set<UserRole>(allowedRoles);
 
-    // Expand administrative synonyms
+    // Expand administrative synonyms: School Admin, Admin, and Principal have identical top-level administrative authority
     if (
       effectiveRoles.has(UserRole.SCHOOL_ADMIN) ||
       effectiveRoles.has(UserRole.ADMIN) ||
@@ -77,7 +77,24 @@ export function authorize(...allowedRoles: UserRole[]) {
       effectiveRoles.add(UserRole.TEACHER);
       effectiveRoles.add(UserRole.CLASS_TEACHER);
       effectiveRoles.add(UserRole.SUBJECT_TEACHER);
-      // School leadership can also access teacher-level views
+      // School leadership (School Admin, Principal) can also access teacher-level views
+      effectiveRoles.add(UserRole.SUPERADMIN);
+      effectiveRoles.add(UserRole.SCHOOL_ADMIN);
+      effectiveRoles.add(UserRole.ADMIN);
+      effectiveRoles.add(UserRole.PRINCIPAL);
+    }
+
+    // Expand accountant/financial endpoints: School leadership can also access financial endpoints
+    if (effectiveRoles.has(UserRole.ACCOUNTANT)) {
+      effectiveRoles.add(UserRole.SUPERADMIN);
+      effectiveRoles.add(UserRole.SCHOOL_ADMIN);
+      effectiveRoles.add(UserRole.ADMIN);
+      effectiveRoles.add(UserRole.PRINCIPAL);
+    }
+
+    // Expand transport/driver endpoints: School leadership can also access transport endpoints
+    if (effectiveRoles.has(UserRole.DRIVER)) {
+      effectiveRoles.add(UserRole.SUPERADMIN);
       effectiveRoles.add(UserRole.SCHOOL_ADMIN);
       effectiveRoles.add(UserRole.ADMIN);
       effectiveRoles.add(UserRole.PRINCIPAL);
@@ -91,4 +108,25 @@ export function authorize(...allowedRoles: UserRole[]) {
 
     next();
   };
+}
+
+/**
+ * Optional Authentication: Attaches req.user if a valid token is present, but allows guest access if not
+ */
+export function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as AuthUserPayload;
+    if (!req.tenantId || payload.tenantId === req.tenantId) {
+      req.user = payload;
+    }
+  } catch (err) {
+    // Non-fatal for optional authentication
+  }
+  next();
 }

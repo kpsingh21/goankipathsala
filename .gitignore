@@ -113,6 +113,10 @@ next-env.d.ts
 coverage/
 */coverage/
 .nyc_output/
+playwright-report/
+*/playwright-report/
+test-results/
+*/test-results/
 
 # ------------------------------------------------------------------------------
 # 7. Temporary & Scratch Files

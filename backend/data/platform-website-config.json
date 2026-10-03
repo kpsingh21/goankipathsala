@@ -1,0 +1,60 @@
+{
+  "logoUrl": "/uploads/logo_1790973221208_Media__2__5c2c3681847c.jpg",
+  "brandName": "Goan Ki Pathshala",
+  "brandTagline": "गाँव की पाठशाला • Multitenant School Operating System",
+  "heroBadge": "🌾 Transforming Rural & Semi-Urban Education",
+  "heroTitle": "Empowering Every School with World-Class Digital Infrastructure.",
+  "heroDescription": "Goan Ki Pathshala (गाँव की पाठशाला) is an enterprise-grade multi-tenant school operating system. Inspired by leading EdTech models like LEAD School, each campus receives its own isolated subdomain, bilingual CBSE curriculum delivery, smart student dossiers, itemized fee billing, and real-time fleet transport tracking.",
+  "exploreButtonText": "Explore Partner Schools",
+  "announcementBanner": {
+    "enabled": false,
+    "text": "🚀 Admissions open across all partner schools for Academic Session 2026-27."
+  },
+  "contact": {
+    "email": "goankipathshala@gmail.com",
+    "phone": "+91 9111393176",
+    "address": "Khandwa Madhya Pradesh"
+  },
+  "features": [
+    {
+      "icon": "📜",
+      "title": "Student Information",
+      "description": "Student data , docs , import export data, ID card."
+    },
+    {
+      "icon": "📋",
+      "title": "Attendance Matrix Engine",
+      "description": "Morning roll call and monthly attendance registers with automated working-day percentage calculation."
+    },
+    {
+      "icon": "💳",
+      "title": "Fee Structures & Ledger",
+      "description": "Itemized breakdown (Tuition, Lab, Sports, Library) with batch invoice issuance and payment receipts."
+    },
+    {
+      "icon": "🚌",
+      "title": "Village Bus Route Network",
+      "description": "Route milestones, pickup/drop times, driver phone numbers, and transport fee management."
+    },
+    {
+      "icon": "🧑‍🏫",
+      "title": "Role-Based Teacher Access",
+      "description": "Subject teachers manage assigned subjects; class teachers and admins hold 360° academic oversight."
+    },
+    {
+      "icon": "📢",
+      "title": "Digital Circular Notice Board",
+      "description": "Targeted school notices with priority tagging, emergency broadcasts, and instant editing."
+    },
+    {
+      "icon": "🌐",
+      "title": "Isolated Subdomain Websites",
+      "description": "Each school enjoys a dedicated public branding portal with custom facilities, photo gallery, and videos."
+    },
+    {
+      "icon": "🔒",
+      "title": "Report Cards",
+      "description": "Unit tests, quarterly, half-yearly, and annual aggregate grading with automatic percentage computation."
+    }
+  ]
+}

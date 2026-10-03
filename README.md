@@ -52,4 +52,17 @@ npm run dev
 cd frontend
 npm install
 npm run dev
+
+
+cd backend
+npx prisma db push
+
 ```
+<!-- using the npm script defined in your -->
+cd backend
+npm run db:push
+
+
+cd backend
+npm run key:generate
+gkp_master_9af635dfdd4fded05d3d83be59deb172e5c6d68fff5ae4fb

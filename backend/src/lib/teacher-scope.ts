@@ -20,12 +20,24 @@ export async function getTeacherClassScope(
   userId: string,
   role: string
 ): Promise<TeacherScope> {
-  const adminRoles = ['SUPERADMIN', 'SCHOOL_ADMIN', 'ADMIN', 'PRINCIPAL', 'ACCOUNTANT'];
+  const adminRoles = ['SUPERADMIN', 'SCHOOL_ADMIN', 'ADMIN', 'PRINCIPAL'];
   if (adminRoles.includes(role)) {
     return {
       isTeacher: false,
       isAdmin: true,
       hasAccessToAll: true,
+      sectionIds: [],
+      classGradeIds: [],
+      classGradeNames: [],
+    };
+  }
+
+  // Non-teaching specific roles (Accountant, Driver) do not have academic teacher scopes
+  if (role === 'ACCOUNTANT' || role === 'DRIVER' || role === 'CASHIER') {
+    return {
+      isTeacher: false,
+      isAdmin: false,
+      hasAccessToAll: false,
       sectionIds: [],
       classGradeIds: [],
       classGradeNames: [],
@@ -44,9 +56,21 @@ export async function getTeacherClassScope(
     include: { classGrade: true },
   });
 
-  // 3. Timetable entries assigned to teacher
+  // 3. Timetable entries assigned to teacher (matches teacherUserId or teacherName)
+  const teacherUser = await prisma.user.findFirst({
+    where: { id: userId, tenantId },
+    include: { staffProfile: true },
+  });
+  const teacherFullName = teacherUser?.staffProfile?.fullName?.trim();
+
   const timetableEntries = await prisma.timetableEntry.findMany({
-    where: { tenantId, teacherId: userId },
+    where: {
+      tenantId,
+      OR: [
+        { teacherUserId: userId },
+        ...(teacherFullName ? [{ teacherName: teacherFullName }] : []),
+      ],
+    },
     include: { classGrade: true, section: true },
   });
 

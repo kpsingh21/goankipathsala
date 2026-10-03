@@ -256,14 +256,18 @@ export async function bulkImportStaff(req: Request, res: Response) {
 
     // Allowed roles
     const validRoles: Record<string, UserRole> = {
-      TEACHER: UserRole.TEACHER,
       CLASS_TEACHER: UserRole.CLASS_TEACHER,
       SUBJECT_TEACHER: UserRole.SUBJECT_TEACHER,
       PRINCIPAL: UserRole.PRINCIPAL,
+      HEADMASTER: UserRole.PRINCIPAL,
       ADMIN: UserRole.ADMIN,
       SCHOOL_ADMIN: UserRole.SCHOOL_ADMIN,
       ACCOUNTANT: UserRole.ACCOUNTANT,
+      CASHIER: UserRole.ACCOUNTANT,
       DRIVER: UserRole.DRIVER,
+      BUS_DRIVER: UserRole.DRIVER,
+      TEACHER: UserRole.SUBJECT_TEACHER,
+      GENERAL_TEACHER: UserRole.SUBJECT_TEACHER,
     };
 
     for (let i = 0; i < rows.length; i++) {
@@ -287,8 +291,8 @@ export async function bulkImportStaff(req: Request, res: Response) {
       }
 
       // Role resolution
-      const rawRole = String(row.role || 'TEACHER').trim().toUpperCase().replace(/\s+/g, '_');
-      const role = validRoles[rawRole] || UserRole.TEACHER;
+      const rawRole = String(row.role || 'SUBJECT_TEACHER').trim().toUpperCase().replace(/\s+/g, '_');
+      const role = validRoles[rawRole] || UserRole.SUBJECT_TEACHER;
 
       // Check if user already exists in this school
       const existingUser = await prisma.user.findFirst({
