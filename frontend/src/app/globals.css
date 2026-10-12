@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@import "../css/dashboard.css";
+@import "../css/student.css";
+@import "../css/fees.css";
+@import "../css/staff.css";
+@import "../css/result.css";
+
 
 :root {
   --background: #ffffff;

@@ -1,0 +1,134 @@
+/* ==========================================================================
+   Goan Ki Pathshala - Student SIS & ID Card Stylesheet
+   ========================================================================== */
+
+/* Student SIS Container */
+.student-section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Student Search & Filter Bar */
+.student-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+@media (min-width: 640px) {
+  .student-filter-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.student-search-input {
+  flex: 1;
+  min-width: 220px;
+}
+
+/* Student Record Avatar & Info */
+.student-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #1d4ed8;
+  font-size: 0.8125rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.student-name-link {
+  font-weight: 700;
+  color: #0f172a;
+  transition: color 0.15s ease-in-out;
+}
+
+.student-name-link:hover {
+  color: #2563eb;
+}
+
+/* Student ID Card Look & Preview */
+.student-idcard-preview {
+  width: 85.6mm;
+  height: 54mm;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.student-idcard-header {
+  padding: 0.5rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.student-idcard-body {
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.student-idcard-photo {
+  width: 22mm;
+  height: 28mm;
+  border-radius: 0.25rem;
+  border: 1px solid #e2e8f0;
+  object-fit: cover;
+  background-color: #f1f5f9;
+}
+
+.student-idcard-info {
+  flex: 1;
+  font-size: 0.625rem;
+  line-height: 1.25;
+}
+
+.student-idcard-footer {
+  padding: 0.25rem 0.5rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.5rem;
+}
+
+/* Printable ID Card Sheets */
+@media print {
+  .student-idcard-print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10mm !important;
+    page-break-after: always;
+  }
+}
+
+/* Student Promotion Box */
+.student-promote-panel {
+  padding: 1.25rem;
+  background-color: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 1rem;
+}
+

@@ -1,0 +1,120 @@
+/* ==========================================================================
+   Goan Ki Pathshala - Results, Examinations & Report Card Stylesheet
+   ========================================================================== */
+
+/* Exam Master & Marks Entry */
+.result-marks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.result-marks-table th {
+  background-color: #f1f5f9;
+  padding: 0.5rem 0.75rem;
+  font-weight: 800;
+  text-align: center;
+  border: 1px solid #cbd5e1;
+}
+
+.result-marks-table td {
+  padding: 0.375rem 0.5rem;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.result-marks-input {
+  width: 4rem;
+  text-align: center;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.375rem;
+  border: 1px solid #cbd5e1;
+  font-weight: 700;
+  outline: none;
+}
+
+.result-marks-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* CBSE Report Card Layout */
+.report-card-sheet {
+  background-color: #ffffff;
+  border: 2px solid #0f172a;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  color: #0f172a;
+  max-width: 210mm;
+  margin: 0 auto;
+}
+
+.report-card-header {
+  text-align: center;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-card-border-emerald {
+  border-color: #065f46;
+}
+
+.report-card-border-burgundy {
+  border-color: #831843;
+}
+
+.report-card-border-blue {
+  border-color: #1e3a8a;
+}
+
+.report-card-student-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.8125rem;
+}
+
+.report-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.8125rem;
+}
+
+.report-card-table th,
+.report-card-table td {
+  border: 1px solid #0f172a;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.report-card-table th {
+  background-color: #f8fafc;
+  font-weight: 800;
+}
+
+.report-card-signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3rem;
+  padding-top: 1rem;
+}
+
+.report-card-sig-line {
+  border-top: 1px solid #0f172a;
+  width: 8rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media print {
+  .report-card-sheet {
+    border: 2px solid #000000 !important;
+    padding: 15mm !important;
+    page-break-after: always;
+  }
+}
+
